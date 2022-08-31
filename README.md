@@ -6,6 +6,8 @@ tobitege, 2022-08-31
 - Removed outdated docking theme assembly
 - Enabled NuGet packages for Json and docking libraries
 - Compile roughly in order: Clifton.Core, Clifton.xxx, Services, FlowSharpxxx, FS-HOPE projects.
+- Compiled successfully on VS 2019 (x86).
+- Some code changes based on IntelliSense.
 
 # FlowSharp
 
