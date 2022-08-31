@@ -59,7 +59,7 @@ namespace FlowSharpCodeShapes
     [ToolboxOrder(8)]
     public class ToolboxAssemblyReferenceBox : Box
     {
-        public override Rectangle ToolboxDisplayRectangle { get { return new Rectangle(0, 0, 45, 25); } }
+        public override Rectangle ToolboxDisplayRectangle => new Rectangle(0, 0, 45, 25);
 
         public ToolboxAssemblyReferenceBox(Canvas canvas) : base(canvas)
         {

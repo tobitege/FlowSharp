@@ -13,9 +13,9 @@ namespace HopeRunnerAppDomainInterface
         public string ToReceptorTypeName { get; set; }
         public string SemanticTypeTypeName { get; set; }
 
-		public ProcessEventArgs() { }
+        public ProcessEventArgs() { }
 
-		public ProcessEventArgs(string fromMembraneTypeName, string fromReceptorTypeName, string toMembraneTypeName, string toReceptorTypeName, string stTypeName)
+        public ProcessEventArgs(string fromMembraneTypeName, string fromReceptorTypeName, string toMembraneTypeName, string toReceptorTypeName, string stTypeName)
         {
             FromMembraneTypeName = fromMembraneTypeName;
             FromReceptorTypeName = fromReceptorTypeName;

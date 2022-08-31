@@ -26,7 +26,7 @@ namespace FlowSharpMenuService
 
     public class FlowSharpMenuService : ServiceBase, IFlowSharpMenuService
     {
-        public string Filename { get { return menuController.Filename; } }
+        public string Filename => menuController.Filename;
         protected MenuController menuController;
         protected Form mainForm;
 

@@ -18,10 +18,10 @@ namespace FlowSharpLib
     [ToolboxOrder(8)]
     public class HorizontalLine : Line
 	{
-		// Fixes background erase issues with dynamic connector.
-		public override Rectangle UpdateRectangle { get { return ZoomRectangle.Grow(anchorWidthHeight + 2 + BorderPen.Width); } }
+        // Fixes background erase issues with dynamic connector.
+        public override Rectangle UpdateRectangle => ZoomRectangle.Grow(anchorWidthHeight + 2 + BorderPen.Width);
 
-		public HorizontalLine(Canvas canvas) : base(canvas)
+        public HorizontalLine(Canvas canvas) : base(canvas)
 		{
 			HasCornerAnchors = false;
 			HasCenterAnchors = false;

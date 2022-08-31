@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -888,8 +888,8 @@ namespace FlowSharpMouseControllerService
             // Normalize the rectangle to a top-left, bottom-right rectangle.
             int x = CurrentMousePosition.X.Min(StartSelectionPosition.X);
             int y = CurrentMousePosition.Y.Min(StartSelectionPosition.Y);
-            int w = (CurrentMousePosition.X - StartSelectionPosition.X).Abs();
-            int h = (CurrentMousePosition.Y - StartSelectionPosition.Y).Abs();
+            int w = Math.Abs(CurrentMousePosition.X - StartSelectionPosition.X);
+            int h = Math.Abs(CurrentMousePosition.Y - StartSelectionPosition.Y);
             Rectangle newRect = new Rectangle(x, y, w, h);
             Point delta = CurrentMousePosition.Delta(LastMousePosition);
             controller.UpdateDisplayRectangle(SelectionBox, newRect, delta);

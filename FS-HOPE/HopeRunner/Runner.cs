@@ -24,6 +24,12 @@ namespace HopeRunner
             sp.RegisterMembrane<HopeMembrane>();
         }
 
+        public event EventHandler<HopeRunnerAppDomainInterface.ProcessEventArgs> Processing;
+
+        public void EnableDisableReceptor(string typeName, bool state)
+        {
+        }
+
         public void InstantiateReceptor(string typeName)
         {
             var agent = Assembly.GetExecutingAssembly().GetTypes().SingleOrDefault(at => at.IsClass && at.IsPublic && at.Name == typeName);

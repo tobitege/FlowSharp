@@ -39,20 +39,21 @@
   <ItemGroup>
     <Reference Include="Clifton.Core, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Libs\Clifton.Core.dll</HintPath>
+      <HintPath>bin\Debug\Clifton.Core.dll</HintPath>
     </Reference>
     <Reference Include="Clifton.DockingFormService">
       <HintPath>Libs\Clifton.DockingFormService.dll</HintPath>
     </Reference>
-    <Reference Include="Clifton.SemanticProcessorService">
-      <HintPath>Libs\Clifton.SemanticProcessorService.dll</HintPath>
+    <Reference Include="Clifton.SemanticProcessorService, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Debug\Clifton.SemanticProcessorService.dll</HintPath>
     </Reference>
     <Reference Include="Clifton.WinForm.ServiceInterfaces, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Libs\Clifton.WinForm.ServiceInterfaces.dll</HintPath>
+      <HintPath>bin\Debug\Clifton.WinForm.ServiceInterfaces.dll</HintPath>
     </Reference>
-    <Reference Include="Renci.SshNet">
-      <HintPath>Libs\Renci.SshNet.dll</HintPath>
+    <Reference Include="Renci.SshNet, Version=2020.0.1.0, Culture=neutral, PublicKeyToken=1cee9f8bde3db106, processorArchitecture=MSIL">
+      <HintPath>packages\SSH.NET.Fork.2022.5.13\lib\net40\Renci.SshNet.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -65,11 +66,9 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="WeifenLuo.WinFormsUI.Docking">
+    <Reference Include="WeifenLuo.WinFormsUI.Docking, Version=2.1.6643.41644, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>Libs\WeifenLuo.WinFormsUI.Docking.dll</HintPath>
-    </Reference>
-    <Reference Include="WeifenLuo.WinFormsUI.Docking.ThemeVS2015">
-      <HintPath>Libs\WeifenLuo.WinFormsUI.Docking.ThemeVS2015.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -86,6 +85,8 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <None Include=".editorconfig" />
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -102,9 +103,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="bin\Debug\FlowSharpCodeModules.xml" />
-    <Content Include="bin\Debug\HelloWorld.py" />
-    <Content Include="bin\Debug\HopeTestPolicy.xml" />
-    <Content Include="bin\Debug\layout.xml" />
     <Content Include="bin\Debug\modules.xml">
       <SubType>Designer</SubType>
     </Content>

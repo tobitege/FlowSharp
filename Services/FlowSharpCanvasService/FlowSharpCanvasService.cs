@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -34,8 +34,8 @@ namespace FlowSharpCanvasService
         public event EventHandler<FileEventArgs> SaveLayout;
         public event EventHandler<FileEventArgs> LoadLayout;
 
-        public BaseController ActiveController { get { return activeCanvasController; } }
-        public List<BaseController> Controllers { get { return documents.Values.ToList(); } }
+        public BaseController ActiveController => activeCanvasController;
+        public List<BaseController> Controllers => documents.Values.ToList();
 
         protected Dictionary<Control, BaseController> documents;
         protected BaseController activeCanvasController;
@@ -63,9 +63,11 @@ namespace FlowSharpCanvasService
 
         public void CreateCanvas(Control parent)
         {
-            Canvas canvas = new Canvas();
-            canvas.ServiceManager = ServiceManager;
-            CanvasController canvasController = new CanvasController(canvas);
+            var canvas = new Canvas
+            {
+                ServiceManager = this.ServiceManager
+            };
+            var canvasController = new CanvasController(canvas);
             documents[parent] = canvasController;
             // Canvas.Initialize requires that the parent be attached to the form!
             canvas.Initialize(parent);
@@ -81,13 +83,11 @@ namespace FlowSharpCanvasService
 
         public void SetActiveController(Control parent)
         {
-			BaseController controller;
-
-			// document won't contain parent if the window is a floating window.
-			if (documents.TryGetValue(parent, out controller))
-			{
-				activeCanvasController = controller;
-			}
+            // document won't contain parent if the window is a floating window.
+            if (documents.TryGetValue(parent, out var controller))
+            {
+                activeCanvasController = controller;
+            }
         }
 
         public void RequestNewCanvas()
@@ -117,24 +117,17 @@ namespace FlowSharpCanvasService
 
         protected void SaveDiagrams(string filename)
         {
-            int n = 0;
+            var n = 0;
 
             foreach (BaseController controller in Controllers)
             {
-                string data = Persist.Serialize(controller.Elements);
+                var data = Persist.Serialize(controller.Elements);
 
                 // If the "canvas" doesn't have a filename, we need to assign one.  For the first controller, this would be the base name,
                 // subsequent unnamed canvases get auto-named "-1", "-2", etc.
-                if (String.IsNullOrEmpty(controller.Filename))
+                if (string.IsNullOrEmpty(controller.Filename))
                 {
-                    if (n == 0)
-                    {
-                        controller.Filename = filename;
-                    }
-                    else
-                    {
-                        controller.Filename = Path.Combine(Path.GetDirectoryName(filename), Path.GetFileNameWithoutExtension(filename) + "-" + n.ToString() + Path.GetExtension(filename));
-                    }
+                    controller.Filename = n == 0 ? filename : Path.Combine(Path.GetDirectoryName(filename), Path.GetFileNameWithoutExtension(filename) + "-" + n.ToString() + Path.GetExtension(filename));
                 }
 
                 // Always increment the controller counter, so if we encounter an unnamed controller

@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\..\bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -27,7 +27,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\..\bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -36,16 +36,17 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Clifton.SemanticProcessorService, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Libs\Clifton.SemanticProcessorService.dll</HintPath>
+    <Reference Include="Clifton.Core">
+      <HintPath>..\..\bin\Debug\Clifton.Core.dll</HintPath>
     </Reference>
-    <Reference Include="HelloWorld">
-      <HintPath>..\..\bin\Debug\HelloWorld.dll</HintPath>
+    <Reference Include="Clifton.SemanticProcessorService">
+      <HintPath>..\..\bin\Debug\Clifton.SemanticProcessorService.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Libs\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="HopeRunner">
+      <HintPath>..\..\bin\Debug\HopeRunner.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -66,12 +67,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\clifton\Clifton.Core\Clifton.Core.csproj">
-      <Project>{54e73707-81c4-4c7f-9739-446c6d7d5fea}</Project>
-      <Name>Clifton.Core</Name>
-    </ProjectReference>
     <ProjectReference Include="..\FlowSharpHopeCommon\FlowSharpHopeCommon.csproj">
       <Project>{7b0e168e-8b6b-4dbf-9763-46b6232a2da7}</Project>
       <Name>FlowSharpHopeCommon</Name>

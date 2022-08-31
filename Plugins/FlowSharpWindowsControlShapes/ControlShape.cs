@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -76,23 +76,18 @@ namespace FlowSharpWindowsControlShapes
         public override void Deserialize(ElementPropertyBag epb)
         {
             base.Deserialize(epb);
-            string name;
 
-            if (Json.TryGetValue("ClickEventName", out name))
+            if (Json.TryGetValue("ClickEventName", out var name))
             {
                 ClickEventName = name;
             }
 
-            string data;
-
-            if (Json.TryGetValue("ClickEventData", out data))
+            if (Json.TryGetValue("ClickEventData", out var data))
             {
                 ClickEventData = data;
             }
 
-            string sendProtocol;
-
-            if (Json.TryGetValue("SendProtocol", out sendProtocol))
+            if (Json.TryGetValue("SendProtocol", out var sendProtocol))
             {
                 SendProtocol = (SendProtocol)Enum.Parse(typeof(SendProtocol), sendProtocol);
             }

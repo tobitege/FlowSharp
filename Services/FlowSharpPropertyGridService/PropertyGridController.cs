@@ -1,10 +1,11 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
 */
 
 using System;
+using System.Drawing;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -76,15 +77,27 @@ namespace FlowSharpPropertyGridService
 
         protected void OnPropertyValueChanged(object s, PropertyValueChangedEventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            string label = e.ChangedItem.Label;
+            if (e == null) return;
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var label = e.ChangedItem.Label;
+            if (e.ChangedItem.PropertyDescriptor?.ComponentType == typeof(System.Drawing.Font))
+            {
+                label = "Font";
+            }
+            else
+            if (e.ChangedItem.PropertyDescriptor?.ComponentType == typeof(System.Drawing.Rectangle))
+            {
+                label = "Rectangle";
+            }
 
             // Updating a shape.
             if (pgElement.SelectedObject is ElementProperties)
             {
                 canvasController.SelectedElements.ForEach(sel =>
                 {
-                    PropertyInfo piElProps = elementProperties.GetType().GetProperty(label);
+                    var ltype = elementProperties.GetType();
+                    var piElProps = ltype.GetProperty(label);
+                    if (piElProps == null) return;
                     object oldVal = e.OldValue;
                     object newVal = piElProps.GetValue(elementProperties);
 

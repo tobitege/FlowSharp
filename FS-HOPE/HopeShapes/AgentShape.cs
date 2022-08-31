@@ -37,12 +37,12 @@ namespace HopeShapes
             int indentSize = ZoomRectangle.Width / 3;
             path = new Point[]
             {
-                new Point(ZoomRectangle.X + indentSize, ZoomRectangle.Y),                                                            // top left of indented left "arrow"
-                new Point(ZoomRectangle.X + ZoomRectangle.Width - indentSize,    ZoomRectangle.Y),                                // top right of indented right "arrow"
-                new Point(ZoomRectangle.X + ZoomRectangle.Width, ZoomRectangle.Y + ZoomRectangle.Height/2),                     // right tip (middle of box)
-                new Point(ZoomRectangle.X + ZoomRectangle.Width - indentSize, ZoomRectangle.Y + ZoomRectangle.Height),         // bottom right of indented right "arrow"
-                new Point(ZoomRectangle.X + indentSize, ZoomRectangle.Y + ZoomRectangle.Height),                                  // bottom left of indented left "arrow"
-                new Point(ZoomRectangle.X, ZoomRectangle.Y + ZoomRectangle.Height/2),                                                            // middle left of indented left "arrow"
+                new Point(ZoomRectangle.X + indentSize, ZoomRectangle.Y),                                               // top left of indented left "arrow"
+                new Point(ZoomRectangle.X + ZoomRectangle.Width - indentSize,    ZoomRectangle.Y),                      // top right of indented right "arrow"
+                new Point(ZoomRectangle.X + ZoomRectangle.Width, ZoomRectangle.Y + ZoomRectangle.Height/2),             // right tip (middle of box)
+                new Point(ZoomRectangle.X + ZoomRectangle.Width - indentSize, ZoomRectangle.Y + ZoomRectangle.Height),  // bottom right of indented right "arrow"
+                new Point(ZoomRectangle.X + indentSize, ZoomRectangle.Y + ZoomRectangle.Height),                        // bottom left of indented left "arrow"
+                new Point(ZoomRectangle.X, ZoomRectangle.Y + ZoomRectangle.Height/2),                                   // middle left of indented left "arrow"
             };
         }
 
@@ -58,7 +58,7 @@ namespace HopeShapes
     [ToolboxOrder(9)]
     public class ToolboxAssemblyAgentShape : AgentShape
     {
-        public override Rectangle ToolboxDisplayRectangle { get { return new Rectangle(0, 0, 35, 25); } }
+        public override Rectangle ToolboxDisplayRectangle => new Rectangle(0, 0, 35, 25);
 
         public ToolboxAssemblyAgentShape(Canvas canvas) : base(canvas)
         {

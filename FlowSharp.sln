@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26430.16
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32802.440
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowSharp", "FlowSharp.csproj", "{98E63D19-3D7A-4CB1-8EA9-31173D4BE05F}"
 EndProject
@@ -73,19 +73,26 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowSharpHopeShapeInterface
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HopeRunnerAppDomainInterface", "FS-HOPE\HopeRunnerAppDomainInterface\HopeRunnerAppDomainInterface.csproj", "{EB69E349-53A1-45CA-8982-988B9BC557A3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clifton.DockingFormService", "..\clifton\Clifton.WinForm\Services\Clifton.DockingFormService\Clifton.DockingFormService.csproj", "{543D44B1-BA75-4A6E-ADCA-7B8D8F3D7492}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clifton.DockingFormService", "clifton\Clifton.WinForm\Services\Clifton.DockingFormService\Clifton.DockingFormService.csproj", "{543D44B1-BA75-4A6E-ADCA-7B8D8F3D7492}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clifton.WinForm.ServiceInterfaces", "..\clifton\Clifton.WinForm\Clifton.WinForm.ServiceInterfaces\Clifton.WinForm.ServiceInterfaces.csproj", "{2C326DE7-2F39-49CB-9A2B-1FE6DE7918B0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clifton.WinForm.ServiceInterfaces", "clifton\Clifton.WinForm\Clifton.WinForm.ServiceInterfaces\Clifton.WinForm.ServiceInterfaces.csproj", "{2C326DE7-2F39-49CB-9A2B-1FE6DE7918B0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clifton.SemanticProcessorService", "..\clifton\Clifton.Core\Services\Clifton.SemanticProcessorService\Clifton.SemanticProcessorService.csproj", "{B716A014-8C9F-4A24-83A4-ACBAE19C28C5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clifton.SemanticProcessorService", "clifton\Clifton.Core\Services\Clifton.SemanticProcessorService\Clifton.SemanticProcessorService.csproj", "{B716A014-8C9F-4A24-83A4-ACBAE19C28C5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clifton.Core", "..\clifton\Clifton.Core\Clifton.Core.csproj", "{54E73707-81C4-4C7F-9739-446C6D7D5FEA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clifton.Core", "clifton\Clifton.Core\Clifton.Core.csproj", "{54E73707-81C4-4C7F-9739-446C6D7D5FEA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StandAloneRunner", "FS-HOPE\StandAloneRunner\StandAloneRunner.csproj", "{EAB1BE73-9426-42F1-8113-4C8511A6BBEB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowSharpHopeCommon", "FS-HOPE\FlowSharpHopeCommon\FlowSharpHopeCommon.csproj", "{7B0E168E-8B6B-4DBF-9763-46B6232A2DA7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeTester", "FS-HOPE\CodeTester\CodeTester.csproj", "{0AED1C57-15F0-49F9-A375-B56E8CE1F8A8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HopeRunner", "FS-HOPE\HopeRunner\HopeRunner.csproj", "{6C543371-0DA1-4E8A-AC3E-52F17613FF22}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{242E7E11-55BF-49A9-AE5E-42E8A3C7DBD8}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -222,19 +229,15 @@ Global
 		{EB69E349-53A1-45CA-8982-988B9BC557A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EB69E349-53A1-45CA-8982-988B9BC557A3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{543D44B1-BA75-4A6E-ADCA-7B8D8F3D7492}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{543D44B1-BA75-4A6E-ADCA-7B8D8F3D7492}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{543D44B1-BA75-4A6E-ADCA-7B8D8F3D7492}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{543D44B1-BA75-4A6E-ADCA-7B8D8F3D7492}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2C326DE7-2F39-49CB-9A2B-1FE6DE7918B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2C326DE7-2F39-49CB-9A2B-1FE6DE7918B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2C326DE7-2F39-49CB-9A2B-1FE6DE7918B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2C326DE7-2F39-49CB-9A2B-1FE6DE7918B0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B716A014-8C9F-4A24-83A4-ACBAE19C28C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B716A014-8C9F-4A24-83A4-ACBAE19C28C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B716A014-8C9F-4A24-83A4-ACBAE19C28C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B716A014-8C9F-4A24-83A4-ACBAE19C28C5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{54E73707-81C4-4C7F-9739-446C6D7D5FEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{54E73707-81C4-4C7F-9739-446C6D7D5FEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{54E73707-81C4-4C7F-9739-446C6D7D5FEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{54E73707-81C4-4C7F-9739-446C6D7D5FEA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EAB1BE73-9426-42F1-8113-4C8511A6BBEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -249,6 +252,10 @@ Global
 		{0AED1C57-15F0-49F9-A375-B56E8CE1F8A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0AED1C57-15F0-49F9-A375-B56E8CE1F8A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0AED1C57-15F0-49F9-A375-B56E8CE1F8A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C543371-0DA1-4E8A-AC3E-52F17613FF22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C543371-0DA1-4E8A-AC3E-52F17613FF22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C543371-0DA1-4E8A-AC3E-52F17613FF22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C543371-0DA1-4E8A-AC3E-52F17613FF22}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -285,6 +292,7 @@ Global
 		{EAB1BE73-9426-42F1-8113-4C8511A6BBEB} = {390FD219-6696-4F18-BFEE-8FDBBB15233A}
 		{7B0E168E-8B6B-4DBF-9763-46B6232A2DA7} = {390FD219-6696-4F18-BFEE-8FDBBB15233A}
 		{0AED1C57-15F0-49F9-A375-B56E8CE1F8A8} = {390FD219-6696-4F18-BFEE-8FDBBB15233A}
+		{6C543371-0DA1-4E8A-AC3E-52F17613FF22} = {390FD219-6696-4F18-BFEE-8FDBBB15233A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2BF8B4D8-D64B-4380-BBDD-D8D01FF83DF0}

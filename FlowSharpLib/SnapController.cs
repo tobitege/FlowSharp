@@ -25,10 +25,10 @@ namespace FlowSharpLib
         public Point Delta { get; protected set; }
         public Action SnapType { get; protected set; }
 
-        public GraphicElement Connector { get { return connector; } }
-        public GraphicElement TargetShape { get { return targetShape; } }
-        public GripType GripType { get { return gripType; } }
-        public ConnectionPoint ShapeConnectionPoint { get { return shapeConnectionPoint; } }
+        public GraphicElement Connector => connector;
+        public GraphicElement TargetShape => targetShape;
+        public GripType GripType => gripType;
+        public ConnectionPoint ShapeConnectionPoint => shapeConnectionPoint;
 
         protected GraphicElement connector;
         protected GraphicElement targetShape;
@@ -88,8 +88,8 @@ namespace FlowSharpLib
 
     public class SnapController
     {
-        public Point RunningDelta { get { return runningDelta; } }
-        public List<SnapAction> SnapActions { get { return snapActions; } }
+        public Point RunningDelta => runningDelta;
+        public List<SnapAction> SnapActions => snapActions;
 
         protected BaseController controller;
         protected Point runningDelta;

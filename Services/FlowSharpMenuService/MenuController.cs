@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -39,7 +39,7 @@ namespace FlowSharpMenuService
     {
         private const string MRU_FILENAME = "FlowSharp.mru";
 
-        public string Filename { get { return filename; } }
+        public string Filename => filename;
 
         protected string filename;
         protected IServiceManager serviceManager;
@@ -112,11 +112,11 @@ namespace FlowSharpMenuService
             // Ungroup disabled if the selected element is not a groupbox:
             mnuUngroup.Enabled = canvasController.SelectedElements.Count == 1 && canvasController.SelectedElements[0].GroupChildren.Any();
 
-            mnuCollapseGroup.Enabled = canvasController.SelectedElements.Count == 1 
+            mnuCollapseGroup.Enabled = canvasController.SelectedElements.Count == 1
                 && (canvasController.SelectedElements[0] is FlowSharpLib.GroupBox)
                 && ((FlowSharpLib.GroupBox)canvasController.SelectedElements[0]).State==FlowSharpLib.GroupBox.CollapseState.Expanded;
 
-            mnuExpandGroup.Enabled = canvasController.SelectedElements.Count == 1 
+            mnuExpandGroup.Enabled = canvasController.SelectedElements.Count == 1
                 && (canvasController.SelectedElements[0] is FlowSharpLib.GroupBox)
                 && ((FlowSharpLib.GroupBox)canvasController.SelectedElements[0]).State == FlowSharpLib.GroupBox.CollapseState.Collapsed;
 
@@ -292,8 +292,8 @@ namespace FlowSharpMenuService
             {
                 for (int n = 1; n < selectedElements.Count; n++)
                 {
-                    dx += (selectedElements[n - 1].DisplayRectangle.Center().X - selectedElements[n].DisplayRectangle.Center().X).Abs();
-                    dy += (selectedElements[n - 1].DisplayRectangle.Center().Y - selectedElements[n].DisplayRectangle.Center().Y).Abs();
+                    dx += Math.Abs(selectedElements[n - 1].DisplayRectangle.Center().X - selectedElements[n].DisplayRectangle.Center().X);
+                    dy += Math.Abs(selectedElements[n - 1].DisplayRectangle.Center().Y - selectedElements[n].DisplayRectangle.Center().Y);
                 }
 
                 if (dx < dy)

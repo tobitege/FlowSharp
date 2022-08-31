@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -272,88 +272,75 @@ namespace FlowSharpEditService
 
         public void SetSavePoint()
         {
-            IFlowSharpCanvasService canvasService = ServiceManager.Get<IFlowSharpCanvasService>();
+            var canvasService = ServiceManager.Get<IFlowSharpCanvasService>();
             canvasService.Controllers.ForEach(c => SetSavePoint(c));
         }
 
         public bool ProcessCmdKey(Keys keyData)
         {
-            BaseController canvasController = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            Action act;
-            bool ret = false;
+            var canvasController = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            if (editBox == null || canvasController == null) return false;
 
-            if (editBox == null && canvasController != null)
+            if (canvasController.Canvas.Focused && keyActions.TryGetValue(keyData, out var act))
             {
-                if (canvasController.Canvas.Focused && keyActions.TryGetValue(keyData, out act))
+                act();
+                return true;
+            }
+            if (canvasController.Canvas.Focused &&
+                canvasController.SelectedElements?.Count == 1 &&
+                !canvasController.SelectedElements[0].IsConnector &&
+                CanStartEditing(keyData))
+            {
+                EditText();
+                // TODO: THIS IS SUCH A MESS!
+
+                // Will return upper case letter always, regardless of shift key....
+                var firstKey = ((char)keyData).ToString();
+
+                // ... so we have to fix it.  Sigh.
+                if ((keyData & Keys.Shift) != Keys.Shift)
                 {
-                    act();
-                    ret = true;
+                    firstKey = firstKey.ToLower();
                 }
                 else
                 {
-                    if (canvasController.Canvas.Focused &&
-                        canvasController.SelectedElements.Count == 1 &&
-                        !canvasController.SelectedElements[0].IsConnector &&
-                        CanStartEditing(keyData))
+                    // Handle shift of number keys on main keyboard
+                    if (char.IsDigit(firstKey[0]))
                     {
-                        EditText();
-                        // TODO: THIS IS SUCH A MESS!
-
-                        // Will return upper case letter always, regardless of shift key....
-                        string firstKey = ((char)keyData).ToString();
-
-                        // ... so we have to fix it.  Sigh.
-                        if ((keyData & Keys.Shift) != Keys.Shift)
+                        // TODO: Probably doesn't handle non-American keyboards!
+                        // Note index 0 is ")"
+                        var key = ")!@#$%^&*(";
+                        if (int.TryParse(firstKey, out var n))
                         {
-                            firstKey = firstKey.ToLower();
+                            firstKey = key[n].ToString();
                         }
-                        else
-                        {
-                            // Handle shift of number keys on main keyboard
-                            if (char.IsDigit(firstKey[0]))
-                            {
-                                // TODO: Probably doesn't handle non-American keyboards!
-                                // Note index 0 is ")"
-                                string key = ")!@#$%^&*(";
-                                int n;
-
-                                if (int.TryParse(firstKey, out n))
-                                {
-                                    firstKey = key[n].ToString();
-                                }
-                            }
-                            // TODO: This is such a PITA.  Other symbols and shift combinations do not produce the correct first character!
-                        }
-
-                        editBox.Text = firstKey;
-                        editBox.SelectionStart = 1;
-                        editBox.SelectionLength = 0;
-                        ret = true;
                     }
+                    // TODO: This is such a PITA.  Other symbols and shift combinations do not produce the correct first character!
                 }
+
+                editBox.Text = firstKey;
+                editBox.SelectionStart = 1;
+                editBox.SelectionLength = 0;
+                return true;
             }
 
-            return ret;
+            return false;
         }
 
         public void EditText()
         {
-            BaseController canvasController = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var canvasController = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            if (canvasController.SelectedElements.Count != 1) return;
 
-            if (canvasController.SelectedElements.Count == 1)
-            {
-                // TODO: At the moment, connectors do not support text.
-                if (!canvasController.SelectedElements[0].IsConnector)
-                {
-                    shapeBeingEdited = canvasController.SelectedElements[0];
-                    editBox = shapeBeingEdited.CreateTextBox(Cursor.Position);
-                    canvasController.Canvas.Controls.Add(editBox);
-                    editBox.Visible = true;
-                    editBox.Focus();
-                    editBox.KeyPress += OnEditBoxKey;
-                    editBox.LostFocus += (sndr, args) => TerminateEditing();
-                }
-            }
+            // TODO: At the moment, connectors do not support text.
+            if (canvasController.SelectedElements[0].IsConnector) return;
+            shapeBeingEdited = canvasController.SelectedElements[0];
+            editBox = shapeBeingEdited.CreateTextBox(Cursor.Position);
+            canvasController.Canvas.Controls.Add(editBox);
+            editBox.Visible = true;
+            editBox.Focus();
+            editBox.KeyPress += OnEditBoxKey;
+            editBox.LostFocus += (sndr, args) => TerminateEditing();
         }
 
         /// <summary>
@@ -362,12 +349,12 @@ namespace FlowSharpEditService
         public void FocusOnShape(GraphicElement shape)
         {
             // For closure:
-            BaseController controller = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            List<GraphicElement> selectedShapes = controller.SelectedElements.ToList();
-            int cx = (controller.Canvas.Width - shape.DisplayRectangle.Width) / 2;
-            int cy = (controller.Canvas.Height - shape.DisplayRectangle.Height) / 2;
-            int dx = -(shape.DisplayRectangle.X - cx);
-            int dy = -(shape.DisplayRectangle.Y - cy);
+            var controller = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var selectedShapes = controller.SelectedElements.ToList();
+            var cx = (controller.Canvas.Width - shape.DisplayRectangle.Width) / 2;
+            var cy = (controller.Canvas.Height - shape.DisplayRectangle.Height) / 2;
+            var dx = -(shape.DisplayRectangle.X - cx);
+            var dy = -(shape.DisplayRectangle.Y - cy);
 
             controller.UndoStack.UndoRedo("Focus Shape " + shape.ToString(),
                 () =>
@@ -386,26 +373,22 @@ namespace FlowSharpEditService
 
         protected void OnElementSelected(object sender, ElementEventArgs args)
         {
-            GraphicElement element = args.Element;
+            var element = args.Element;
 
             // Make sure this isn't a de-select.
-            if (element != null)
-            {
-                //BaseController controller = ((GraphicElement)sender).Canvas.Controller;
-                BaseController controller = ((BaseController)sender);
+            if (element == null) return;
+            //BaseController controller = ((GraphicElement)sender).Canvas.Controller;
+            var controller = ((BaseController)sender);
 
-                // Make sure we're not selecting a group of elements.
-                if (controller.SelectedElements.Count == 1)
-                {
-                    List<GraphicElement> selectedElementHistory = controllerSelectElementsHistory[controller];
-                    MoveSelectedElementToTopOfHistory(selectedElementHistory, controller.SelectedElements[0]);
-                }
-            }
+            // Make sure we're not selecting a group of elements.
+            if (controller.SelectedElements.Count != 1) return;
+            var selectedElementHistory = controllerSelectElementsHistory[controller];
+            MoveSelectedElementToTopOfHistory(selectedElementHistory, controller.SelectedElements[0]);
         }
 
         protected List<GraphicElement> IncludeChildren(List<GraphicElement> parents)
         {
-            List<GraphicElement> els = new List<GraphicElement>();
+            var els = new List<GraphicElement>();
 
             parents.ForEach(p =>
             {
@@ -418,19 +401,19 @@ namespace FlowSharpEditService
 
         protected void RestoreConnections(List<ZOrderMap> zomList)
         {
-            foreach (ZOrderMap zom in zomList)
+            foreach (var zom in zomList)
             {
-                GraphicElement el = zom.Element;
-                List<Connection> connections = zom.Connections;
+                var el = zom.Element;
+                var connections = zom.Connections;
 
-                foreach (Connection conn in connections)
+                foreach (var conn in connections)
                 {
                     conn.ToElement.SetConnection(conn.ToConnectionPoint.Type, el);
                 }
 
                 if (el.IsConnector)
                 {
-                    Connector connector = el as Connector;
+                    var connector = el as Connector;
                     connector.StartConnectedShape = zom.StartConnectedShape;
                     connector.EndConnectedShape = zom.EndConnectedShape;
 

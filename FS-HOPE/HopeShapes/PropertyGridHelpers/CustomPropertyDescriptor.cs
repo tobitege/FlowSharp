@@ -18,51 +18,20 @@ namespace HopeShapes.PropertyGridHelpers
             return false;
         }
 
-        public override Type ComponentType
-        {
-            get
-            {
-                return null;
-            }
-        }
+        public override Type ComponentType => null;
 
         public override object GetValue(object component)
         {
             return m_Property.Value;
         }
 
-        public override string Description
-        {
-            get
-            {
-                return m_Property.Description;
-            }
-        }
+        public override string Description => m_Property.Description;
 
-        public override string Category
-        {
-            get
-            {
-                return m_Property.Category;
-            }
-        }
+        public override string Category => m_Property.Category;
 
-        public override string DisplayName
-        {
-            get
-            {
-                return m_Property.Name;
-            }
+        public override string DisplayName => m_Property.Name;
 
-        }
-
-        public override bool IsReadOnly
-        {
-            get
-            {
-                return m_Property.ReadOnly;
-            }
-        }
+        public override bool IsReadOnly => m_Property.ReadOnly;
 
         public override void ResetValue(object component)
         {
@@ -79,9 +48,6 @@ namespace HopeShapes.PropertyGridHelpers
             m_Property.Value = value;
         }
 
-        public override Type PropertyType
-        {
-            get { return m_Property.PropertyType; }
-        }
+        public override Type PropertyType => m_Property.PropertyType;
     }
 }

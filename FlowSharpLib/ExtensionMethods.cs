@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -8,8 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Reflection;
-using System.Windows.Forms;
 
 namespace FlowSharpLib
 {
@@ -17,12 +15,12 @@ namespace FlowSharpLib
     {
         public static void Step2(this int n, int step, Action<int> action)
         {
-            for (int i = 0; i < n + step; i += step)
+            for (var i = 0; i < n + step; i += step)
             {
                 action(i);
             }
         }
-        
+
         public static Point Delta(this Point p, Point p2)
         {
             return new Point(p.X - p2.X, p.Y - p2.Y);
@@ -57,10 +55,10 @@ namespace FlowSharpLib
         //{
         //    return (a < min) ? min : a;
         //}
-        
+
         public static Rectangle Grow(this Rectangle r, float w)
         {
-            Rectangle ret = r;
+            var ret = r;
             ret.Inflate((int)w, (int)w);
 
             return ret;
@@ -78,7 +76,7 @@ namespace FlowSharpLib
 
         public static Rectangle Grow(this Rectangle r, float x, float y)
         {
-            Rectangle ret = r;
+            var ret = r;
             ret.Inflate((int)x, (int)y);
 
             return ret;
@@ -134,7 +132,7 @@ namespace FlowSharpLib
         /// </summary>
         public static Rectangle Add(this Rectangle r, Point p)
         {
-            Rectangle ret = new Rectangle(r.X + p.X, r.Y + p.Y, r.Width, r.Height);
+            var ret = new Rectangle(r.X + p.X, r.Y + p.Y, r.Width, r.Height);
 
             return ret;
         }
@@ -179,7 +177,7 @@ namespace FlowSharpLib
             return new Point(-p.X, -p.Y);
         }
 
-        public static int to_i(this float f)
+        public static int To_Int(this float f)
         {
             return (int)f;
         }
@@ -191,7 +189,7 @@ namespace FlowSharpLib
 
         public static void ForEachReverse<T>(this IList<T> collection, Action<T> action)
         {
-            for (int i = collection.Count - 1; i >= 0; i--)
+            for (var i = collection.Count - 1; i >= 0; i--)
             {
                 action(collection[i]);
             }
@@ -199,16 +197,14 @@ namespace FlowSharpLib
 
         public static List<T> Swap<T>(this List<T> list, int indexA, int indexB)
         {
-            T tmp = list[indexA];
-            list[indexA] = list[indexB];
-            list[indexB] = tmp;
+            (list[indexA], list[indexB]) = (list[indexB], list[indexA]);
 
             return list;
         }
 
-		public static string ToHtmlColor(this Color c, char prefix = '#')
-		{
-			return prefix + c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
-		}
-	}
+        public static string ToHtmlColor(this Color c, char prefix = '#')
+        {
+            return prefix + c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
+        }
+    }
 }

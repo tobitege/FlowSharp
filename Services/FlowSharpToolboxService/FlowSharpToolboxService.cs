@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -32,8 +32,8 @@ namespace FlowSharpToolboxService
 
     public class FlowSharpToolboxService : ServiceBase, IFlowSharpToolboxService
     {
-        public BaseController Controller { get { return toolboxController; } }
-        public List<Type> ShapeList { get { return allShapes; } }
+        public BaseController Controller => toolboxController;
+        public List<Type> ShapeList => allShapes;
 
         protected ToolboxCanvas toolboxCanvas;
         protected ToolboxController toolboxController;
@@ -69,7 +69,9 @@ namespace FlowSharpToolboxService
         {
             // Initialize built-in shapes.
             // TODO: FlowSharpLib.dll can be a dll listed in the plugin list.
-            string fslPath = Path.Combine(Application.ExecutablePath.LeftOfRightmostOf("\\"), "FlowSharpLib.dll");
+            var sTmp = Path.GetDirectoryName(Application.ExecutablePath); // normalize path separators!
+            //string fslPath = Path.Combine(Application.ExecutablePath.LeftOfRightmostOf("\\"), "FlowSharpLib.dll");
+            string fslPath = Path.Combine(sTmp, "FlowSharpLib.dll");
             Assembly assy = Assembly.LoadFrom(fslPath);
             IEnumerable<Type> shapes = assy.GetTypes().Where(t => t.IsSubclassOf(typeof(GraphicElement)) && !t.IsAbstract);
             AddShapes(shapes);
@@ -115,6 +117,5 @@ namespace FlowSharpToolboxService
 
     public class FlowSharpToolboxReceptor : IReceptor
     {
-
     }
 }

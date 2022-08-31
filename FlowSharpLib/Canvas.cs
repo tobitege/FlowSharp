@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -16,23 +16,23 @@ namespace FlowSharpLib
     public class Canvas : Panel
     {
         public IServiceManager ServiceManager { get; set; }
-		public Action<Canvas> PaintComplete { get; set; }
-		public Color BackgroundColor { get { return canvasBrush.Color; } }
-		public BaseController Controller { get; set; }
-		public Bitmap Bitmap { get { return bitmap; } }
+        public Action<Canvas> PaintComplete { get; set; }
+        public Color BackgroundColor => canvasBrush.Color;
+        public BaseController Controller { get; set; }
+        public Bitmap Bitmap => bitmap;
 
-		protected SolidBrush canvasBrush;
+        protected SolidBrush canvasBrush;
         protected Pen gridPen;
         protected Size gridSpacing;
         protected Bitmap bitmap;
         protected Point origin = new Point(0, 0);
         protected Point dragOffset = new Point(0, 0);
 
-		protected Graphics graphics;
-		protected Graphics antiAliasGraphics;
+        protected Graphics graphics;
+        protected Graphics antiAliasGraphics;
 
-        public Graphics Graphics { get { return graphics; } }
-        public Graphics AntiAliasGraphics { get { return antiAliasGraphics; } }
+        public Graphics Graphics => graphics;
+        public Graphics AntiAliasGraphics => antiAliasGraphics;
 
         public Canvas()
         {
@@ -48,24 +48,24 @@ namespace FlowSharpLib
         }
 
         protected override void Dispose(bool disposing)
-		{
-			base.Dispose(disposing);
+        {
+            base.Dispose(disposing);
 
-			if (disposing)
-			{
-				graphics.Dispose();
-				antiAliasGraphics.Dispose();
-				canvasBrush.Dispose();
-				gridPen.Dispose();
-				bitmap.Dispose();
-			}
-		}
+            if (disposing)
+            {
+                graphics.Dispose();
+                antiAliasGraphics.Dispose();
+                canvasBrush.Dispose();
+                gridPen.Dispose();
+                bitmap.Dispose();
+            }
+        }
 
         /// <summary>
         /// Canvas.Initialize requires that the parent be attached to the form!
         /// </summary>
         /// <param name="parent"></param>
-		public void Initialize(Control parent)
+        public void Initialize(Control parent)
         {
             Dock = DockStyle.Fill;
             parent.Controls.Add(this);
@@ -97,10 +97,10 @@ namespace FlowSharpLib
 
         public void CopyToScreen(Rectangle r)
         {
-			Bitmap b = bitmap.Clone(r, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            Bitmap b = bitmap.Clone(r, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             Graphics grScreen = CreateGraphics();
             grScreen.DrawImage(b, r);
-			b.Dispose();
+            b.Dispose();
             grScreen.Dispose();
         }
 
@@ -127,34 +127,34 @@ namespace FlowSharpLib
             return new Rectangle(x, y, width, height);
         }
 
-		public void CreateBitmap(int w, int h)
-		{
+        public void CreateBitmap(int w, int h)
+        {
             bitmap?.Dispose();
             bitmap = new Bitmap(w, h);
-			CreateGraphicsObjects();
-		}
+            CreateGraphicsObjects();
+        }
 
         protected bool NotMinimized()
         {
             return FindForm().WindowState != FormWindowState.Minimized && ClientSize.Width != 0 && ClientSize.Height != 0;
         }
 
-		protected void CreateBitmap()
+        protected void CreateBitmap()
         {
             bitmap?.Dispose();
             bitmap = new Bitmap(ClientSize.Width, ClientSize.Height);
-			CreateGraphicsObjects();
+            CreateGraphicsObjects();
         }
 
-		protected void CreateGraphicsObjects()
-		{
+        protected void CreateGraphicsObjects()
+        {
             graphics?.Dispose();
-			graphics = Graphics.FromImage(bitmap);
-			antiAliasGraphics = Graphics.FromImage(bitmap);
-			antiAliasGraphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-		}
+            graphics = Graphics.FromImage(bitmap);
+            antiAliasGraphics = Graphics.FromImage(bitmap);
+            antiAliasGraphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+        }
 
-		protected void OnPaint(object sender, PaintEventArgs e)
+        protected void OnPaint(object sender, PaintEventArgs e)
         {
             // Controller.OnPaint(e);
             // WinForm controls will cause an OnPaint when they are moved/redrawn, so
@@ -176,7 +176,7 @@ namespace FlowSharpLib
 
         protected virtual void DrawBackground(Graphics gr)
         {
-			gr.Clear(canvasBrush.Color);
+            gr.Clear(canvasBrush.Color);
         }
 
         protected virtual void DrawGrid(Graphics gr)
@@ -186,7 +186,7 @@ namespace FlowSharpLib
         }
 
         public void DrawVerticalGridLines(Graphics gr)
-        { 
+        {
             DisplayRectangle.Height.Step2(gridSpacing.Height,
                 ((y) =>
                     DisplayRectangle.Width.Step2(gridSpacing.Width, (x) =>

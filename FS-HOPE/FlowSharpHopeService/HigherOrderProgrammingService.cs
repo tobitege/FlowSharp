@@ -36,7 +36,7 @@ namespace FlowSharpHopeService
 
     public class HigherOrderProgrammingService : ServiceBase, IHigherOrderProgrammingService
     {
-        public bool RunnerLoaded { get { return runner.Loaded; } }
+        public bool RunnerLoaded => runner.Loaded;
 
         protected ToolStripMenuItem mnuBuild = new ToolStripMenuItem() { Name = "mnuBuild", Text = "Build" };
         protected ToolStripMenuItem mnuRun = new ToolStripMenuItem() { Name = "mnuRun", Text = "Run" };

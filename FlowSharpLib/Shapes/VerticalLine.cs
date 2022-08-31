@@ -11,11 +11,11 @@ namespace FlowSharpLib
     [ToolboxOrder(8)]
     public class VerticalLine : Line
 	{
-		// Fixes background erase issues with dynamic connector with endcaps.
+        // Fixes background erase issues with dynamic connector with endcaps.
         // + 1 needed for arrows, + 2 needed for diamonds.
-		public override Rectangle UpdateRectangle { get { return ZoomRectangle.Grow(anchorWidthHeight + 2 + BorderPen.Width); } }
+        public override Rectangle UpdateRectangle => ZoomRectangle.Grow(anchorWidthHeight + 2 + BorderPen.Width);
 
-		public VerticalLine(Canvas canvas) : base(canvas)
+        public VerticalLine(Canvas canvas) : base(canvas)
 		{
 			HasCornerAnchors = false;
 			HasCenterAnchors = false;

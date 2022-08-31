@@ -18,8 +18,8 @@ namespace FlowSharpLib
         [Category("Element")]
         public string Name { get; set; }
         [Category("Element")]
-		public string ShapeName { get { return element?.GetType().Name; } }
-		[Category("Element")]
+        public string ShapeName => element?.GetType().Name;
+        [Category("Element")]
 		public Rectangle Rectangle { get; set; }
 
 		[Category("Border")]

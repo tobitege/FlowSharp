@@ -20,7 +20,7 @@ namespace FlowSharpCodeServiceInterfaces
 
     public class DrakonCodeTree
     {
-        public bool HasInstructions { get { return instructions.Count > 0; } }
+        public bool HasInstructions => instructions.Count > 0;
         protected List<DrakonInstruction> instructions;
 
         public DrakonCodeTree()

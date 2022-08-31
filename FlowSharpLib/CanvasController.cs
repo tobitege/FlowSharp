@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -15,35 +15,35 @@ using Clifton.Core.ExtensionMethods;
 namespace FlowSharpLib
 {
     // Test Selected property to determine if the element is selected or de-selected.
-	public class ElementEventArgs : EventArgs
-	{
-		public GraphicElement Element { get; set; }
-	}
+    public class ElementEventArgs : EventArgs
+    {
+        public GraphicElement Element { get; set; }
+    }
 
-	public class SnapInfo
-	{
-		public GraphicElement NearElement { get; set; }
-		public ConnectionPoint LineConnectionPoint { get; set; }
+    public class SnapInfo
+    {
+        public GraphicElement NearElement { get; set; }
+        public ConnectionPoint LineConnectionPoint { get; set; }
         public ConnectionPoint NearConnectionPoint { get; set; }
         public int AbsDx { get; set; }
         public int AbsDy { get; set; }
     }
 
-	public class CanvasController : BaseController
-	{
+    public class CanvasController : BaseController
+    {
         // Minimum movement to start selection process.
         public const int SELECTION_MIN = 2;
 
-		protected Point mousePosition;
+        protected Point mousePosition;
         protected Point startSelectionPosition;
         protected Point currentSelectionPosition;
         protected GraphicElement selectionBox;
 
         public CanvasController(Canvas canvas) : base(canvas)
-		{
-			canvas.Controller = this;
-			canvas.PaintComplete = CanvasPaintComplete;
-		}
+        {
+            canvas.Controller = this;
+            canvas.PaintComplete = CanvasPaintComplete;
+        }
 
         public override void DragSelectedElements(Point delta)
         {
@@ -70,7 +70,7 @@ namespace FlowSharpLib
         /// </summary>
         public override void DeselectGroupedElements()
         {
-            List<GraphicElement> elementsToRemove = new List<GraphicElement>();
+            var elementsToRemove = new List<GraphicElement>();
 
             selectedElements.Where(el=>el.Parent != null).ForEach(el =>
             {
@@ -99,26 +99,24 @@ namespace FlowSharpLib
         public override void SelectElement(GraphicElement el)
         {
             // Add to selected elements only once!
-            if (!selectedElements.Contains(el))
-            {
-                var els = EraseOurselvesAndIntersectionsTopToBottom(el);
-                selectedElements.Add(el);
-                el.Select();
-                DrawBottomToTop(els);
-                UpdateScreen(els);
-                ElementSelected.Fire(this, new ElementEventArgs() { Element = el });
-                // Added this to support the NavTo feature, so that the element
-                // can override this behavior (which is empty in the GraphicElement)
-                // to do other things AFTER the rendering of the selected element has taken place.
-                el.ElementSelected();
-            }
+            if (selectedElements.Contains(el)) return;
+            var els = EraseOurselvesAndIntersectionsTopToBottom(el);
+            selectedElements.Add(el);
+            el.Select();
+            DrawBottomToTop(els);
+            UpdateScreen(els);
+            ElementSelected.Fire(this, new ElementEventArgs() { Element = el });
+            // Added this to support the NavTo feature, so that the element
+            // can override this behavior (which is empty in the GraphicElement)
+            // to do other things AFTER the rendering of the selected element has taken place.
+            el.ElementSelected();
         }
 
         // Deselect all other elements.
         public override void SelectOnlyElement(GraphicElement el)
         {
-            List<GraphicElement> intersections = FindAllIntersections(el).ToList();
-            List<GraphicElement> deselectedElements = new List<GraphicElement>();
+            var intersections = FindAllIntersections(el).ToList();
+            var deselectedElements = new List<GraphicElement>();
             selectedElements.Where(e => e != el).ForEach(e =>
             {
                 intersections.AddRange(FindAllIntersections(e));
@@ -142,7 +140,7 @@ namespace FlowSharpLib
 
         public override void DeselectElement(GraphicElement el)
         {
-            IEnumerable<GraphicElement> intersections = FindAllIntersections(el);
+            var intersections = FindAllIntersections(el).ToList();
             EraseTopToBottom(intersections);
             el.Deselect();
             selectedElements.Remove(el);
@@ -152,20 +150,20 @@ namespace FlowSharpLib
 
         public override void SetAnchorCursor(GraphicElement el)
         {
-            ShapeAnchor anchor = el.GetAnchors().FirstOrDefault(a => a.Near(mousePosition));
+            var anchor = el.GetAnchors().FirstOrDefault(a => a.Near(mousePosition));
             canvas.Cursor = anchor == null ? Cursors.Arrow : anchor.Cursor;
         }
 
-		protected bool SelectElement(Point p)
-		{
-			GraphicElement el = elements.FirstOrDefault(e => e.IsSelectable(p));
+        protected bool SelectElement(Point p)
+        {
+            var el = elements.FirstOrDefault(e => e.IsSelectable(p));
 
-			if (el != null)
-			{
-				SelectElement(el);
-			}
+            if (el != null)
+            {
+                SelectElement(el);
+            }
 
-			return el != null;
-		}
-	}
+            return el != null;
+        }
+    }
 }

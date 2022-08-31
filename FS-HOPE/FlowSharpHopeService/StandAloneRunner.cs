@@ -20,7 +20,7 @@ namespace FlowSharpHopeService
     public class StandAloneRunner : IRunner
     {
         public event EventHandler<HopeRunnerAppDomainInterface.ProcessEventArgs> Processing;
-        public bool Loaded { get { return loaded; } }
+        public bool Loaded => loaded;
 
         protected IServiceManager serviceManager;
         protected Process process;
@@ -34,40 +34,40 @@ namespace FlowSharpHopeService
         protected const string CLOSE = "close";
         protected bool loaded = false;
         protected bool externallyStarted = false;
-		protected WebServer webServer;
+        protected WebServer webServer;
 
-		public StandAloneRunner(IServiceManager serviceManager)
+        public StandAloneRunner(IServiceManager serviceManager)
         {
-			this.serviceManager = serviceManager;
-			webServer = new WebServer(new RouteHandlers(this));
-			webServer.Start("localhost", new int[] { 5002 });
-		}
+            this.serviceManager = serviceManager;
+            webServer = new WebServer(new RouteHandlers(this));
+            webServer.Start("localhost", new int[] { 5002 });
+        }
 
-		public void Load(string fullName)
+        public void Load(string fullName)
         {
-			// Testing externally started is a workaround for the fact that once we detect the "Stand Alone Runner" app,
-			// which sets externallyStarted to true, subsequently any child windows that it opens results in AlreadyRunning
-			// returning false, so we have to check if we already know that the runner was externally started.
-			bool alreadyRunning = AlreadyRunning();
+            // Testing externally started is a workaround for the fact that once we detect the "Stand Alone Runner" app,
+            // which sets externallyStarted to true, subsequently any child windows that it opens results in AlreadyRunning
+            // returning false, so we have to check if we already know that the runner was externally started.
+            bool alreadyRunning = AlreadyRunning();
 
-			if (!alreadyRunning && !externallyStarted && !loaded)
-			{
-				IFlowSharpCodeService codeSvc = serviceManager.Get<IFlowSharpCodeService>();
-				process = codeSvc.LaunchProcess(fullName, String.Empty, _ => { });
-				loaded = true;
-			}
-			else if (alreadyRunning)
-			{
-				externallyStarted = true;
-				loaded = false;     // Ensure loaded flag stays false so we don't unload an externally started process.
-			}
-		}
+            if (!alreadyRunning && !externallyStarted && !loaded)
+            {
+                IFlowSharpCodeService codeSvc = serviceManager.Get<IFlowSharpCodeService>();
+                process = codeSvc.LaunchProcess(fullName, String.Empty, _ => { });
+                loaded = true;
+            }
+            else if (alreadyRunning)
+            {
+                externallyStarted = true;
+                loaded = false;     // Ensure loaded flag stays false so we don't unload an externally started process.
+            }
+        }
 
         /// <summary>
         /// An externally started runner will not be unloaded because the loaded flag is still false.
         /// </summary>
         public void Unload()
-		{
+        {
             //IFlowSharpCodeService codeSvc = serviceManager.Get<IFlowSharpCodeService>();
             //codeSvc.TerminateProcess(process);
             if (loaded)
@@ -78,9 +78,9 @@ namespace FlowSharpHopeService
             }
 
             process = null;
-			loaded = false;
-			externallyStarted = false;
-		}
+            loaded = false;
+            externallyStarted = false;
+        }
 
         public void InstantiateReceptor(string name)
         {
@@ -92,8 +92,8 @@ namespace FlowSharpHopeService
         public List<ReceptorDescription> DescribeReceptor(string typeName)
         {
             IFlowSharpRestService restSvc = serviceManager.Get<IFlowSharpRestService>();
-			// TODO: Fix the hardcoded "App." -- figure out some way of getting the namespace?
-			string json = restSvc.HttpGet(url + DESCRIBE_RECEPTOR, "receptorName=" + "App." + typeName);
+            // TODO: Fix the hardcoded "App." -- figure out some way of getting the namespace?
+            string json = restSvc.HttpGet(url + DESCRIBE_RECEPTOR, "receptorName=" + "App." + typeName);
             var ret = JsonConvert.DeserializeObject<List<ReceptorDescription>>(json);
 
             return ret;
@@ -148,10 +148,10 @@ namespace FlowSharpHopeService
             }
         }
 
-		public void ProcessMessage(HopeRunnerAppDomainInterface.ProcessEventArgs stMsg)
-		{
-			Processing.Fire(this, stMsg);
-		}
+        public void ProcessMessage(HopeRunnerAppDomainInterface.ProcessEventArgs stMsg)
+        {
+            Processing.Fire(this, stMsg);
+        }
 
         protected bool AlreadyRunning()
         {

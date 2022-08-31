@@ -15,7 +15,7 @@ namespace FlowSharpLib
     [ToolboxOrder(9)]
     public class DiagonalConnector : DynamicConnector
     {
-        public override Rectangle UpdateRectangle { get { return ZoomRectangle.Grow(anchorWidthHeight + 1 + BorderPen.Width); } }
+        public override Rectangle UpdateRectangle => ZoomRectangle.Grow(anchorWidthHeight + 1 + BorderPen.Width);
 
         public DiagonalConnector(Canvas canvas) : base(canvas)
         {

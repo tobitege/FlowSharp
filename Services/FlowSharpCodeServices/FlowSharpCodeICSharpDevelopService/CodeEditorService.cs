@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Forms.Integration;
 using System.Windows.Media;
@@ -27,7 +28,7 @@ namespace FlowSharpCodeICSharpDevelopService
 
     public class CsCodeEditorService : ServiceBase, IFlowSharpCodeEditorService
     {
-        public event EventHandler<TextChangedEventArgs> TextChanged;
+        public event EventHandler<FlowSharpCodeServiceInterfaces.TextChangedEventArgs> TextChanged;
         public string Filename { get; set; }
 
         protected CodeTextEditor editor;
@@ -69,10 +70,10 @@ namespace FlowSharpCodeICSharpDevelopService
         /// <summary>
         /// We have to preserve the last caret position on lost focus because once the focus has been
         /// lost, for some reason the CaretOffset returns to 0!  This would then result in FlowSharpCodeService.cs
-        /// always getting a 0 for the last known caret when another shape is selected, and we want to 
+        /// always getting a 0 for the last known caret when another shape is selected, and we want to
         /// be able to restore the last position when we re-select the element with this code.
         /// </summary>
-        private void OnLostFocus(object sender, System.Windows.RoutedEventArgs e)
+        private void OnLostFocus(object sender, RoutedEventArgs e)
         {
             lastCaretPosition = editor.CaretOffset;
         }
@@ -116,7 +117,7 @@ namespace FlowSharpCodeICSharpDevelopService
         protected void OnTextChanged(object sender, EventArgs e)
         {
             // TODO: Fix this hardcoded language name and generalize with how editors are handled.
-            TextChanged.Fire(this, new TextChangedEventArgs() { Language = "C#", Text = editor.Text });
+            TextChanged.Fire(this, new FlowSharpCodeServiceInterfaces.TextChangedEventArgs() { Language = "C#", Text = editor.Text });
         }
 
         protected void Closed()

@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -46,7 +46,7 @@ namespace HopeShapes
         protected Point[] path;
         protected bool enabled;
 
-        public Color EnabledColor { get { return enabledColor; } }
+        public Color EnabledColor => enabledColor;
 
         protected Color enabledColor = Color.LightGreen;
         protected Color disabledColor = Color.FromArgb(255, 80, 80);
@@ -127,9 +127,8 @@ namespace HopeShapes
         {
             base.Deserialize(epb);
             AgentName = Json["agentName"];
-            string strEnabled;
 
-            if (Json.TryGetValue("agentEnabled", out strEnabled))
+            if (Json.TryGetValue("agentEnabled", out var _))
             {
                 // use field, not property, so property setter doesn't get triggered before the
                 // element is drawn, because the path is null at this point.
@@ -150,7 +149,7 @@ namespace HopeShapes
     [ToolboxOrder(10)]
     public class ToolboxAssemblyAgentReceptorShape : AgentReceptorShape
     {
-        public override Rectangle ToolboxDisplayRectangle { get { return new Rectangle(0, 0, 35, 25); } }
+        public override Rectangle ToolboxDisplayRectangle => new Rectangle(0, 0, 35, 25);
 
         public ToolboxAssemblyAgentReceptorShape(Canvas canvas) : base(canvas)
         {

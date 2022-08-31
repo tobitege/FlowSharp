@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -28,7 +28,7 @@ namespace FlowSharpLib
         public Size ExpandedSize { get; protected set; }
 
         public GroupBox(Canvas canvas) : base(canvas)
-		{
+        {
             FillBrush.Color = Color.FromArgb(240, 240, 240);
             State = CollapseState.Expanded;
         }
@@ -64,18 +64,15 @@ namespace FlowSharpLib
         public override void Deserialize(ElementPropertyBag epb)
         {
             base.Deserialize(epb);
-            string state;
 
-            if (Json.TryGetValue("State", out state))
+            if (Json.TryGetValue("State", out var state))
             {
                 State = (CollapseState)Enum.Parse(typeof(CollapseState), state);
             }
 
-            string size;
-
-            if (Json.TryGetValue("ExpandedSize", out size))
+            if (Json.TryGetValue("ExpandedSize", out var size))
             {
-                TypeConverter tc = TypeDescriptor.GetConverter(typeof(Size));
+                var tc = TypeDescriptor.GetConverter(typeof(Size));
                 ExpandedSize = (Size)tc.ConvertFromString(size);
             }
         }

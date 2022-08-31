@@ -1,9 +1,10 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
 */
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -111,7 +112,7 @@ namespace FlowSharpToolboxService
             {
                 Point delta = args.Location.Delta(mouseDownPosition);
 
-                if ((delta.X.Abs() > MIN_DRAG) || (delta.Y.Abs() > MIN_DRAG))
+                if ((Math.Abs(delta.X) > MIN_DRAG) || (Math.Abs(delta.Y) > MIN_DRAG))
                 {
                     dragging = true;
                     setup = true;

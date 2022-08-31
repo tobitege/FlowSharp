@@ -50,11 +50,11 @@ namespace FlowSharpLib
 
         public event EventHandler<EventArgs> AfterAction;
         // public virtual void AfterAction(bool @do) { }
-        public virtual bool HasChanges { get { return _undoStack.Count != 0; } }
-        public virtual int UndoStackSize { get { return _undoStack.Count; } }
+        public virtual bool HasChanges => _undoStack.Count != 0;
+        public virtual int UndoStackSize => _undoStack.Count;
 
-        public bool CanUndo { get { return _undoStack.Count > 0; } }
-        public bool CanRedo { get { return _redoStack.Count > 0; } }
+        public bool CanUndo => _undoStack.Count > 0;
+        public bool CanRedo => _redoStack.Count > 0;
 
         public ActionState Performing { get; protected set; }
 
@@ -73,8 +73,8 @@ namespace FlowSharpLib
                         // be false on all actions except the final one.
             bool _finishGroup;
             string _name;
-            public string Name { get { return _name; } }
-            public bool FinishGroup { get { return _finishGroup; } }
+            public string Name => _name;
+            public bool FinishGroup => _finishGroup;
             public Command Do() { Debug.Assert(!_done); _done = true; _action(true, false); return this; }
             public Command Undo() { Debug.Assert(_done); _done = false; _action(false, false); return this; }
             // cliftonm - I added the Redo call to support handling redoing property changes.

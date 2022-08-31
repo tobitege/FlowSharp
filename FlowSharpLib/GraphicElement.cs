@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -16,24 +16,24 @@ using Clifton.Core.ExtensionMethods;
 
 namespace FlowSharpLib
 {
-	public static class GraphicElementHelpers
-	{
-		public static void Erase(this Bitmap background, Canvas canvas, Rectangle r)
-		{
-			canvas.DrawImage(background, r);
-			background.Dispose();
-		}
-	}
+    public static class GraphicElementHelpers
+    {
+        public static void Erase(this Bitmap background, Canvas canvas, Rectangle r)
+        {
+            canvas.DrawImage(background, r);
+            background.Dispose();
+        }
+    }
 
-	public class PropertiesChangedEventArgs : EventArgs
-	{
-		public GraphicElement GraphicElement { get; protected set; }
+    public class PropertiesChangedEventArgs : EventArgs
+    {
+        public GraphicElement GraphicElement { get; protected set; }
 
-		public PropertiesChangedEventArgs(GraphicElement el)
-		{
-			GraphicElement = el;
-		}
-	}
+        public PropertiesChangedEventArgs(GraphicElement el)
+        {
+            GraphicElement = el;
+        }
+    }
 
     public class GraphicElement : IDisposable
     {
@@ -46,12 +46,12 @@ namespace FlowSharpLib
         public bool ShowConnectionPoints { get; set; }
         // public bool HideConnectionPoints { get; set; }
         public bool ShowAnchors { get; set; }
-        public Canvas Canvas { get { return canvas; } }
+        public Canvas Canvas => canvas;
 
         // This is probably a ridiculous optimization -- should just grow pen width + connection point size / 2
         // public virtual Rectangle UpdateRectangle { get { return DisplayRectangle.Grow(BorderPen.Width + ((ShowConnectionPoints || HideConnectionPoints) ? 3 : 0)); } }
-        public virtual Rectangle UpdateRectangle { get { return ZoomRectangle.Grow(BorderPen.Width + BaseController.CONNECTION_POINT_SIZE); } }
-        public virtual bool IsConnector { get { return false; } }
+        public virtual Rectangle UpdateRectangle => ZoomRectangle.Grow(BorderPen.Width + BaseController.CONNECTION_POINT_SIZE);
+        public virtual bool IsConnector => false;
         public List<Connection> Connections = new List<Connection>();
         public List<GraphicElement> GroupChildren = new List<GraphicElement>();
         public GraphicElement Parent { get; set; }
@@ -64,7 +64,7 @@ namespace FlowSharpLib
         protected Rectangle displayRectangle;
         public Rectangle DisplayRectangle
         {
-            get { return displayRectangle; }
+            get => displayRectangle;
             set
             {
                 // Ew, side effect! :)
@@ -75,17 +75,28 @@ namespace FlowSharpLib
 
         public Rectangle ZoomRectangle { get; protected set; }
 
-        public virtual Rectangle ToolboxDisplayRectangle { get { return new Rectangle(0, 0, 25, 25); } }
+        public virtual Rectangle ToolboxDisplayRectangle => new Rectangle(0, 0, 25, 25);
         public Pen BorderPen { get; set; }
         public SolidBrush FillBrush { get; set; }
 
         // Helpers for reflection undo/redo update
-        public Color BorderPenColor { get { return BorderPen.Color; } set { BorderPen.Color = value; } }
-        public int BorderPenWidth { get { return (int)BorderPen.Width; } set { BorderPen.Width = value; } }
-        public Color FillColor { get { return FillBrush.Color; } set { FillBrush.Color = value; } }
+        public Color BorderPenColor
+        {
+            get => BorderPen.Color;
+            set => BorderPen.Color = value;
+        }
+        public int BorderPenWidth
+        {
+            get => (int)BorderPen.Width;
+            set => BorderPen.Width = value;
+        }
+        public Color FillColor {
+            get => FillBrush.Color;
+            set => FillBrush.Color = value;
+        }
 
         public bool IsBookmarked { get; protected set; }
-        public string NavigateName { get { return String.IsNullOrEmpty(Name) ? GetType().Name + " " + Text : Name; } }
+        public string NavigateName => string.IsNullOrEmpty(Name) ? GetType().Name + " " + Text : Name;
 
         public string Name { get; set; }
         public string Text { get; set; }
@@ -143,8 +154,10 @@ namespace FlowSharpLib
             HasTopBottomConnections = false;
             HasCenterConnection = false;
             FillBrush = new SolidBrush(Color.White);
-            BorderPen = new Pen(Color.Black);
-            BorderPen.Width = 1;
+            BorderPen = new Pen(Color.Black)
+            {
+                Width = 1
+            };
             TextFont = new Font(FontFamily.GenericSansSerif, 10);
             TextColor = Color.Black;
             TextAlign = ContentAlignment.MiddleCenter;
@@ -253,7 +266,7 @@ namespace FlowSharpLib
         /// </summary>
         public virtual GraphicElement CloneDefault(Canvas canvas, Point offset)
         {
-            GraphicElement el = (GraphicElement)Activator.CreateInstance(GetType(), new object[] { canvas });
+            var el = (GraphicElement)Activator.CreateInstance(GetType(), new object[] { canvas });
             el.DisplayRectangle = el.DefaultRectangle();
             el.Move(offset);
             el.UpdateProperties();
@@ -264,9 +277,11 @@ namespace FlowSharpLib
 
         public virtual TextBox CreateTextBox(Point mousePosition)
         {
-            TextBox tb = new TextBox();
-            tb.Multiline = Multiline;
-            tb.WordWrap = false;
+            TextBox tb = new TextBox
+            {
+                Multiline = Multiline,
+                WordWrap = false
+            };
 
             if (Multiline)
             {
@@ -510,38 +525,38 @@ namespace FlowSharpLib
         }
 
         public virtual List<ShapeAnchor> GetAnchors()
-		{
-			List<ShapeAnchor> anchors = new List<ShapeAnchor>();
-			Rectangle r;
+        {
+            List<ShapeAnchor> anchors = new List<ShapeAnchor>();
+            Rectangle r;
             Size anchorSize = new Size(anchorWidthHeight, anchorWidthHeight);
 
-			if (HasCornerAnchors)
-			{
-				r = new Rectangle(ZoomRectangle.TopLeftCorner(), anchorSize);
-				anchors.Add(new ShapeAnchor(GripType.TopLeft, r, Cursors.SizeNWSE));
-				r = new Rectangle(ZoomRectangle.TopRightCorner().Move(-anchorWidthHeight, 0), anchorSize);
-				anchors.Add(new ShapeAnchor(GripType.TopRight, r, Cursors.SizeNESW));
-				r = new Rectangle(ZoomRectangle.BottomLeftCorner().Move(0, -anchorWidthHeight), anchorSize);
-				anchors.Add(new ShapeAnchor(GripType.BottomLeft, r, Cursors.SizeNESW));
-				r = new Rectangle(ZoomRectangle.BottomRightCorner().Move(-anchorWidthHeight, -anchorWidthHeight), anchorSize);
-				anchors.Add(new ShapeAnchor(GripType.BottomRight, r, Cursors.SizeNWSE));
-			}
+            if (HasCornerAnchors)
+            {
+                r = new Rectangle(ZoomRectangle.TopLeftCorner(), anchorSize);
+                anchors.Add(new ShapeAnchor(GripType.TopLeft, r, Cursors.SizeNWSE));
+                r = new Rectangle(ZoomRectangle.TopRightCorner().Move(-anchorWidthHeight, 0), anchorSize);
+                anchors.Add(new ShapeAnchor(GripType.TopRight, r, Cursors.SizeNESW));
+                r = new Rectangle(ZoomRectangle.BottomLeftCorner().Move(0, -anchorWidthHeight), anchorSize);
+                anchors.Add(new ShapeAnchor(GripType.BottomLeft, r, Cursors.SizeNESW));
+                r = new Rectangle(ZoomRectangle.BottomRightCorner().Move(-anchorWidthHeight, -anchorWidthHeight), anchorSize);
+                anchors.Add(new ShapeAnchor(GripType.BottomRight, r, Cursors.SizeNWSE));
+            }
 
-			if (HasCenterAnchors || HasLeftRightAnchors)
-			{
-				r = new Rectangle(ZoomRectangle.LeftMiddle().Move(0, -anchorWidthHeight / 2), anchorSize);
-				anchors.Add(new ShapeAnchor(GripType.LeftMiddle, r, Cursors.SizeWE));
-				r = new Rectangle(ZoomRectangle.RightMiddle().Move(-anchorWidthHeight, -anchorWidthHeight / 2), anchorSize);
-				anchors.Add(new ShapeAnchor(GripType.RightMiddle, r, Cursors.SizeWE));
-			}
+            if (HasCenterAnchors || HasLeftRightAnchors)
+            {
+                r = new Rectangle(ZoomRectangle.LeftMiddle().Move(0, -anchorWidthHeight / 2), anchorSize);
+                anchors.Add(new ShapeAnchor(GripType.LeftMiddle, r, Cursors.SizeWE));
+                r = new Rectangle(ZoomRectangle.RightMiddle().Move(-anchorWidthHeight, -anchorWidthHeight / 2), anchorSize);
+                anchors.Add(new ShapeAnchor(GripType.RightMiddle, r, Cursors.SizeWE));
+            }
 
-			if (HasCenterAnchors || HasTopBottomAnchors)
-			{ 
-				r = new Rectangle(ZoomRectangle.TopMiddle().Move(-anchorWidthHeight / 2, 0), anchorSize);
-				anchors.Add(new ShapeAnchor(GripType.TopMiddle, r, Cursors.SizeNS));
-				r = new Rectangle(ZoomRectangle.BottomMiddle().Move(-anchorWidthHeight / 2, -anchorWidthHeight), anchorSize);
-				anchors.Add(new ShapeAnchor(GripType.BottomMiddle, r, Cursors.SizeNS));
-			}
+            if (HasCenterAnchors || HasTopBottomAnchors)
+            {
+                r = new Rectangle(ZoomRectangle.TopMiddle().Move(-anchorWidthHeight / 2, 0), anchorSize);
+                anchors.Add(new ShapeAnchor(GripType.TopMiddle, r, Cursors.SizeNS));
+                r = new Rectangle(ZoomRectangle.BottomMiddle().Move(-anchorWidthHeight / 2, -anchorWidthHeight), anchorSize);
+                anchors.Add(new ShapeAnchor(GripType.BottomMiddle, r, Cursors.SizeNS));
+            }
 
             if (HasCenterAnchor)
             {
@@ -550,58 +565,58 @@ namespace FlowSharpLib
             }
 
             return anchors;
-		}
+        }
 
-		public virtual List<ConnectionPoint> GetConnectionPoints()
-		{
-			List<ConnectionPoint> connectionPoints = new List<ConnectionPoint>();
+        public virtual List<ConnectionPoint> GetConnectionPoints()
+        {
+            List<ConnectionPoint> connectionPoints = new List<ConnectionPoint>();
 
-			if (HasCornerConnections)
-			{
-				connectionPoints.Add(new ConnectionPoint(GripType.TopLeft, DisplayRectangle.TopLeftCorner()));
-				connectionPoints.Add(new ConnectionPoint(GripType.TopRight, DisplayRectangle.TopRightCorner()));
-				connectionPoints.Add(new ConnectionPoint(GripType.BottomLeft, DisplayRectangle.BottomLeftCorner()));
-				connectionPoints.Add(new ConnectionPoint(GripType.BottomRight, DisplayRectangle.BottomRightCorner()));
-			}
+            if (HasCornerConnections)
+            {
+                connectionPoints.Add(new ConnectionPoint(GripType.TopLeft, DisplayRectangle.TopLeftCorner()));
+                connectionPoints.Add(new ConnectionPoint(GripType.TopRight, DisplayRectangle.TopRightCorner()));
+                connectionPoints.Add(new ConnectionPoint(GripType.BottomLeft, DisplayRectangle.BottomLeftCorner()));
+                connectionPoints.Add(new ConnectionPoint(GripType.BottomRight, DisplayRectangle.BottomRightCorner()));
+            }
 
-			if (HasCenterConnections)
-			{
-				connectionPoints.Add(new ConnectionPoint(GripType.LeftMiddle, DisplayRectangle.LeftMiddle()));
-				connectionPoints.Add(new ConnectionPoint(GripType.RightMiddle, DisplayRectangle.RightMiddle()));
-				connectionPoints.Add(new ConnectionPoint(GripType.TopMiddle, DisplayRectangle.TopMiddle()));
-				connectionPoints.Add(new ConnectionPoint(GripType.BottomMiddle, DisplayRectangle.BottomMiddle()));
-			}
+            if (HasCenterConnections)
+            {
+                connectionPoints.Add(new ConnectionPoint(GripType.LeftMiddle, DisplayRectangle.LeftMiddle()));
+                connectionPoints.Add(new ConnectionPoint(GripType.RightMiddle, DisplayRectangle.RightMiddle()));
+                connectionPoints.Add(new ConnectionPoint(GripType.TopMiddle, DisplayRectangle.TopMiddle()));
+                connectionPoints.Add(new ConnectionPoint(GripType.BottomMiddle, DisplayRectangle.BottomMiddle()));
+            }
 
-			if (HasLeftRightConnections)
-			{
-				connectionPoints.Add(new ConnectionPoint(GripType.Start, DisplayRectangle.LeftMiddle()));
-				connectionPoints.Add(new ConnectionPoint(GripType.End, DisplayRectangle.RightMiddle()));
-			}
+            if (HasLeftRightConnections)
+            {
+                connectionPoints.Add(new ConnectionPoint(GripType.Start, DisplayRectangle.LeftMiddle()));
+                connectionPoints.Add(new ConnectionPoint(GripType.End, DisplayRectangle.RightMiddle()));
+            }
 
-			if (HasTopBottomConnections)
-			{
-				connectionPoints.Add(new ConnectionPoint(GripType.Start, DisplayRectangle.TopMiddle()));
-				connectionPoints.Add(new ConnectionPoint(GripType.End, DisplayRectangle.BottomMiddle()));
-			}
+            if (HasTopBottomConnections)
+            {
+                connectionPoints.Add(new ConnectionPoint(GripType.Start, DisplayRectangle.TopMiddle()));
+                connectionPoints.Add(new ConnectionPoint(GripType.End, DisplayRectangle.BottomMiddle()));
+            }
 
             if (HasCenterConnection)
             {
                 connectionPoints.Add(new ConnectionPoint(GripType.Center, DisplayRectangle.Center()));
             }
 
-			return connectionPoints;
-		}
+            return connectionPoints;
+        }
 
         /// <summary>
         /// Stub, so that certain shapes (like shapes that embed controls) can hide their sub-components.
         /// </summary>
         public virtual void Hide() { }
 
-		public virtual void Draw(Graphics gr, bool showSelection = true)
+        public virtual void Draw(Graphics gr, bool showSelection = true)
         {
             if (Selected && showSelection)      // show selection is overriden when we save the image as a PNG.
             {
-				DrawSelection(gr);
+                DrawSelection(gr);
             }
 
             if (Tagged && showSelection)
@@ -609,23 +624,23 @@ namespace FlowSharpLib
                 DrawTag(gr);
             }
 
-			// For illustration / debugging of what's being updated.
-			// DrawUpdateRectangle(gr);
+            // For illustration / debugging of what's being updated.
+            // DrawUpdateRectangle(gr);
         }
 
         public void UpdateZoomRectangle()
         {
-			// TODO: canvas controller is null when saving as PNG!
-			if (canvas.Controller != null)
-			{
-				double dz = canvas.Controller.Zoom / 100.0;
+            // TODO: canvas controller is null when saving as PNG!
+            if (canvas.Controller != null)
+            {
+                double dz = canvas.Controller.Zoom / 100.0;
 
-				ZoomRectangle = new Rectangle(
-					(int)(DisplayRectangle.X * dz),
-					(int)(DisplayRectangle.Y * dz),
-					(int)(DisplayRectangle.Width * dz),
-					(int)(DisplayRectangle.Height * dz));
-			}
+                ZoomRectangle = new Rectangle(
+                    (int)(DisplayRectangle.X * dz),
+                    (int)(DisplayRectangle.Y * dz),
+                    (int)(DisplayRectangle.Width * dz),
+                    (int)(DisplayRectangle.Height * dz));
+            }
         }
 
         protected void InternalUpdateScreen(int ix, int iy)
@@ -670,18 +685,18 @@ namespace FlowSharpLib
         }
 
         protected virtual void DrawSelection(Graphics gr)
-		{
-			if (BorderPen.Color.ToArgb() == selectionPen.Color.ToArgb())
-			{
-				Rectangle r = ZoomRectangle;
-				gr.DrawRectangle(altSelectionPen, r);
-			}
-			else
-			{
-				Rectangle r = ZoomRectangle;
-				gr.DrawRectangle(selectionPen, r);
-			}
-		}
+        {
+            if (BorderPen.Color.ToArgb() == selectionPen.Color.ToArgb())
+            {
+                Rectangle r = ZoomRectangle;
+                gr.DrawRectangle(altSelectionPen, r);
+            }
+            else
+            {
+                Rectangle r = ZoomRectangle;
+                gr.DrawRectangle(selectionPen, r);
+            }
+        }
 
         protected virtual void DrawTag(Graphics gr)
         {
@@ -699,39 +714,39 @@ namespace FlowSharpLib
 
         // For illustration / debugging of what's being updated.
         protected virtual void DrawUpdateRectangle(Graphics gr)
-		{
-			Pen pen = new Pen(Color.Gray);
-			Rectangle r = UpdateRectangle.Grow(-1);
-			gr.DrawRectangle(pen, r);
-			pen.Dispose();
-		}
+        {
+            Pen pen = new Pen(Color.Gray);
+            Rectangle r = UpdateRectangle.Grow(-1);
+            gr.DrawRectangle(pen, r);
+            pen.Dispose();
+        }
 
-		protected virtual void DrawAnchors(Graphics gr)
-		{
-			GetAnchors().ForEach((a =>
-			{
-				gr.DrawRectangle(anchorPen, a.Rectangle);
-				gr.FillRectangle(anchorBrush, a.Rectangle.Grow(-1));
-			}));
-		}
+        protected virtual void DrawAnchors(Graphics gr)
+        {
+            GetAnchors().ForEach((a =>
+            {
+                gr.DrawRectangle(anchorPen, a.Rectangle);
+                gr.FillRectangle(anchorBrush, a.Rectangle.Grow(-1));
+            }));
+        }
 
-		protected virtual void DrawConnectionPoints(Graphics gr)
-		{
-			GetConnectionPoints().ForEach(cp =>
-			{
+        protected virtual void DrawConnectionPoints(Graphics gr)
+        {
+            GetConnectionPoints().ForEach(cp =>
+            {
                 // We change where the connection point renders, not the unzoomed connection point.
                 var cpz = AdjustForZoom(cp);
-				gr.FillRectangle(anchorBrush, new Rectangle(cpz.Point.X - BaseController.CONNECTION_POINT_SIZE, cpz.Point.Y - BaseController.CONNECTION_POINT_SIZE, BaseController.CONNECTION_POINT_SIZE*2, BaseController.CONNECTION_POINT_SIZE*2));
+                gr.FillRectangle(anchorBrush, new Rectangle(cpz.Point.X - BaseController.CONNECTION_POINT_SIZE, cpz.Point.Y - BaseController.CONNECTION_POINT_SIZE, BaseController.CONNECTION_POINT_SIZE*2, BaseController.CONNECTION_POINT_SIZE*2));
                 gr.DrawLine(connectionPointPen, cpz.Point.X - BaseController.CONNECTION_POINT_SIZE, cpz.Point.Y - BaseController.CONNECTION_POINT_SIZE, cpz.Point.X + BaseController.CONNECTION_POINT_SIZE, cpz.Point.Y + BaseController.CONNECTION_POINT_SIZE);
                 gr.DrawLine(connectionPointPen, cpz.Point.X + BaseController.CONNECTION_POINT_SIZE, cpz.Point.Y - BaseController.CONNECTION_POINT_SIZE, cpz.Point.X - BaseController.CONNECTION_POINT_SIZE, cpz.Point.Y + BaseController.CONNECTION_POINT_SIZE);
             });
-		}
+        }
 
         protected ConnectionPoint AdjustForZoom(ConnectionPoint cp)
         {
             ConnectionPoint ret = cp;
 
-			// TODO: controller is null when saving as PNG!
+            // TODO: controller is null when saving as PNG!
             if (canvas.Controller != null && canvas.Controller.Zoom != 100)
             {
                 ret = new ConnectionPoint(cp.Type, AdjustForZoom(cp.Point));
@@ -744,7 +759,7 @@ namespace FlowSharpLib
         {
             Point ret = p;
 
-			// TODO: canvas.Controller is null when saving image as PNG!
+            // TODO: canvas.Controller is null when saving image as PNG!
             if (canvas.Controller != null && canvas.Controller.Zoom != 100)
             {
                 ret = new Point(p.X * canvas.Controller.Zoom / 100, p.Y * canvas.Controller.Zoom / 100);
@@ -770,14 +785,14 @@ namespace FlowSharpLib
 
         protected virtual void DrawText(Graphics gr, string text, Font textFont, Color textColor, ContentAlignment textAlign)
         {
-			SizeF size = gr.MeasureString(text, textFont);
-			Brush brush = new SolidBrush(textColor);
+            SizeF size = gr.MeasureString(text, textFont);
+            Brush brush = new SolidBrush(textColor);
             Point textpos;
             Font font = textFont;
             bool disposeFont = false;
 
             // TODO: Should we just create the font and dispose it every time we draw?
-			// TODO: canvas.Controller is null when we save the drawing as a PNG!
+            // TODO: canvas.Controller is null when we save the drawing as a PNG!
             if (canvas.Controller != null && canvas.Controller.Zoom != 100)
             {
                 font = new Font(textFont.FontFamily, textFont.Size * canvas.Controller.Zoom / 100, textFont.Style);
@@ -894,6 +909,6 @@ namespace FlowSharpLib
             {
                 font.Dispose();
             }
-		}
-	}
+        }
+    }
 }

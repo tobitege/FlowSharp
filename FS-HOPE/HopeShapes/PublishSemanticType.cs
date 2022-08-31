@@ -198,10 +198,7 @@ namespace HopeShapes
                 _name = name;
             }
 
-            public override Type PropertyType
-            {
-                get { return _expando[_name]?.GetType() ?? typeof(string); }
-            }
+            public override Type PropertyType => _expando[_name]?.GetType() ?? typeof(string);
 
             public override void SetValue(object component, object value)
             {
@@ -213,19 +210,11 @@ namespace HopeShapes
                 return _expando[_name];
             }
 
-            public override bool IsReadOnly
-            {
-                get
-                {
+            public override bool IsReadOnly =>
                     // You might be able to implement some better logic here
-                    return false;
-                }
-            }
+                    false;
 
-            public override Type ComponentType
-            {
-                get { return null; }
-            }
+            public override Type ComponentType => null;
 
             public override bool CanResetValue(object component)
             {
@@ -241,15 +230,9 @@ namespace HopeShapes
                 return false;
             }
 
-            public override string Category
-            {
-                get { return string.Empty; }
-            }
+            public override string Category => string.Empty;
 
-            public override string Description
-            {
-                get { return string.Empty; }
-            }
+            public override string Description => string.Empty;
         }
     }
     public class ExpandoObjectTypeDescriptionProvider : TypeDescriptionProvider

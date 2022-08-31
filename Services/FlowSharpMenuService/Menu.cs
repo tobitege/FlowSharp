@@ -5,7 +5,7 @@ namespace FlowSharpMenuService
 {
     public partial class MenuController
     {
-        public MenuStrip MenuStrip { get { return menuStrip; } }
+        public MenuStrip MenuStrip => menuStrip;
 
         private MenuStrip menuStrip;
         private ToolStripMenuItem fileToolStripMenuItem;
