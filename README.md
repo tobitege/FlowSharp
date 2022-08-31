@@ -1,9 +1,11 @@
+tobitege, 2022-08-31
 - Fixed crash when loading an xml file with hard-coded path that
   doesn't exist and it will try to load the layout file from the same folder
 - Fixed crash when changing Font and Rectangle properties in the property inspector
 - included Clifton.Core packages to get stuff compiled
 - Removed outdated docking theme assembly
 - Enabled NuGet packages for Json and docking libraries
+- Compile roughly in order: Clifton.Core, Clifton.xxx, Services, FlowSharpxxx, FS-HOPE projects.
 
 # FlowSharp
 
