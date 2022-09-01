@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -42,7 +42,8 @@ namespace FlowSharpRestService
         {
             Console.Write(context.Request.HttpMethod.ToUpper() + " ");
             Console.WriteLine(context.Request.RawUrl.LeftOf("?").RightOf("/").ToLower());
-            KeyValuePair<Route, Action<HttpListenerContext, string>> route = routes.SingleOrDefault(kvp => kvp.Key.Verb == context.Request.HttpMethod.ToUpper() && kvp.Key.Path == context.Request.RawUrl.LeftOf("?").RightOf("/").ToLower());
+            var route = routes.SingleOrDefault(kvp => kvp.Key.Verb == context.Request.HttpMethod.ToUpper() &&
+                                                      kvp.Key.Path == context.Request.RawUrl.LeftOf("?").RightOf("/").ToLower());
             route.Value?.Invoke(context, data);
         }
 
@@ -53,50 +54,45 @@ namespace FlowSharpRestService
 
         protected void PublishSemanticMessage(HttpListenerContext context, string data)
         {
-            string resp = OK;
-            NameValueCollection nvc = context.Request.QueryString;
-            string stname = nvc["cmd"];
-            Type st = Type.GetType("FlowSharpServiceInterfaces." + stname + ",FlowSharpServiceInterfaces");
-            ISemanticType t = Activator.CreateInstance(st) as ISemanticType;
+            var resp = OK;
+            var nvc = context.Request.QueryString;
+            var stname = nvc["cmd"];
+            var st = Type.GetType("FlowSharpServiceInterfaces." + stname + ",FlowSharpServiceInterfaces");
+            var t = Activator.CreateInstance(st) as ISemanticType;
             PopulateType(t, nvc);
             // Synchronous, because however we're processing the command doesn't know (or need to know) that it's
             // coming from an HTTP GET, but we don't want to issue the response until the action has been performed.
             serviceManager.Get<ISemanticProcessor>().ProcessInstance<FlowSharpMembrane>(t, true);
-
-            if (t is IHasResponse)
+            if (t is IHasResponse hr)
             {
-                resp = ((IHasResponse)t).SerializeResponse();
+                resp = hr.SerializeResponse();
             }
-
             Response(context, resp, resp == OK ? "text/plain" : "application/json");
         }
 
         protected void PopulateType(ISemanticType packet, NameValueCollection nvc)
         {
-            foreach (string key in nvc.AllKeys)
+            foreach (var key in nvc.AllKeys)
             {
-                PropertyInfo pi = packet.GetType().GetProperty(key, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                var pi = packet.GetType().GetProperty(key, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                if (pi == null) continue;
+                object valOfType = null;
+                var ptype = pi.PropertyType;
 
-                if (pi != null)
+                if (ptype.IsGenericType)
                 {
-                    object valOfType = null;
-                    Type ptype = pi.PropertyType;
-
-                    if (ptype.IsGenericType)
-                    {
-                        // We assume it's a nullable type
-                        ptype = ptype.GenericTypeArguments[0];
-                    }
-
-                    valOfType = Convert.ChangeType(Uri.UnescapeDataString(nvc[key].Replace('+', ' ')), ptype);
-                    pi.SetValue(packet, valOfType);
+                    // We assume it's a nullable type
+                    ptype = ptype.GenericTypeArguments[0];
                 }
+
+                valOfType = Convert.ChangeType(Uri.UnescapeDataString(nvc[key].Replace('+', ' ')), ptype);
+                pi.SetValue(packet, valOfType);
             }
         }
 
         public void Response(HttpListenerContext context, string resp, string contentType)
         {
-            byte[] utf8data = Encoding.UTF8.GetBytes(resp);
+            var utf8data = Encoding.UTF8.GetBytes(resp);
             context.Response.ContentType = contentType;
             context.Response.ContentEncoding = Encoding.UTF8;
             context.Response.ContentLength64 = utf8data.Length;

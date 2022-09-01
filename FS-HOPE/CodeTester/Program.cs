@@ -113,7 +113,6 @@ namespace CodeTester
         public int J { get; set; }
     }
 
-
     public class ST_Address : ISemanticType
     {
         public string Address1 { get; set; }
@@ -162,8 +161,6 @@ namespace CodeTester
         public string State { get; set; }
     }
 
-
-
     public class PropertyContainer
     {
         public List<PropertyData> Types { get; set; }
@@ -191,16 +188,16 @@ namespace CodeTester
     {
         public static string Get(string uri)
         {
-            WebClient client = new WebClient();
+            var client = new WebClient();
 
-            // Add a user agent header in case the 
+            // Add a user agent header in case the
             // requested URI contains a query.
 
             client.Headers.Add("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
 
-            Stream data = client.OpenRead(uri);
-            StreamReader reader = new StreamReader(data);
-            string s = reader.ReadToEnd();
+            var data = client.OpenRead(uri);
+            var reader = new StreamReader(data);
+            var s = reader.ReadToEnd();
             data.Close();
             reader.Close();
 
@@ -209,49 +206,59 @@ namespace CodeTester
 
         static void Main(string[] args)
         {
-            AddressValidateRequest avr = new AddressValidateRequest();
-            avr.Address.Address2 = "565 Roxbury Rd";
-            avr.Address.City = "Hudson";
-            avr.Address.State = "NY";
-            avr.Address.Zip5 = "12534";
+            var avr = new AddressValidateRequest
+            {
+                Address =
+                {
+                    Address2 = "565 Roxbury Rd",
+                    City = "Hudson",
+                    State = "NY",
+                    Zip5 = "12534"
+                }
+            };
 
             // All this necessary to omit the XML declaration and remove namespaces.  Sigh.
-            XmlWriterSettings xws = new XmlWriterSettings();
-            xws.OmitXmlDeclaration = true;
-            XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
+            var xws = new XmlWriterSettings
+            {
+                OmitXmlDeclaration = true
+            };
+            var ns = new XmlSerializerNamespaces();
             ns.Add("", "");
-            XmlSerializer xs = new XmlSerializer(avr.GetType());
-            StringBuilder sb = new StringBuilder();
-            TextWriter tw = new StringWriter(sb);
-            XmlWriter xtw = XmlWriter.Create(tw, xws);
+            var xs = new XmlSerializer(avr.GetType());
+            var sb = new StringBuilder();
+            var tw = new StringWriter(sb);
+            var xtw = XmlWriter.Create(tw, xws);
             xs.Serialize(xtw, avr, ns);
-            string xml = sb.ToString();
-            string ret = Get("https://secure.shippingapis.com/ShippingAPI.dll?API=Verify&XML=" + xml);
-            // string ret = "<?xml version =\"1.0\" encoding=\"UTF-8\"?><AddressValidateResponse><Address ID=\"0\"><Address2>565 ROXBURY RD</Address2><City>HUDSON</City><State>NY</State><Zip5>12534</Zip5><Zip4>3626</Zip4><DeliveryPoint>65</DeliveryPoint><CarrierRoute>R001</CarrierRoute><DPVConfirmation>Y</DPVConfirmation><DPVCMRA>N</DPVCMRA><DPVFootnotes>AABB</DPVFootnotes><Business>N</Business><CentralDeliveryPoint>N</CentralDeliveryPoint><Vacant>N</Vacant></Address></AddressValidateResponse>";
+            var xml = sb.ToString();
+            var ret = Get("https://secure.shippingapis.com/ShippingAPI.dll?API=Verify&XML=" + xml);
+            // var ret = "<?xml version =\"1.0\" encoding=\"UTF-8\"?><AddressValidateResponse><Address ID=\"0\"><Address2>565 ROXBURY RD</Address2><City>HUDSON</City><State>NY</State><Zip5>12534</Zip5><Zip4>3626</Zip4><DeliveryPoint>65</DeliveryPoint><CarrierRoute>R001</CarrierRoute><DPVConfirmation>Y</DPVConfirmation><DPVCMRA>N</DPVCMRA><DPVFootnotes>AABB</DPVFootnotes><Business>N</Business><CentralDeliveryPoint>N</CentralDeliveryPoint><Vacant>N</Vacant></Address></AddressValidateResponse>";
 
-            XmlSerializer xs2 = new XmlSerializer(typeof(AddressValidateResponse));
-            StringReader sr = new StringReader(ret);
-            AddressValidateResponse resp = (AddressValidateResponse)xs2.Deserialize(sr);
+            var xs2 = new XmlSerializer(typeof(AddressValidateResponse));
+            var sr = new StringReader(ret);
+            var resp = (AddressValidateResponse)xs2.Deserialize(sr);
 
-            Type t = typeof(ST_Address);
-            PropertyInfo[] pis = t.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            PropertyContainer pc = new PropertyContainer();
+            var t = typeof(ST_Address);
+            var pis = t.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            var pc = new PropertyContainer();
             BuildTypes(pc, pis);
-            string json = JsonConvert.SerializeObject(pc);
+            var json = JsonConvert.SerializeObject(pc);
         }
 
         static void BuildTypes(PropertyContainer pc, PropertyInfo[] pis)
         {
-            foreach (PropertyInfo pi in pis)
+            foreach (var pi in pis)
             {
-                PropertyData pd = new PropertyData() { Name = pi.Name, TypeName = pi.PropertyType.FullName };
-                pd.Category = pi.GetCustomAttribute<CategoryAttribute>()?.Category;
-                pd.Description = pi.GetCustomAttribute<DescriptionAttribute>()?.Description;
+                var pd = new PropertyData
+                {
+                    Name = pi.Name, TypeName = pi.PropertyType.FullName,
+                    Category = pi.GetCustomAttribute<CategoryAttribute>()?.Category,
+                    Description = pi.GetCustomAttribute<DescriptionAttribute>()?.Description
+                };
                 pc.Types.Add(pd);
 
                 if ((!pi.PropertyType.IsValueType) && (pd.TypeName != "System.String"))
                 {
-                    PropertyInfo[] pisChild = pi.PropertyType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                    var pisChild = pi.PropertyType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
                     pd.ChildType = new PropertyContainer();
                     BuildTypes(pd.ChildType, pisChild);
                 }

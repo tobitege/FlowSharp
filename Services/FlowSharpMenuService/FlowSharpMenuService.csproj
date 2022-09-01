@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FlowSharpMenuService.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Menu.cs" />
     <Compile Include="MenuController.cs" />
     <Compile Include="NavigateDlg.cs">

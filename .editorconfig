@@ -1,0 +1,10 @@
+﻿[*.{cs,vb}]
+
+# IDE0060: Nicht verwendete Parameter entfernen
+dotnet_diagnostic.IDE0060.severity = none
+
+# IDE0059: Unnötige Zuweisung eines Werts.
+dotnet_diagnostic.IDE0059.severity = none
+
+# IDE0051: Nicht verwendete private Member entfernen
+dotnet_diagnostic.IDE0051.severity = none

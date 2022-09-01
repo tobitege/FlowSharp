@@ -52,9 +52,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\Debug\Clifton.WinForm.ServiceInterfaces.dll</HintPath>
     </Reference>
-    <Reference Include="Renci.SshNet, Version=2020.0.1.0, Culture=neutral, PublicKeyToken=1cee9f8bde3db106, processorArchitecture=MSIL">
-      <HintPath>packages\SSH.NET.Fork.2022.5.13\lib\net40\Renci.SshNet.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -108,7 +105,13 @@
     </Content>
     <Content Include="bin\Debug\personOfInterest.py" />
     <Content Include="bin\Debug\plugins.txt" />
+    <None Include="defaultLayout.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <Content Include="FlowSharp.ico" />
+    <None Include="plugins.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Resources\FlowSharp.ico" />
   </ItemGroup>
   <ItemGroup>

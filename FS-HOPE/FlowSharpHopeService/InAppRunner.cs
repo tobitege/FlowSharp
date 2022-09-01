@@ -38,7 +38,6 @@ namespace FlowSharpHopeService
         public InAppRunner()
         {
             sp = new SemanticProcessor();
-
             // membrane = new HopeMembrane();
             // membrane = sp.RegisterMembrane<HopeMembrane>();
             // membrane = new App.HopeMembrane();
@@ -49,22 +48,22 @@ namespace FlowSharpHopeService
 
         private void ProcessingSemanticType(object sender, ProcessEventArgs args)
         {
-			var stMsg = new HopeRunnerAppDomainInterface.ProcessEventArgs()
-			{
-				FromMembraneTypeName = args.FromMembrane?.GetType()?.FullName,
-				FromReceptorTypeName = args.FromReceptor?.GetType()?.FullName,
-				ToMembraneTypeName = args.ToMembrane.GetType().FullName,
-				ToReceptorTypeName = args.ToReceptor.GetType().FullName,
-				SemanticTypeTypeName = args.SemanticType.GetType().FullName,
-			};
+            var stMsg = new HopeRunnerAppDomainInterface.ProcessEventArgs()
+            {
+                FromMembraneTypeName = args.FromMembrane?.GetType()?.FullName,
+                FromReceptorTypeName = args.FromReceptor?.GetType()?.FullName,
+                ToMembraneTypeName = args.ToMembrane.GetType().FullName,
+                ToReceptorTypeName = args.ToReceptor.GetType().FullName,
+                SemanticTypeTypeName = args.SemanticType.GetType().FullName,
+            };
 
-			Processing.Fire(this, stMsg);
-		}
+            Processing.Fire(this, stMsg);
+        }
 
         public void Load(string dll)
         {
             assy = Assembly.LoadFrom(dll);
-            Type t = assy.GetTypes().Single(at => at.Name == "HopeMembrane");
+            var t = assy.GetTypes().Single(at => at.Name == "HopeMembrane");
             membrane = (IMembrane)Activator.CreateInstance(t);
             sp.RegisterMembrane(membrane);
             Loaded = true;
@@ -81,51 +80,48 @@ namespace FlowSharpHopeService
 
         public List<ReceptorDescription> DescribeReceptor(string typeName)
         {
-            List<ReceptorDescription> descrList = new List<ReceptorDescription>();
-            Type rtype = assy.GetTypes().Single(at => at.Name == typeName);
+            var descrList = new List<ReceptorDescription>();
+            var rtype = assy.GetTypes().Single(at => at.Name == typeName);
 
             var mis = rtype.GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(m => m.Name == "Process");
 
             foreach(var mi in mis)
             {
-                ReceptorDescription descr = new ReceptorDescription();
-                descr.ReceptorTypeName = typeName;
-                descr.ReceivingSemanticType =  mi.GetParameters()[2].ParameterType.Name;
+                var descr = new ReceptorDescription
+                {
+                    ReceptorTypeName = typeName,
+                    ReceivingSemanticType = mi.GetParameters()[2].ParameterType.Name
+                };
                 descrList.Add(descr);
                 var attrs = mi.GetCustomAttributes().Where(attr => attr is PublishesAttribute).Cast<PublishesAttribute>();
-
                 foreach (var attr in attrs)
                 {
                     descr.Publishes.Add(attr.PublishesType.Name);
                 }
             }
-
             return descrList;
         }
 
         public void InstantiateReceptor(string name)
         {
-            Type t = assy.GetTypes().Single(at => at.Name == name);
-            IReceptor inst = (IReceptor)Activator.CreateInstance(t);
+            var t = assy.GetTypes().Single(at => at.Name == name);
+            var inst = (IReceptor)Activator.CreateInstance(t);
             // sp.Register(membrane, inst);
             sp.Register<App.HopeMembrane>(inst);
         }
 
         public object InstantiateSemanticType(string typeName)
         {
-            Type st = assy.GetTypes().Single(t => t.Name == typeName);
-            object inst = Activator.CreateInstance(st);
-
-            return inst;
+            var st = assy.GetTypes().Single(t => t.Name == typeName);
+            return Activator.CreateInstance(st);
         }
 
         public PropertyContainer DescribeSemanticType(string typeName)
         {
-            Type t = assy.GetTypes().Single(at => at.Name == typeName);
-            PropertyInfo[] pis = t.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            PropertyContainer pc = new PropertyContainer();
+            var t = assy.GetTypes().Single(at => at.Name == typeName);
+            var pis = t.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            var pc = new PropertyContainer();
             BuildTypes(pc, pis);
-
             return pc;
         }
 
@@ -136,26 +132,26 @@ namespace FlowSharpHopeService
 
         public void Publish(string typeName, string json)
         {
-            Type t = assy.GetTypes().Single(at => at.Name == typeName);
-            ISemanticType st = (ISemanticType)JsonConvert.DeserializeObject(json, t);
+            var t = assy.GetTypes().Single(at => at.Name == typeName);
+            var st = (ISemanticType)JsonConvert.DeserializeObject(json, t);
             // sp.ProcessInstance(membrane, st, true);
             sp.ProcessInstance<App.HopeMembrane>(st, true);
         }
 
         protected void BuildTypes(PropertyContainer pc, PropertyInfo[] pis)
         {
-            foreach (PropertyInfo pi in pis)
+            foreach (var pi in pis)
             {
-                PropertyData pd = new PropertyData() { Name = pi.Name, TypeName = pi.PropertyType.FullName };
+                var pd = new PropertyData() { Name = pi.Name, TypeName = pi.PropertyType.FullName };
                 var cat = pi.GetCustomAttribute<CategoryAttribute>();
                 var desc = pi.GetCustomAttribute<DescriptionAttribute>();
-                pd.Category = cat == null ? null : cat.Category;
-                pd.Description = desc == null ? null : desc.Description;
+                pd.Category = cat?.Category;
+                pd.Description = desc?.Description;
                 pc.Types.Add(pd);
 
                 if ((!pi.PropertyType.IsValueType) && (pd.TypeName != "System.String"))
                 {
-                    PropertyInfo[] pisChild = pi.PropertyType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                    var pisChild = pi.PropertyType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
                     pd.ChildType = new PropertyContainer();
                     BuildTypes(pd.ChildType, pisChild);
                 }

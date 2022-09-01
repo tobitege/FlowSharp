@@ -66,20 +66,22 @@ namespace FlowSharpLib
         protected struct Command
         {
             public Command(string name, DoOrUndo action, bool finishGroup)
-            { _name = name; _action = action; _done = false; _finishGroup = finishGroup; }
-            DoOrUndo _action;
+            {
+                Name = name; _action = action; _done = false;
+                FinishGroup = finishGroup;
+            }
+
+            readonly DoOrUndo _action;
             bool _done; // debug check
                         // To group a series of actions into one undo command, _finishGroup should
                         // be false on all actions except the final one.
-            bool _finishGroup;
-            string _name;
-            public string Name => _name;
-            public bool FinishGroup => _finishGroup;
+            public string Name { get; }
+            public bool FinishGroup { get; private set; }
             public Command Do() { Debug.Assert(!_done); _done = true; _action(true, false); return this; }
             public Command Undo() { Debug.Assert(_done); _done = false; _action(false, false); return this; }
             // cliftonm - I added the Redo call to support handling redoing property changes.
             public Command Redo() { Debug.Assert(!_done); _done = true; _action(false, true); return this; }
-            public Command WithSeparatorFlag(bool finishGroup) { var copy = this; copy._finishGroup = finishGroup; return copy; }
+            public Command WithSeparatorFlag(bool finishGroup) { var copy = this; copy.FinishGroup = finishGroup; return copy; }
         }
 
         protected readonly Stack<Command> _undoStack = new Stack<Command>();

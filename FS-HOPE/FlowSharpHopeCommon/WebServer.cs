@@ -17,20 +17,20 @@ namespace FlowSharpHopeCommon
     public class WebServer
     {
         protected HttpListener listener;
-		protected BaseRouteHandlers routeHandlers;
+        protected BaseRouteHandlers routeHandlers;
 
         public WebServer(BaseRouteHandlers routeHandlers)
         {
-			this.routeHandlers = routeHandlers;
+            this.routeHandlers = routeHandlers;
         }
 
         public void Start(string ip, int[] ports)
         {
             listener = new HttpListener();
 
-            foreach (int port in ports)
+            foreach (var port in ports)
             {
-                string url = IpWithPort(ip, port);
+                var url = IpWithPort(ip, port);
                 listener.Prefixes.Add(url);
             }
 
@@ -40,23 +40,23 @@ namespace FlowSharpHopeCommon
 
         protected void WaitForConnection(object objListener)
         {
-            HttpListener listener = (HttpListener)objListener;
+            var listener = (HttpListener)objListener;
 
             while (true)
             {
                 // Wait for a connection.  Return to caller while we wait.
-                HttpListenerContext context = listener.GetContext();
+                var context = listener.GetContext();
 
                 // Redirect to HTTPS if not local and not secure.
                 if (!context.Request.IsLocal && !context.Request.IsSecureConnection)
                 {
-                    string redirectUrl = context.Request.Url.ToString().Replace("http:", "https:");
+                    var redirectUrl = context.Request.Url.ToString().Replace("http:", "https:");
                     context.Response.Redirect(redirectUrl);
                     context.Response.Close();
                 }
                 else
                 {
-                    string data = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
+                    var data = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
                     Task.Run(() => ProcessRoute(context, data));
                 }
             }
@@ -70,16 +70,16 @@ namespace FlowSharpHopeCommon
             //    Program.tbLog.AppendText(data + "\n");
             //});
 
-            string route = context.Request.Url.ToString().RightOfRightmostOf('/').LeftOf('?');
-            string parms = context.Request.Url.ToString().RightOf('?');
-            Func<HttpListenerContext, string, (string text, string mime)> handler;
+            var route = context.Request.Url.ToString().RightOfRightmostOf('/').LeftOf('?');
+            var parms = context.Request.Url.ToString().RightOf('?');
+            //Func<HttpListenerContext, string, (string text, string mime)> handler;
 
-            if (routeHandlers.Routes.TryGetValue(route, out handler))
+            if (routeHandlers.Routes.TryGetValue(route, out var handler))
             {
                 try
                 {
                     var (text, mime) = handler(context, parms);
-					Response(context, text, mime);
+                    Response(context, text, mime);
                 }
                 catch (Exception)
                 {
@@ -97,7 +97,7 @@ namespace FlowSharpHopeCommon
 
         protected void Response(HttpListenerContext context, string resp, string contentType)
         {
-            byte[] utf8data = Encoding.UTF8.GetBytes(resp);
+            var utf8data = Encoding.UTF8.GetBytes(resp);
             context.Response.ContentType = contentType;
             context.Response.ContentEncoding = Encoding.UTF8;
             context.Response.ContentLength64 = utf8data.Length;

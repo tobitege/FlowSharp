@@ -608,8 +608,10 @@ namespace Clifton.Core.ExtensionMethods
                         where Attribute.IsDefined(prop, typeof(ColumnAttribute))
                         select new
                         {
-                            PkFieldName = Attribute.IsDefined(prop, typeof(ColumnAttribute)) ? ((ColumnAttribute)prop.GetCustomAttribute(typeof(ColumnAttribute))).Name ?? prop.Name : prop.Name,
-                            IsPrimaryKey = Attribute.IsDefined(prop, typeof(ColumnAttribute)) ? ((ColumnAttribute)prop.GetCustomAttribute(typeof(ColumnAttribute))).IsPrimaryKey : false,
+                            PkFieldName  = Attribute.IsDefined(prop, typeof(ColumnAttribute)) ?
+                                ((ColumnAttribute)prop.GetCustomAttribute(typeof(ColumnAttribute))).Name ?? prop.Name : prop.Name,
+                            IsPrimaryKey = Attribute.IsDefined(prop, typeof(ColumnAttribute)) &&
+                                           ((ColumnAttribute)prop.GetCustomAttribute(typeof(ColumnAttribute))).IsPrimaryKey,
                         }).Where(p=>p.IsPrimaryKey);
 
             // TODO: Support multiple PK fields?

@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FlowSharpMouseControllerService.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="MouseController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
