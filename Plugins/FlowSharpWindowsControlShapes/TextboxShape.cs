@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -63,24 +63,20 @@ namespace FlowSharpWindowsControlShapes
         public override void Deserialize(ElementPropertyBag epb)
         {
             base.Deserialize(epb);
-            string multiline;
-            string readOnly;
-
-            if (Json.TryGetValue("Multiline", out multiline))
+            if (Json.TryGetValue("Multiline", out var multiline))
             {
-                Multiline = multiline.to_b();
+                Multiline = multiline.To_b();
             }
-
-            if (Json.TryGetValue("ReadOnly", out readOnly))
+            if (Json.TryGetValue("ReadOnly", out var readOnly))
             {
-                ReadOnly = readOnly.to_b();
+                ReadOnly = readOnly.To_b();
             }
         }
 
         public override void Draw(Graphics gr, bool showSelection = true)
         {
             base.Draw(gr, showSelection);
-            Rectangle r = ZoomRectangle.Grow(-4);
+            var r = ZoomRectangle.Grow(-4);
             control.Location = r.Location;
             // Use the control's height so we don't get continuous redraws, unless the textbox is a multiline textbox.
             control.Size = new Size(r.Width, Multiline ? r.Height : control.Height);
@@ -96,7 +92,7 @@ namespace FlowSharpWindowsControlShapes
     {
         public const string TOOLBOX_TEXT = "txtbox";
 
-        protected Brush brush = new SolidBrush(Color.Black);
+        protected readonly Brush brush = new SolidBrush(Color.Black);
 
         public ToolboxTextboxShape(Canvas canvas) : base(canvas)
         {
@@ -111,18 +107,17 @@ namespace FlowSharpWindowsControlShapes
 
         public override GraphicElement CloneDefault(Canvas canvas, Point offset)
         {
-            TextboxShape shape = new TextboxShape(canvas);
+            var shape = new TextboxShape(canvas);
             shape.DisplayRectangle = shape.DefaultRectangle().Move(offset);
             shape.UpdateProperties();
             shape.UpdatePath();
-
             return shape;
         }
 
         public override void Draw(Graphics gr, bool showSelection = true)
         {
-            SizeF size = gr.MeasureString(TOOLBOX_TEXT, TextFont);
-            Point textpos = DisplayRectangle.Center().Move((int)(-size.Width / 2), (int)(-size.Height / 2));
+            var size = gr.MeasureString(TOOLBOX_TEXT, TextFont);
+            var textpos = DisplayRectangle.Center().Move((int)(-size.Width / 2), (int)(-size.Height / 2));
             gr.DrawString(TOOLBOX_TEXT, TextFont, brush, textpos);
             base.Draw(gr, showSelection);
         }

@@ -132,7 +132,7 @@ namespace HopeShapes
             {
                 // use field, not property, so property setter doesn't get triggered before the
                 // element is drawn, because the path is null at this point.
-                enabled = Json["agentEnabled"].to_b();
+                enabled = Json["agentEnabled"].To_b();
                 UpdateHope();
             }
         }

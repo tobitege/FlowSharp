@@ -68,12 +68,14 @@ namespace FlowSharpCodeOutputWindowService
 
         public void CreateOutputWindow(Control parent)
         {
-            outputWindow = new TextBox();
-            outputWindow.Multiline = true;
-            outputWindow.Dock = DockStyle.Fill;
-            outputWindow.ReadOnly = true;
-            outputWindow.BackColor = Color.White;
-            outputWindow.ScrollBars = ScrollBars.Both;
+            outputWindow = new TextBox
+            {
+                Multiline = true,
+                Dock = DockStyle.Fill,
+                ReadOnly = true,
+                BackColor = Color.White,
+                ScrollBars = ScrollBars.Both
+            };
             parent.Controls.Add(outputWindow);
             this.parent = parent;
         }
@@ -131,9 +133,7 @@ namespace FlowSharpCodeOutputWindowService
 
         protected void OnDocumentClosing(object document)
         {
-            Control ctrl = document as Control;
-
-            if ( (ctrl != null && ctrl.Controls.Count == 1) && ((IDockDocument)document).Metadata.LeftOf(",") == Constants.META_OUTPUT)
+            if (document is Control ctrl && ctrl.Controls.Count == 1 && ((IDockDocument)document).Metadata.LeftOf(",") == Constants.META_OUTPUT)
             {
                 Closed();
             }

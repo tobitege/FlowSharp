@@ -40,22 +40,26 @@ namespace FlowSharpCodeICSharpDevelopService
         public override void FinishedInitialization()
         {
             base.FinishedInitialization();
-            IDockingFormService dockingService = ServiceManager.Get<IDockingFormService>();
+            var dockingService = ServiceManager.Get<IDockingFormService>();
             dockingService.DocumentClosing += (sndr, args) => OnDocumentClosing(sndr);
         }
 
         public void CreateEditor(Control parent)
         {
-            host = new ElementHost();
-            host.Dock = DockStyle.Fill;
+            host = new ElementHost
+            {
+                Dock = DockStyle.Fill
+            };
 
             completion = new CSharpCompletion(new ScriptProvider());
 
-            editor = new CodeTextEditor();
-            editor.FontFamily = new FontFamily("Consolas");
-            editor.FontSize = 12;
-            editor.Completion = completion;
-            editor.SyntaxHighlighting = HighlightingManager.Instance.GetDefinition("C#");
+            editor = new CodeTextEditor
+            {
+                FontFamily = new FontFamily("Consolas"),
+                FontSize = 12,
+                Completion = completion,
+                SyntaxHighlighting = HighlightingManager.Instance.GetDefinition("C#")
+            };
             editor.TextChanged += OnTextChanged;
             editor.LostFocus += OnLostFocus;
 
@@ -131,9 +135,8 @@ namespace FlowSharpCodeICSharpDevelopService
 
         protected void OnDocumentClosing(object document)
         {
-            Control ctrl = document as Control;
-
-            if ((ctrl != null && ctrl.Controls.Count == 1) && ((IDockDocument)document).Metadata.LeftOf(",") == Constants.META_CSHARP_EDITOR)
+            if (document is Control ctrl && ctrl.Controls.Count == 1 &&
+                ((IDockDocument)document).Metadata.LeftOf(",") == Constants.META_CSHARP_EDITOR)
             {
                 Closed();
             }

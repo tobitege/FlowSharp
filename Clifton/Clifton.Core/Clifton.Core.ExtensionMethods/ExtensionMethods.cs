@@ -124,7 +124,7 @@ namespace Clifton.Core.ExtensionMethods
         /// </summary>
         public static R IfNotNullReturn<T, R>(this T obj, Func<T, R> func)
         {
-            return obj != null ? func(obj) : default(R);
+            return obj != null ? func(obj) : default;
         }
 
         /// <summary>
@@ -132,7 +132,7 @@ namespace Clifton.Core.ExtensionMethods
         /// </summary>
         public static R ElseIfNullReturn<T, R>(this T obj, Func<R> func)
         {
-            return obj == null ? func() : default(R);
+            return obj == null ? func() : default;
         }
 
         /// <summary>
@@ -152,7 +152,7 @@ namespace Clifton.Core.ExtensionMethods
         /// </summary>
         public static R IfNotNull<T, R>(this T obj, R defaultValue, Func<T, R> func)
         {
-            R ret = defaultValue;
+            var ret = defaultValue;
 
             if (obj != null)
             {
@@ -280,7 +280,7 @@ namespace Clifton.Core.ExtensionMethods
 
         public static T Single<T>(this IEnumerable collection, Func<T, bool> expr)
         {
-            T ret = default(T);
+            T ret = default;
             var found = false;
 
             foreach (T item in collection)
@@ -303,7 +303,7 @@ namespace Clifton.Core.ExtensionMethods
 
         public static T SingleOrDefault<T>(this IEnumerable collection, Func<T, bool> expr)
         {
-            T ret = default(T);
+            T ret = default;
 
             foreach (T item in collection)
             {
@@ -605,12 +605,12 @@ namespace Clifton.Core.ExtensionMethods
         /// <summary>
         /// Converts a string to an int (Int32).
         /// </summary>
-        public static int to_i(this string src)
+        public static int To_i(this string src)
         {
             return string.IsNullOrEmpty(src) ? 0 : Convert.ToInt32(src.Replace(",", "").LeftOf('.'));
         }
 
-        public static int to_iFromHex(this string src)
+        public static int To_iFromHex(this string src)
         {
             return int.Parse(src, NumberStyles.HexNumber);
         }
@@ -637,7 +637,7 @@ namespace Clifton.Core.ExtensionMethods
         /// <summary>
         /// Converts a string to a boolean.
         /// </summary>
-        public static bool to_b(this string src)
+        public static bool To_b(this string src)
         {
             return !string.IsNullOrEmpty(src) && Convert.ToBoolean(src);
         }
@@ -645,7 +645,7 @@ namespace Clifton.Core.ExtensionMethods
         /// <summary>
         /// Converts a string to a float.
         /// </summary>
-        public static float to_f(this string src)
+        public static float To_f(this string src)
         {
             return string.IsNullOrEmpty(src) ? 0 : (float)Convert.ToDouble(src);
         }
@@ -653,7 +653,7 @@ namespace Clifton.Core.ExtensionMethods
         /// <summary>
         /// Converts a string to a double.
         /// </summary>
-        public static double to_d(this string src)
+        public static double To_d(this string src)
         {
             if (string.IsNullOrEmpty(src))
             {
@@ -666,7 +666,7 @@ namespace Clifton.Core.ExtensionMethods
         /// <summary>
         /// Converts a string to a decimal.
         /// </summary>
-        public static decimal to_dec(this string src)
+        public static decimal To_dec(this string src)
         {
             decimal.TryParse(src, out var d);
 
@@ -702,7 +702,7 @@ namespace Clifton.Core.ExtensionMethods
             // The result variable will contain the 32-bit signed integer value equivalent
             // of the number contained in src, if the conversion succeeded, or zero if the
             // conversion failed.
-            return int.TryParse(src, out var result);
+            return int.TryParse(src, out var _);
         }
 
         /// <summary>
@@ -1222,7 +1222,7 @@ namespace Clifton.Core.ExtensionMethods
             return Convert.ToBase64String(Encoding.ASCII.GetBytes(sb.ToString()));
         }
 
-        public static byte[] to_Utf8(this string str)
+        public static byte[] To_Utf8(this string str)
         {
             return Encoding.UTF8.GetBytes(str);
         }
@@ -1479,17 +1479,16 @@ namespace Clifton.Core.ExtensionMethods
         public static IEnumerable<T> SkipLastN<T>(this IEnumerable<T> source, int n)
         {
             var it = source.GetEnumerator();
-            var hasRemainingItems = false;
+            bool hasRemainingItems;
             var cache = new Queue<T>(n + 1);
 
             do
             {
-                if (hasRemainingItems = it.MoveNext())
-                {
-                    cache.Enqueue(it.Current);
-                    if (cache.Count > n)
-                        yield return cache.Dequeue();
-                }
+                hasRemainingItems = it.MoveNext();
+                if (!hasRemainingItems) break;
+                cache.Enqueue(it.Current);
+                if (cache.Count > n)
+                    yield return cache.Dequeue();
             } while (hasRemainingItems);
         }
 

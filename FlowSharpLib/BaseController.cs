@@ -99,7 +99,7 @@ namespace FlowSharpLib
         protected string filename;
 
         // Diagnostic
-        protected int eraseCount = 0;
+        protected int eraseCount;
 
         public BaseController(Canvas canvas)
         {
@@ -463,8 +463,8 @@ namespace FlowSharpLib
                 intersections.AddRange(FindAllIntersections(el));
             });
 
-            var distinctIntersections = intersections.Distinct();
-            var connectors = new List<GraphicElement>();
+            var distinctIntersections = intersections.Distinct().ToList();
+            //var connectors = new List<GraphicElement>();
 
             //selectedElements.ForEach(el =>
             //{
@@ -635,18 +635,18 @@ namespace FlowSharpLib
             UpdateScreen(elements);
         }
 
-        public void SaveAsPng(string filename, bool selectionOnly = false)
+        public void SaveAsPng(string fname, bool selectionOnly = false)
         {
-            selectionOnly.If(() => SaveAsPng(filename, SelectedElements.ToList())).Else(() => SaveAsPng(filename, elements));
+            selectionOnly.If(() => SaveAsPng(fname, SelectedElements.ToList())).Else(() => SaveAsPng(fname, elements));
         }
 
-        protected void SaveAsPng(string filename, List<GraphicElement> elements)
+        protected void SaveAsPng(string fname, List<GraphicElement> elems)
         {
             // Get boundaries of of all elements.
-            var x1 = elements.Min(e => e.DisplayRectangle.X);
-            var y1 = elements.Min(e => e.DisplayRectangle.Y);
-            var x2 = elements.Max(e => e.DisplayRectangle.X + e.DisplayRectangle.Width);
-            var y2 = elements.Max(e => e.DisplayRectangle.Y + e.DisplayRectangle.Height);
+            var x1 = elems.Min(e => e.DisplayRectangle.X);
+            var y1 = elems.Min(e => e.DisplayRectangle.Y);
+            var x2 = elems.Max(e => e.DisplayRectangle.X + e.DisplayRectangle.Width);
+            var y2 = elems.Max(e => e.DisplayRectangle.Y + e.DisplayRectangle.Height);
             var w = x2 - x1 + 10;
             var h = y2 - y1 + 10;
             var pngCanvas = new Canvas();
@@ -657,10 +657,11 @@ namespace FlowSharpLib
             var offset = new Point(-(x1-5), -(y1-5));
             var restore = new Point(x1-5, y1-5);
 
-            elements.AsEnumerable().Reverse().ForEach(e =>
+            elems.AsEnumerable().Reverse().ForEach(e =>
             {
                 e.Move(offset);
                 e.UpdatePath();
+                // ReSharper disable once AccessToDisposedClosure
                 e.SetCanvas(pngCanvas);
                 e.Draw(gr, false);      // Don't draw selection or tag shapes.
                 e.DrawText(gr);
@@ -669,7 +670,7 @@ namespace FlowSharpLib
                 e.UpdatePath();
             });
 
-            pngCanvas.Bitmap.Save(filename, System.Drawing.Imaging.ImageFormat.Png);
+            pngCanvas.Bitmap.Save(fname, System.Drawing.Imaging.ImageFormat.Png);
             pngCanvas.Dispose();
         }
 
@@ -762,13 +763,13 @@ namespace FlowSharpLib
         {
             elements.Remove(el);
             elements.Insert(0, el);
-            el.GroupChildren.ForEach(child => MoveToTop(child));
+            el.GroupChildren.ForEach(MoveToTop);
         }
 
         protected void MoveToBottom(GraphicElement el)
         {
             elements.Remove(el);
-            el.GroupChildren.ForEach(child => MoveToBottom(child));
+            el.GroupChildren.ForEach(MoveToBottom);
             elements.Add(el);
         }
 
@@ -843,11 +844,10 @@ namespace FlowSharpLib
             children.ForEach(child => RecursiveGetAllGroupedShapes(child.GroupChildren, acc));
         }
 
-        public Rectangle GetExtents(IEnumerable<GraphicElement> elements)
+        public Rectangle GetExtents(List<GraphicElement> elems)
         {
-            var r = elements.First().DisplayRectangle;
-            elements.Skip(1).ForEach(el => r = r.Union(el.DisplayRectangle));
-
+            var r = elems.First().DisplayRectangle;
+            elems.Skip(1).ForEach(el => r = r.Union(el.DisplayRectangle));
             return r;
         }
 
@@ -885,7 +885,7 @@ namespace FlowSharpLib
             });
         }
 
-        protected IEnumerable<GraphicElement> EraseOurselvesAndIntersectionsTopToBottom(GraphicElement el, int dx = 0, int dy = 0)
+        protected List<GraphicElement> EraseOurselvesAndIntersectionsTopToBottom(GraphicElement el, int dx = 0, int dy = 0)
         {
             if (++eraseCount > 1)
             {
@@ -900,6 +900,7 @@ namespace FlowSharpLib
             return intersections;
         }
 
+        // ReSharper disable once ParameterHidesMember
         protected void CanvasPaintComplete(Canvas canvas)
         {
             Trace.WriteLine("*** CanvasPaintComplete");

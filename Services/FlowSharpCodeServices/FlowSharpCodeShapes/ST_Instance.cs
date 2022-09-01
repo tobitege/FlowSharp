@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -24,9 +24,9 @@ namespace FlowSharpCodeShapes
             Text = "ST";
         }
 
-        public override GraphicElement CloneDefault(Canvas canvas)
+        public override GraphicElement CloneDefault(Canvas canv)
         {
-            GraphicElement el = base.CloneDefault(canvas);
+            var el = base.CloneDefault(canv);
             el.TextFont.Dispose();
             el.TextFont = new Font(FontFamily.GenericSansSerif, 10);
             el.TextAlign = ContentAlignment.MiddleCenter;
@@ -34,9 +34,9 @@ namespace FlowSharpCodeShapes
             return el;
         }
 
-        public override GraphicElement CloneDefault(Canvas canvas, Point offset)
+        public override GraphicElement CloneDefault(Canvas canv, Point offset)
         {
-            GraphicElement el = base.CloneDefault(canvas, offset);
+            var el = base.CloneDefault(canv, offset);
             el.TextFont.Dispose();
             el.TextFont = new Font(FontFamily.GenericSansSerif, 10);
             el.TextAlign = ContentAlignment.MiddleCenter;
@@ -46,8 +46,10 @@ namespace FlowSharpCodeShapes
 
         public override ElementProperties CreateProperties()
         {
-            SemanticInstanceProperties props = new SemanticInstanceProperties(this);
-            props.SemanticType = Text;
+            var props = new SemanticInstanceProperties(this)
+            {
+                SemanticType = Text
+            };
 
             return props;
         }
@@ -82,7 +84,7 @@ namespace FlowSharpCodeShapes
 
         public override void Update(GraphicElement el, string label)
         {
-            SemanticInstance si = (SemanticInstance)el;
+            var si = (SemanticInstance)el;
 
             (label == "SemanticType").If(() =>
             {

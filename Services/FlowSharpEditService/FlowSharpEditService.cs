@@ -17,6 +17,7 @@ using Clifton.Core.ServiceManagement;
 
 using FlowSharpLib;
 using FlowSharpServiceInterfaces;
+// ReSharper disable UnusedParameter.Global
 
 namespace FlowSharpEditService
 {
@@ -68,34 +69,30 @@ namespace FlowSharpEditService
 
         public void Copy()
         {
-            BaseController canvasController = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
-
             if (editBox != null)
             {
                 Clipboard.SetText(editBox.SelectedText);
                 return;
             }
 
-            if (canvasController.SelectedElements.Any())
+            var canvasController = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            if (canvasController.SelectedElements?.Any() == true)
             {
-                List<GraphicElement> elementsToCopy = new List<GraphicElement>();
+                var elementsToCopy = new List<GraphicElement>();
                 // Include child elements of any groupbox, otherwise, on deserialization,
                 // the ID's for the child elements aren't found.
                 elementsToCopy.AddRange(canvasController.SelectedElements);
                 elementsToCopy.AddRange(IncludeChildren(elementsToCopy));
-                string copyBuffer = Persist.Serialize(elementsToCopy.OrderByDescending(el => canvasController.Elements.IndexOf(el)));
+                var copyBuffer = Persist.Serialize(elementsToCopy.OrderByDescending(el => canvasController.Elements.IndexOf(el)));
                 Clipboard.SetData("FlowSharp", copyBuffer);
+                return;
             }
-            else
-            {
-                MessageBox.Show("Please select one or more shape(s).", "Nothing to copy.", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
+
+            MessageBox.Show("Please select one or more shape(s).", "Nothing to copy.", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         public void Paste()
         {
-            BaseController canvasController = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
-
             // TODO: This seems klunky.
             if (editBox != null && Clipboard.ContainsText())
             {
@@ -103,75 +100,74 @@ namespace FlowSharpEditService
                 return;
             }
 
-            string copyBuffer = Clipboard.GetData("FlowSharp")?.ToString();
-
+            var copyBuffer = Clipboard.GetData("FlowSharp")?.ToString();
             if (copyBuffer == null)
             {
                 MessageBox.Show("Clipboard does not contain a FlowSharp shape", "Paste Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
             }
-            else
+
+            try
             {
-                try
+                var canvasController = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
+                var els = Persist.Deserialize(canvasController.Canvas, copyBuffer);
+                var selectedElements = canvasController.SelectedElements.ToList();
+
+                // After deserialization, only move and select elements without parents -
+                // children of group boxes should not be moved, as their parent will handle this,
+                // and children of group boxes cannot be selected.
+                var noParentElements = els.Where(e => e.Parent == null).ToList();
+
+                noParentElements.ForEach(el =>
                 {
-                    List<GraphicElement> els = Persist.Deserialize(canvasController.Canvas, copyBuffer);
-                    List<GraphicElement> selectedElements = canvasController.SelectedElements.ToList();
+                    el.Move(new Point(20, 20));
+                    el.UpdateProperties();
+                    el.UpdatePath();
+                });
 
-                    // After deserialization, only move and select elements without parents -
-                    // children of group boxes should not be moved, as their parent will handle this,
-                    // and children of group boxes cannot be selected.
-                    List<GraphicElement> noParentElements = els.Where(e => e.Parent == null).ToList();
+                var intersections = new List<GraphicElement>();
 
-                    noParentElements.ForEach(el =>
+                els.ForEach(el =>
+                {
+                    intersections.AddRange(canvasController.FindAllIntersections(el));
+                });
+
+                var distinctIntersections = intersections.Distinct();
+
+                canvasController.UndoStack.UndoRedo("Paste",
+                    () =>
                     {
-                        el.Move(new Point(20, 20));
-                        el.UpdateProperties();
-                        el.UpdatePath();
-                    });
+                        canvasController.DeselectCurrentSelectedElements();
 
-                    List<GraphicElement> intersections = new List<GraphicElement>();
+                        canvasController.EraseTopToBottom(distinctIntersections);
 
-                    els.ForEach(el =>
-                    {
-                        intersections.AddRange(canvasController.FindAllIntersections(el));
-                    });
-
-                    IEnumerable<GraphicElement> distinctIntersections = intersections.Distinct();
-
-                    canvasController.UndoStack.UndoRedo("Paste",
-                        () =>
+                        els.ForEach(el =>
                         {
-                            canvasController.DeselectCurrentSelectedElements();
-
-                            canvasController.EraseTopToBottom(distinctIntersections);
-
-                            els.ForEach(el =>
-                            {
-                                canvasController.Insert(0, el);
-                                // ElementCache.Instance.Remove(el);
-                            });
-
-                            canvasController.DrawBottomToTop(distinctIntersections);
-                            canvasController.UpdateScreen(distinctIntersections);
-                            noParentElements.ForEach(el => canvasController.SelectElement(el));
-                        }
-                        ,
-                        () =>
-                        {
-                            canvasController.DeselectCurrentSelectedElements();
-
-                            els.ForEach(el =>
-                            {
-                                canvasController.DeleteElement(el, false);
-                                // ElementCache.Instance.Add(el);
-                            });
-
-                            canvasController.SelectElements(selectedElements);
+                            canvasController.Insert(0, el);
+                            // ElementCache.Instance.Remove(el);
                         });
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error pasting shape:\r\n" + ex.Message, "Paste Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+
+                        canvasController.DrawBottomToTop(distinctIntersections);
+                        canvasController.UpdateScreen(distinctIntersections);
+                        noParentElements.ForEach(el => canvasController.SelectElement(el));
+                    }
+                    ,
+                    () =>
+                    {
+                        canvasController.DeselectCurrentSelectedElements();
+
+                        els.ForEach(el =>
+                        {
+                            canvasController.DeleteElement(el, false);
+                            // ElementCache.Instance.Add(el);
+                        });
+
+                        canvasController.SelectElements(selectedElements);
+                    });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error pasting shape:\r\n" + ex.Message, "Paste Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -411,9 +407,8 @@ namespace FlowSharpEditService
                     conn.ToElement.SetConnection(conn.ToConnectionPoint.Type, el);
                 }
 
-                if (el.IsConnector)
+                if (el.IsConnector && el is Connector connector)
                 {
-                    var connector = el as Connector;
                     connector.StartConnectedShape = zom.StartConnectedShape;
                     connector.EndConnectedShape = zom.EndConnectedShape;
 
@@ -462,12 +457,10 @@ namespace FlowSharpEditService
 
         protected void OnKeyboardEvent(object sender, KeyMessageEventArgs args)
         {
-            if (args.State == KeyMessageEventArgs.KeyState.KeyUp)
+            if (args.State != KeyMessageEventArgs.KeyState.KeyUp) return;
+            if (args.KeyCode == TAB_KEY)
             {
-                if (args.KeyCode == TAB_KEY)
-                {
-                    ResetSelectedElementNavigator();
-                }
+                ResetSelectedElementNavigator();
             }
         }
 
@@ -490,38 +483,32 @@ namespace FlowSharpEditService
 
         protected void SelectNextShape()
         {
-            BaseController controller = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var controller = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
             var history = controllerSelectElementsHistory[controller];
 
-            if (history.Count > 1)
+            if (history.Count <= 1) return;
+            var idx = controllerHistoryIndex[controller] + 1;
+            if (idx >= history.Count)
             {
-                int idx = controllerHistoryIndex[controller] + 1;
-
-                if (idx >= history.Count)
-                {
-                    idx = 0;
-                }
-
-                SelectHistoryElement(controller, history, idx);
+                idx = 0;
             }
+
+            SelectHistoryElement(controller, history, idx);
         }
 
         protected void SelectPreviousShape()
         {
-            BaseController controller = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var controller = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
             var history = controllerSelectElementsHistory[controller];
 
-            if (history.Count > 1)
+            if (history.Count <= 1) return;
+            var idx = controllerHistoryIndex[controller] - 1;
+            if (idx < 0)
             {
-                int idx = controllerHistoryIndex[controller] - 1;
-
-                if (idx < 0)
-                {
-                    idx = history.Count - 1;
-                }
-
-                SelectHistoryElement(controller, history, idx);
+                idx = history.Count - 1;
             }
+
+            SelectHistoryElement(controller, history, idx);
         }
 
         protected void SelectHistoryElement(BaseController controller, List<GraphicElement> history, int idx)
@@ -544,12 +531,12 @@ namespace FlowSharpEditService
 
         protected void ResetSelectedElementNavigator()
         {
-            BaseController controller = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var controller = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
 
             // TODO: Sometimes on startup in the debugger the controller isn't initialized yet.
             if ((controller?.SelectedElements?.Count ?? 0) == 1)
             {
-                List<GraphicElement> selectedElementHistory = controllerSelectElementsHistory[controller];
+                var selectedElementHistory = controllerSelectElementsHistory[controller];
                 MoveSelectedElementToTopOfHistory(selectedElementHistory, controller.SelectedElements[0]);
                 controllerHistoryIndex[controller] = 0;
             }
@@ -564,7 +551,7 @@ namespace FlowSharpEditService
 
         protected void DoMove(Point dir)
         {
-            BaseController canvasController = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var canvasController = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
 
             // Always reset the snap controller before a keyboard move.  This ensures that, among other things, the running delta is zero'd.
             canvasController.SnapController.Reset();
@@ -601,15 +588,14 @@ namespace FlowSharpEditService
 
         protected void DoKeyboardSnapWithMove(Point dir)
         {
-            BaseController canvasController = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var canvasController = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
             canvasController.SnapController.DoUndoSnapActions(canvasController.UndoStack);
 
-            if (canvasController.SnapController.RunningDelta != Point.Empty)
-            {
-                Point delta = canvasController.SnapController.RunningDelta;     // for closure
-                bool ignoreSnapCheck = canvasController.IsSnapToBeIgnored;      // for closure
+            if (canvasController.SnapController.RunningDelta == Point.Empty) return;
+            var delta = canvasController.SnapController.RunningDelta;     // for closure
+            var ignoreSnapCheck = canvasController.IsSnapToBeIgnored;     // for closure
 
-                canvasController.UndoStack.UndoRedo(
+            canvasController.UndoStack.UndoRedo(
                 "KeyboardMove",
                 () => { },  // Doing is already done.
                 () =>
@@ -620,14 +606,13 @@ namespace FlowSharpEditService
                 },
                 true,
                 () => canvasController.DragSelectedElements(delta)
-                );
-            }
+            );
         }
 
         protected void DoJustKeyboardMove(Point dir)
         {
-            BaseController canvasController = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            bool ignoreSnapCheck = canvasController.IsSnapToBeIgnored;      // for closure
+            var canvasController = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var ignoreSnapCheck = canvasController.IsSnapToBeIgnored;      // for closure
             canvasController.UndoStack.UndoRedo(
             "KeyboardMove",
             () => canvasController.DragSelectedElements(dir),
@@ -642,13 +627,13 @@ namespace FlowSharpEditService
 
         protected bool CanStartEditing(Keys keyData)
         {
-            bool ret = false;
+            var ret = false;
 
             if (((keyData & Keys.Control) != Keys.Control) &&              // any control + key is not valid
                  ((keyData & Keys.Alt) != Keys.Alt) &&                       // any alt + key is not valid
                  ((keyData & Keys.Delete) != Keys.Delete))                  // DEL key is not valid, as it's assigned to deleting a shape
             {
-                Keys k2 = (keyData & ~(Keys.Control | Keys.Shift | Keys.ShiftKey | Keys.Alt | Keys.Menu));
+                var k2 = (keyData & ~(Keys.Control | Keys.Shift | Keys.ShiftKey | Keys.Alt | Keys.Menu));
 
                 if ((k2 != Keys.None) && (k2 < Keys.F1 || k2 > Keys.F12))
                 {
@@ -674,29 +659,21 @@ namespace FlowSharpEditService
         {
             BaseController canvasController = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
 
-            if (editBox != null)
-            {
-                editBox.KeyPress -= OnEditBoxKey;
-                string oldVal = shapeBeingEdited.Text;
-                string newVal = editBox.Text;
-                TextBox tb = editBox;
-                editBox = null;     // set editBox to null so the remove, which fires a LoseFocus event, doesn't call into TerminateEditing again!
-                shapeBeingEdited.EndEdit(newVal, oldVal);
-                canvasController.Canvas.Controls.Remove(tb);
-            }
+            if (editBox == null) return;
+            editBox.KeyPress -= OnEditBoxKey;
+            var oldVal = shapeBeingEdited.Text;
+            var newVal = editBox.Text;
+            var tb = editBox;
+            editBox = null;     // set editBox to null so the remove, which fires a LoseFocus event, doesn't call into TerminateEditing again!
+            shapeBeingEdited.EndEdit(newVal, oldVal);
+            canvasController.Canvas.Controls.Remove(tb);
         }
 
         protected int GetSavePoint(BaseController controller)
         {
-            int ret;
-
-            if (!savePoints.TryGetValue(controller, out ret))
-            {
-                savePoints[controller] = 0;
-                ret = 0;
-            }
-
-            return ret;
+            if (savePoints.TryGetValue(controller, out var ret)) return ret;
+            savePoints[controller] = 0;
+            return 0;
         }
 
         protected void SetSavePoint(BaseController controller)

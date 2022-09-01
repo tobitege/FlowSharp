@@ -6,21 +6,19 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 using Microsoft.CSharp;
 
-using Clifton.Core.Assertions;
 using Clifton.Core.ExtensionMethods;
 using Clifton.Core.ModuleManagement;
 using Clifton.Core.ServiceManagement;
 
-using FlowSharpCodeDrakonShapes;
 using FlowSharpCodeServiceInterfaces;
 using FlowSharpCodeShapeInterfaces;
 using FlowSharpServiceInterfaces;
 using FlowSharpLib;
+// ReSharper disable UnusedMember.Local
 
 namespace FlowSharpCodeCompilerService
 {
@@ -32,8 +30,8 @@ namespace FlowSharpCodeCompilerService
         /// </summary>
         public static string RightOfMatching(this string src, char p1, char p2)
         {
-            int count = 0;
-            int idx = 0;
+            var count = 0;
+            var idx = 0;
 
             while (idx < src.Length)
             {
@@ -61,7 +59,7 @@ namespace FlowSharpCodeCompilerService
                 ++idx;
             }
 
-            string ret = (idx < src.Length) ? src.Substring(idx) : String.Empty;
+            var ret = (idx < src.Length) ? src.Substring(idx) : string.Empty;
 
             return ret;
         }
@@ -132,10 +130,10 @@ namespace FlowSharpCodeCompilerService
         [DllImport("user32.dll")]
         static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
-        private const int SW_HIDE = 0;
-        private const int SW_SHOW = 5;
+        //private const int SW_HIDE = 0;
+        //private const int SW_SHOW = 5;
 
-        protected Dictionary<string, string> tempToTextBoxMap = new Dictionary<string, string>();
+        protected readonly Dictionary<string, string> tempToTextBoxMap = new Dictionary<string, string>();
         protected string exeFilename;
         protected CompilerResults results;
         protected Process runningProcess;
@@ -161,7 +159,7 @@ namespace FlowSharpCodeCompilerService
             }
 
             // If no errors:
-            if (!results.Errors.HasErrors)
+            if (results != null && !results.Errors.HasErrors)
             {
                 runningProcess = fscSvc.LaunchProcess(exeFilename, null,
                     stdout => outputWindow.WriteLine(stdout),
@@ -254,36 +252,36 @@ namespace FlowSharpCodeCompilerService
 
         protected void InsertCodeInRunWorkflowMethod(GraphicElement root, StringBuilder code)
         {
-			ICSharpClass cls = (ICSharpClass)root;
+            var cls = (ICSharpClass)root;
 
-			string existingCode = String.Empty;
-			// TODO: Verify that root.Json["Code"] defines the namespace, class, and stub, or figure out how to include "using" and field initialization and properties such that 
-			// we can create the namespace, class, and stub for the user.
-			if (root.Json.ContainsKey("Code"))
-			{
-				existingCode = root.Json["Code"];
-			}
+            //string existingCode;
+            // TODO: Verify that root.Json["Code"] defines the namespace, class, and stub, or figure out how to include "using" and field initialization and properties such that
+            // we can create the namespace, class, and stub for the user.
+            //if (root.Json.ContainsKey("Code"))
+            //{
+            //    existingCode = root.Json["Code"];
+            //}
 
-			//string before = existingCode.LeftOf("void RunWorkflow()");
-			//string after = existingCode.RightOf("void RunWorkflow()").RightOfMatching('{', '}');
-			//StringBuilder finalCode = new StringBuilder(before);
-			StringBuilder finalCode = new StringBuilder();
-			finalCode.AppendLine("using System;");
-			finalCode.AppendLine("using System.Linq;");
-			finalCode.AppendLine();
+            //string before = existingCode.LeftOf("void RunWorkflow()");
+            //string after = existingCode.RightOf("void RunWorkflow()").RightOfMatching('{', '}');
+            //StringBuilder finalCode = new StringBuilder(before);
+            var finalCode = new StringBuilder();
+            finalCode.AppendLine("using System;");
+            finalCode.AppendLine("using System.Linq;");
+            finalCode.AppendLine();
 
-			finalCode.AppendLine("namespace " + cls.NamespaceName);
-			finalCode.AppendLine("{");
-			finalCode.AppendLine("    public partial class " + cls.ClassName);
-			finalCode.AppendLine("    {");
-			finalCode.AppendLine(new String(' ', 8) + "public void " + cls.MethodName + "()");
-			finalCode.AppendLine(new String(' ', 8) + "{");
-			finalCode.AppendLine(new String(' ', 12) + code.ToString().Trim());
-			finalCode.AppendLine(new String(' ', 8) + "}");
-			finalCode.AppendLine("    }");
-			finalCode.AppendLine("}");
-			// finalCode.Append(after);
-			root.Json["Code"] = finalCode.ToString();
+            finalCode.AppendLine("namespace " + cls.NamespaceName);
+            finalCode.AppendLine("{");
+            finalCode.AppendLine("    public partial class " + cls.ClassName);
+            finalCode.AppendLine("    {");
+            finalCode.AppendLine(new string(' ', 8) + "public void " + cls.MethodName + "()");
+            finalCode.AppendLine(new string(' ', 8) + "{");
+            finalCode.AppendLine(new string(' ', 12) + code.ToString().Trim());
+            finalCode.AppendLine(new string(' ', 8) + "}");
+            finalCode.AppendLine("    }");
+            finalCode.AppendLine("}");
+            // finalCode.Append(after);
+            root.Json["Code"] = finalCode.ToString();
         }
 
         protected bool HasDrakonShapes(BaseController canvasController, GraphicElement elClass)
@@ -430,17 +428,17 @@ namespace FlowSharpCodeCompilerService
 
         protected void GenerateCodeForWorkflow(IFlowSharpCodeService codeService, StringBuilder sb, GraphicElement el, int indent)
         {
-            string strIndent = new String('\t', indent);
+            var strIndent = new string('\t', indent);
 
             while (el != null)
             {
-                if ( (el is IIfBox) )
+                if (el is IIfBox elBox)
                 {
 
                     // True clause
-                    var elTrue = codeService.GetTruePathFirstShape((IIfBox)el);
+                    var elTrue = codeService.GetTruePathFirstShape(elBox);
                     // False clause
-                    var elFalse = codeService.GetFalsePathFirstShape((IIfBox)el);
+                    var elFalse = codeService.GetFalsePathFirstShape(elBox);
 
                     if (elTrue != null)
                     {
@@ -471,7 +469,6 @@ namespace FlowSharpCodeCompilerService
 
                     // TODO: How to join back up with workflows that rejoin from if-then-else?
                     break;
-
                 }
                 else
                 {
@@ -487,38 +484,36 @@ namespace FlowSharpCodeCompilerService
             tempToTextBoxMap.ForEach(kvp => File.Delete(kvp.Key));
         }
 
-        private void MnuRun_Click(object sender, EventArgs e)
-        {
-            // Ever compiled?
-            if (results == null || results.Errors.HasErrors)
-            {
-                Compile();
-            }
+        //private void MnuRun_Click(object sender, EventArgs e)
+        //{
+        //    // Ever compiled?
+        //    if (results == null || results.Errors.HasErrors)
+        //    {
+        //        Compile();
+        //    }
 
-            // If no errors:
-            if (!results.Errors.HasErrors)
-            {
-                //ProcessStartInfo psi = new ProcessStartInfo(exeFilename);
-                //psi.UseShellExecute = true;     // must be true if we want to keep a console window open.
-                Process p = Process.Start(exeFilename);
-                //p.WaitForExit();
-                //p.Close();
-                //Type program = compiledAssembly.GetType("WebServerDemo.Program");
-                //MethodInfo main = program.GetMethod("Main");
-                //main.Invoke(null, null);
-            }
-        }
+        //    // If no errors:
+        //    if (results != null && !results.Errors.HasErrors)
+        //    {
+        //        //ProcessStartInfo psi = new ProcessStartInfo(exeFilename);
+        //        //psi.UseShellExecute = true;     // must be true if we want to keep a console window open.
+        //        var p = Process.Start(exeFilename);
+        //        //p.WaitForExit();
+        //        //p.Close();
+        //        //Type program = compiledAssembly.GetType("WebServerDemo.Program");
+        //        //MethodInfo main = program.GetMethod("Main");
+        //        //main.Invoke(null, null);
+        //    }
+        //}
 
         protected bool CompileAssemblies(BaseController canvasController, List<GraphicElement> compiledAssemblies)
         {
-            bool ok = true;
-
-            foreach (GraphicElement elAssy in canvasController.Elements.Where(el => el is IAssemblyBox))
+            foreach (var elAssy in canvasController.Elements.Where(el => el is IAssemblyBox))
             {
                 CompileAssembly(canvasController, elAssy, compiledAssemblies);
             }
 
-            return ok;
+            return true;
         }
 
         protected string CompileAssembly(BaseController canvasController, GraphicElement elAssy, List<GraphicElement> compiledAssemblies)
@@ -530,17 +525,17 @@ namespace FlowSharpCodeCompilerService
                 // Add now, so we don't accidentally recurse infinitely.
                 compiledAssemblies.Add(elAssy);
 
-                List<GraphicElement> referencedAssemblies = GetReferencedAssemblies(elAssy);
-                List<string> refs = new List<string>();
+                var referencedAssemblies = GetReferencedAssemblies(elAssy);
+                var refs = new List<string>();
 
                 // Recurse into referenced assemblies that need compiling first.
-                foreach (GraphicElement el in referencedAssemblies)
+                foreach (var el in referencedAssemblies)
                 {
-                    string refAssy = CompileAssembly(canvasController, el, compiledAssemblies);
+                    var refAssy = CompileAssembly(canvasController, el, compiledAssemblies);
                     refs.Add(refAssy);
                 }
 
-                List<string> sources = GetSources(canvasController, elAssy);
+                var sources = GetSources(canvasController, elAssy);
                 Compile(assyFilename, sources, refs);
             }
 
@@ -549,28 +544,24 @@ namespace FlowSharpCodeCompilerService
 
         protected List<GraphicElement> GetReferencedAssemblies(GraphicElement elAssy)
         {
-            List<GraphicElement> refs = new List<GraphicElement>();
+            var refs = new List<GraphicElement>();
 
             // TODO: Qualify EndConnectedShape as being IAssemblyBox
-            elAssy.Connections.Where(c => (c.ToElement is Connector) && ((Connector)c.ToElement).EndCap == AvailableLineCap.Arrow).ForEach(c =>
+            elAssy.Connections.Where(c => (c.ToElement is Connector con) && con.EndCap == AvailableLineCap.Arrow).ForEach(c =>
             {
                 // Connector endpoint will reference ourselves, so exclude.
-                if (((Connector)c.ToElement).EndConnectedShape != elAssy)
-                {
-                    GraphicElement toAssy = ((Connector)c.ToElement).EndConnectedShape;
-                    refs.Add(toAssy);
-                }
+                if (((Connector)c.ToElement).EndConnectedShape == elAssy) return;
+                var toAssy = ((Connector)c.ToElement).EndConnectedShape;
+                refs.Add(toAssy);
             });
 
             // TODO: Qualify EndConnectedShape as being IAssemblyBox
-            elAssy.Connections.Where(c => (c.ToElement is Connector) && ((Connector)c.ToElement).StartCap == AvailableLineCap.Arrow).ForEach(c =>
+            elAssy.Connections.Where(c => (c.ToElement is Connector con) && con.StartCap == AvailableLineCap.Arrow).ForEach(c =>
             {
                 // Connector endpoint will reference ourselves, so exclude.
-                if (((Connector)c.ToElement).StartConnectedShape != elAssy)
-                {
-                    GraphicElement toAssy = ((Connector)c.ToElement).StartConnectedShape;
-                    refs.Add(toAssy);
-                }
+                if (((Connector)c.ToElement).StartConnectedShape == elAssy) return;
+                var toAssy = ((Connector)c.ToElement).StartConnectedShape;
+                refs.Add(toAssy);
             });
 
             return refs;
@@ -578,14 +569,14 @@ namespace FlowSharpCodeCompilerService
 
         protected bool Compile(string assyFilename, List<string> sources, List<string> refs, bool generateExecutable = false)
         {
-            bool ok = false;
-
-            CSharpCodeProvider provider = new CSharpCodeProvider();
-            CompilerParameters parameters = new CompilerParameters();
-
-            parameters.IncludeDebugInformation = true;
-            parameters.GenerateInMemory = false;
-            parameters.GenerateExecutable = generateExecutable;
+            var provider = new CSharpCodeProvider();
+            var parameters = new CompilerParameters
+            {
+                IncludeDebugInformation = true,
+                GenerateInMemory = false,
+                GenerateExecutable = generateExecutable,
+                OutputAssembly = assyFilename
+            };
 
             parameters.ReferencedAssemblies.Add("System.dll");
             parameters.ReferencedAssemblies.Add("System.Core.dll");
@@ -600,7 +591,6 @@ namespace FlowSharpCodeCompilerService
             // parameters.ReferencedAssemblies.Add("Clifton.Core.dll");
             // parameters.ReferencedAssemblies.Add("websocket-sharp.dll");
             parameters.ReferencedAssemblies.AddRange(refs.ToArray());
-            parameters.OutputAssembly = assyFilename;
 
             if (generateExecutable)
             {
@@ -610,29 +600,26 @@ namespace FlowSharpCodeCompilerService
             // results = provider.CompileAssemblyFromSource(parameters, sources.ToArray());
 
             results = provider.CompileAssemblyFromFile(parameters, sources.ToArray());
-            ok = !results.Errors.HasErrors;
 
-            if (results.Errors.HasErrors)
+            if (!results.Errors.HasErrors) return true;
+            var sb = new StringBuilder();
+
+            foreach (CompilerError error in results.Errors)
             {
-                StringBuilder sb = new StringBuilder();
-
-                foreach (CompilerError error in results.Errors)
+                try
                 {
-                    try
-                    {
-                        sb.AppendLine(String.Format("Error ({0} - {1}): {2}", tempToTextBoxMap[Path.GetFileNameWithoutExtension(error.FileName.RemoveWhitespace()) + ".cs"], error.Line, error.ErrorText));
-                    }
-                    catch
-                    {
-                        sb.AppendLine(error.ErrorText);     // other errors, like "process in use", do not have an associated filename, so general catch-all here.
-                    }
+                    sb.AppendLine($"Error ({tempToTextBoxMap[Path.GetFileNameWithoutExtension(error.FileName.RemoveWhitespace()) + ".cs"]} - {error.Line}): {error.ErrorText}");
                 }
-
-                // MessageBox.Show(sb.ToString(), assyFilename, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                ServiceManager.Get<IFlowSharpCodeOutputWindowService>().WriteLine(sb.ToString());
+                catch
+                {
+                    sb.AppendLine(error.ErrorText);     // other errors, like "process in use", do not have an associated filename, so general catch-all here.
+                }
             }
 
-            return ok;
+            // MessageBox.Show(sb.ToString(), assyFilename, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            ServiceManager.Get<IFlowSharpCodeOutputWindowService>().WriteLine(sb.ToString());
+
+            return false;
         }
 
         protected List<IAssemblyReferenceBox> GetReferences(BaseController canvasController)
@@ -650,9 +637,9 @@ namespace FlowSharpCodeCompilerService
         /// </summary>
         protected List<GraphicElement> GetSources(BaseController canvasController)
         {
-            List<GraphicElement> sourceList = new List<GraphicElement>();
+            var sourceList = new List<GraphicElement>();
 
-            foreach (GraphicElement srcEl in canvasController.Elements.Where(
+            foreach (var srcEl in canvasController.Elements.Where(
                 srcEl => !ContainedIn<IAssemblyBox>(canvasController, srcEl) &&
                 !(srcEl is IFileBox)))
             {
@@ -672,11 +659,11 @@ namespace FlowSharpCodeCompilerService
         /// </summary>
         protected List<string> GetSources(BaseController canvasController, GraphicElement elAssy)
         {
-            List<string> sourceList = new List<string>();
+            var sourceList = new List<string>();
 
             foreach (GraphicElement srcEl in canvasController.Elements.Where(srcEl => elAssy.DisplayRectangle.Contains(srcEl.DisplayRectangle)))
             {
-                string filename = Path.GetFileNameWithoutExtension(Path.GetTempFileName()) + ".cs";
+                var filename = Path.GetFileNameWithoutExtension(Path.GetTempFileName()) + ".cs";
                 tempToTextBoxMap[filename] = srcEl.Text.RemoveWhitespace();
                 File.WriteAllText(filename, GetCode(srcEl));
                 sourceList.Add(filename);
@@ -687,8 +674,7 @@ namespace FlowSharpCodeCompilerService
 
         protected string GetCode(GraphicElement el)
         {
-            string code;
-            el.Json.TryGetValue("Code", out code);
+            el.Json.TryGetValue("Code", out var code);
 
             return code ?? "";
         }

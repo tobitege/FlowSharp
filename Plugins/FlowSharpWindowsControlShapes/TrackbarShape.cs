@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -23,7 +23,7 @@ namespace FlowSharpWindowsControlShapes
 
         public TrackbarShape(Canvas canvas) : base(canvas)
         {
-            TrackBar tb = new TrackBar();
+            var tb = new TrackBar();
             control = tb;
             canvas.Controls.Add(control);
             tb.ValueChanged += OnValueChanged;
@@ -53,23 +53,19 @@ namespace FlowSharpWindowsControlShapes
         public override void Deserialize(ElementPropertyBag epb)
         {
             base.Deserialize(epb);
-            string name;
-
-            if (Json.TryGetValue("ValueChangedName", out name))
+            if (Json.TryGetValue("ValueChangedName", out var name))
             {
                 ValueChangedName = name;
             }
 
-            string data;
-
-            if (Json.TryGetValue("Minimum", out data))
+            if (Json.TryGetValue("Minimum", out var data))
             {
-                Minimum = data.to_i();
+                Minimum = data.To_i();
             }
 
             if (Json.TryGetValue("Maximum", out data))
             {
-                Maximum = data.to_i();
+                Maximum = data.To_i();
             }
         }
 
@@ -84,7 +80,7 @@ namespace FlowSharpWindowsControlShapes
         public override void Draw(Graphics gr, bool showSelection = true)
         {
             base.Draw(gr, showSelection);
-            Rectangle r = ZoomRectangle.Grow(-4);
+            var r = ZoomRectangle.Grow(-4);
             ((TrackBar)control).Minimum = Minimum;
             ((TrackBar)control).Maximum = Maximum;
             control.Location = r.Location;
@@ -100,7 +96,7 @@ namespace FlowSharpWindowsControlShapes
     {
         public const string TOOLBOX_TEXT = "trckbar";
 
-        protected Brush brush = new SolidBrush(Color.Black);
+        protected readonly Brush brush = new SolidBrush(Color.Black);
 
         public ToolboxTrackbarShape(Canvas canvas) : base(canvas)
         {
@@ -108,14 +104,14 @@ namespace FlowSharpWindowsControlShapes
             TextFont = new Font(FontFamily.GenericSansSerif, 8);
         }
 
-        public override GraphicElement CloneDefault(Canvas canvas)
+        public override GraphicElement CloneDefault(Canvas canv)
         {
-            return CloneDefault(canvas, Point.Empty);
+            return CloneDefault(canv, Point.Empty);
         }
 
-        public override GraphicElement CloneDefault(Canvas canvas, Point offset)
+        public override GraphicElement CloneDefault(Canvas canv, Point offset)
         {
-            TrackbarShape shape = new TrackbarShape(canvas);
+            var shape = new TrackbarShape(canv);
             shape.DisplayRectangle = shape.DefaultRectangle().Move(offset);
             shape.UpdateProperties();
             shape.UpdatePath();
@@ -125,8 +121,8 @@ namespace FlowSharpWindowsControlShapes
 
         public override void Draw(Graphics gr, bool showSelection = true)
         {
-            SizeF size = gr.MeasureString(TOOLBOX_TEXT, TextFont);
-            Point textpos = DisplayRectangle.Center().Move((int)(-size.Width / 2), (int)(-size.Height / 2));
+            var size = gr.MeasureString(TOOLBOX_TEXT, TextFont);
+            var textpos = DisplayRectangle.Center().Move((int)(-size.Width / 2), (int)(-size.Height / 2));
             gr.DrawString(TOOLBOX_TEXT, TextFont, brush, textpos);
             base.Draw(gr, showSelection);
         }

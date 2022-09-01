@@ -33,21 +33,21 @@ namespace FlowSharpCodeService
         private const string LANGUAGE_HTML = "HTML";
         private const string LANGUAGE_CSS = "CSS";
 
-        protected ToolStripMenuItem mnuCSharp = new ToolStripMenuItem() { Name = "mnuCSharp", Text = "C#" };
-        protected ToolStripMenuItem mnuPython = new ToolStripMenuItem() { Name = "mnuPython", Text = "Python" };
-        protected ToolStripMenuItem mnuJavascript = new ToolStripMenuItem() { Name = "mnuJavascript", Text = "JavaScript" };
-        protected ToolStripMenuItem mnuHtml = new ToolStripMenuItem() { Name = "mnuHtml", Text = "Html" };
-        protected ToolStripMenuItem mnuCss = new ToolStripMenuItem() { Name = "mnuCss", Text = "Css" };
-        protected ToolStripMenuItem mnuOutput = new ToolStripMenuItem() { Name = "mnuOutput", Text = "Output" };
+        protected readonly ToolStripMenuItem mnuCSharp = new ToolStripMenuItem() { Name = "mnuCSharp", Text = "C#" };
+        protected readonly ToolStripMenuItem mnuPython = new ToolStripMenuItem() { Name = "mnuPython", Text = "Python" };
+        protected readonly ToolStripMenuItem mnuJavascript = new ToolStripMenuItem() { Name = "mnuJavascript", Text = "JavaScript" };
+        protected readonly ToolStripMenuItem mnuHtml = new ToolStripMenuItem() { Name = "mnuHtml", Text = "Html" };
+        protected readonly ToolStripMenuItem mnuCss = new ToolStripMenuItem() { Name = "mnuCss", Text = "Css" };
+        protected readonly ToolStripMenuItem mnuOutput = new ToolStripMenuItem() { Name = "mnuOutput", Text = "Output" };
 
         protected Dictionary<string, int> fileCaretPos = new Dictionary<string, int>();
 
         public override void FinishedInitialization()
         {
             base.FinishedInitialization();
-            IFlowSharpService fss = ServiceManager.Get<IFlowSharpService>();
-            IFlowSharpCodeEditorService ces = ServiceManager.Get<IFlowSharpCodeEditorService>();
-            IFlowSharpScintillaEditorService ses = ServiceManager.Get<IFlowSharpScintillaEditorService>();
+            var fss = ServiceManager.Get<IFlowSharpService>();
+            var ces = ServiceManager.Get<IFlowSharpCodeEditorService>();
+            var ses = ServiceManager.Get<IFlowSharpScintillaEditorService>();
             fss.FlowSharpInitialized += OnFlowSharpInitialized;
             fss.ContentResolver += OnContentResolver;
             fss.NewCanvas += OnNewCanvas;
@@ -60,46 +60,28 @@ namespace FlowSharpCodeService
 
         public GraphicElement FindStartOfWorkflow(BaseController canvasController, GraphicElement wf)
         {
-            GraphicElement start = canvasController.Elements.Where(srcEl => wf.DisplayRectangle.Contains(srcEl.DisplayRectangle) &&
-                    !srcEl.IsConnector &&
-                    !srcEl.Connections.Any(c => 
-                        new GripType[] { GripType.TopMiddle, GripType.LeftMiddle, GripType.RightMiddle }
+            var start = canvasController.Elements.FirstOrDefault(srcEl => wf.DisplayRectangle.Contains(srcEl.DisplayRectangle) &&
+                !srcEl.IsConnector &&
+                !srcEl.Connections.Any(c =>
+                    new[] { GripType.TopMiddle, GripType.LeftMiddle, GripType.RightMiddle }
                         .Contains(c.ElementConnectionPoint.Type)) &&
-                    srcEl.Connections.Any(c =>
-                        new GripType[] { GripType.BottomMiddle }
-                        .Contains(c.ElementConnectionPoint.Type))).FirstOrDefault();
+                srcEl.Connections.Any(c =>
+                    new[] { GripType.BottomMiddle }
+                        .Contains(c.ElementConnectionPoint.Type)));
 
             return start;
         }
 
         protected GripType[] GetTrueConnections(IIfBox el)
         {
-            GripType[] path;
-
-            if (el.TruePath == TruePath.Down)
-            {
-                path = new GripType[] { GripType.BottomMiddle };
-            }
-            else
-            {
-                path = new GripType[] { GripType.LeftMiddle, GripType.RightMiddle };
-            }
+            var path = el.TruePath == TruePath.Down ? new[] { GripType.BottomMiddle } : new[] { GripType.LeftMiddle, GripType.RightMiddle };
 
             return path;
         }
 
         protected GripType[] GetFalseConnections(IIfBox el)
         {
-            GripType[] path;
-
-            if (el.TruePath == TruePath.Down)
-            {
-                path = new GripType[] { GripType.LeftMiddle, GripType.RightMiddle };
-            }
-            else
-            {
-                path = new GripType[] { GripType.BottomMiddle };
-            }
+            var path = el.TruePath == TruePath.Down ? new[] { GripType.LeftMiddle, GripType.RightMiddle } : new[] { GripType.BottomMiddle };
 
             return path;
         }
@@ -107,9 +89,9 @@ namespace FlowSharpCodeService
         // True path is always the bottom of the diamond.
         public GraphicElement GetTruePathFirstShape(IIfBox el)
         {
-            GripType[] path = GetTrueConnections(el);
+            var path = GetTrueConnections(el);
             GraphicElement trueStart = null;
-            Connection connection = ((GraphicElement)el).Connections.FirstOrDefault(c => path.Contains(c.ElementConnectionPoint.Type));
+            var connection = ((GraphicElement)el).Connections.FirstOrDefault(c => path.Contains(c.ElementConnectionPoint.Type));
 
             if (connection != null)
             {
@@ -122,9 +104,9 @@ namespace FlowSharpCodeService
         // False path is always the left or right point of the diamond.
         public GraphicElement GetFalsePathFirstShape(IIfBox el)
         {
-            GripType[] path = GetFalseConnections(el);
+            var path = GetFalseConnections(el);
             GraphicElement falseStart = null;
-            Connection connection = ((GraphicElement)el).Connections.FirstOrDefault(c => path.Contains(c.ElementConnectionPoint.Type));
+            var connection = ((GraphicElement)el).Connections.FirstOrDefault(c => path.Contains(c.ElementConnectionPoint.Type));
 
             if (connection != null)
             {
@@ -160,7 +142,7 @@ namespace FlowSharpCodeService
 
         public Process LaunchProcess(string processName, string arguments, Action<string> onOutput, Action<string> onError = null)
         {
-            Process p = new Process();
+            var p = new Process();
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = true;
             p.StartInfo.RedirectStandardError = true;
@@ -216,77 +198,71 @@ namespace FlowSharpCodeService
                     }
                 }
 
-                // All these if's.  Yuck.
-                if (el is IBeginForLoopBox)
+                switch (el)
                 {
-                    var drakonLoop = new DrakonLoop() { Code = ParseCode(el) };
-                    dcg.AddInstruction(drakonLoop);
-                    var nextEl = codeService.NextElementInWorkflow(el);
-
-					if (nextEl != null)
-					{
-						el = ParseDrakonWorkflow(drakonLoop.LoopInstructions, codeService, canvasController, nextEl);
-					}
-					else
-					{
-						// TODO: error -- there are no further elements after the beginning for loop box!
-						ServiceManager.Get<IFlowSharpCodeOutputWindowService>().WriteLine("Error: Drakon start 'for' loop does not have any statements!");
-						return el;
-					}
-                }
-                else if (el is IEndForLoopBox)
-                {
-                    return el;
-                }
-                else if (el is IIfBox)
-                {
-                    var drakonIf = new DrakonIf() { Code = ParseCode(el) };
-                    dcg.AddInstruction(drakonIf);
-
-                    var elTrue = codeService.GetTruePathFirstShape((IIfBox)el);
-                    var elFalse = codeService.GetFalsePathFirstShape((IIfBox)el);
-
-                    if (elTrue != null)
+                    // All these if's.  Yuck.
+                    case IBeginForLoopBox _:
                     {
-                        ParseDrakonWorkflow(drakonIf.TrueInstructions, codeService, canvasController, elTrue, true);
-                    }
+                        var drakonLoop = new DrakonLoop() { Code = ParseCode(el) };
+                        dcg.AddInstruction(drakonLoop);
+                        var nextEl = codeService.NextElementInWorkflow(el);
 
-                    if (elFalse != null)
+                        if (nextEl != null)
+                        {
+                            el = ParseDrakonWorkflow(drakonLoop.LoopInstructions, codeService, canvasController, nextEl);
+                        }
+                        else
+                        {
+                            // TODO: error -- there are no further elements after the beginning for loop box!
+                            ServiceManager.Get<IFlowSharpCodeOutputWindowService>().WriteLine("Error: Drakon start 'for' loop does not have any statements!");
+                            return el;
+                        }
+
+                        break;
+                    }
+                    case IEndForLoopBox _:
+                        return el;
+                    case IIfBox elBox:
                     {
-                        ParseDrakonWorkflow(drakonIf.FalseInstructions, codeService, canvasController, elFalse, true);
+                        var drakonIf = new DrakonIf() { Code = ParseCode(el) };
+                        dcg.AddInstruction(drakonIf);
+
+                        var elTrue = codeService.GetTruePathFirstShape(elBox);
+                        var elFalse = codeService.GetFalsePathFirstShape(elBox);
+
+                        if (elTrue != null)
+                        {
+                            ParseDrakonWorkflow(drakonIf.TrueInstructions, codeService, canvasController, elTrue, true);
+                        }
+
+                        if (elFalse != null)
+                        {
+                            ParseDrakonWorkflow(drakonIf.FalseInstructions, codeService, canvasController, elFalse, true);
+                        }
+                        // dcg.AddInstruction(new DrakonEndIf());
+                        break;
                     }
-
-                    // dcg.AddInstruction(new DrakonEndIf());
+                    case IOutputBox _:
+                        dcg.AddInstruction(new DrakonOutput() { Code = ParseCode(el) });
+                        break;
+                    default:
+                        dcg.AddInstruction(new DrakonStatement() { Code = ParseCode(el) });
+                        break;
                 }
-                else if (el is IOutputBox)
-                {
-                    dcg.AddInstruction(new DrakonOutput() { Code = ParseCode(el) });
-                }
-                else
-                {
-                    dcg.AddInstruction(new DrakonStatement() { Code = ParseCode(el) });
-                }
-
                 el = codeService.NextElementInWorkflow(el);
             }
-
             return null;
         }
 
         protected string ParseCode(GraphicElement el)
         {
-            string ret;
-
             // TODO: This is a mess.  Imagine what it will look like when we add more languages!
-            if (!el.Json.TryGetValue("python", out ret))
+            if (el.Json.TryGetValue("python", out var ret)) return ret;
+            if (!el.Json.TryGetValue("Code", out ret))
             {
-                if (!el.Json.TryGetValue("Code", out ret))
-                {
-                    // Replace crlf with space and if element has 'python" code in Json, use that instead.
-                    ret = el.Text.Replace("\r", "").Replace("\n", " ");
-                }
+                // Replace crlf with space and if element has 'python" code in Json, use that instead.
+                ret = el.Text.Replace("\r", "").Replace("\n", " ");
             }
-
             return ret;
         }
 
@@ -397,32 +373,25 @@ namespace FlowSharpCodeService
 
         protected IDockDocument CreateCSharpEditor()
         {
-            IDockingFormService dockingService = ServiceManager.Get<IDockingFormService>();
+            var dockingService = ServiceManager.Get<IDockingFormService>();
             // Panel dock = dockingService.DockPanel;
-            Control d = FindDocument(dockingService, FlowSharpCodeServiceInterfaces.Constants.META_SCINTILLA_EDITOR);
+            var d = FindDocument(dockingService, FlowSharpCodeServiceInterfaces.Constants.META_SCINTILLA_EDITOR);
 
             if (d == null)
             {
-                Control docCanvas = FindDocument(dockingService, FlowSharpServiceInterfaces.Constants.META_CANVAS);
+                var docCanvas = FindDocument(dockingService, FlowSharpServiceInterfaces.Constants.META_CANVAS);
 
-                if (docCanvas == null)
-                {
-                    csDocEditor = dockingService.CreateDocument(DockState.Document, "C# Editor", FlowSharpCodeServiceInterfaces.Constants.META_CSHARP_EDITOR);
-                }
-                else
-                {
-                    csDocEditor = dockingService.CreateDocument(docCanvas, DockAlignment.Bottom, "C# Editor", FlowSharpCodeServiceInterfaces.Constants.META_CSHARP_EDITOR, 0.50);
-                }
+                csDocEditor = docCanvas == null ? dockingService.CreateDocument(DockState.Document, "C# Editor", FlowSharpCodeServiceInterfaces.Constants.META_CSHARP_EDITOR) : dockingService.CreateDocument(docCanvas, DockAlignment.Bottom, "C# Editor", FlowSharpCodeServiceInterfaces.Constants.META_CSHARP_EDITOR, 0.50);
             }
             else
             {
                 csDocEditor = dockingService.CreateDocument(d, DockState.Document, "C# Editor", FlowSharpCodeServiceInterfaces.Constants.META_CSHARP_EDITOR);
             }
 
-            Control pnlCsCodeEditor = new Panel() { Dock = DockStyle.Fill };
+            var pnlCsCodeEditor = new Panel() { Dock = DockStyle.Fill };
             csDocEditor.Controls.Add(pnlCsCodeEditor);
 
-            IFlowSharpCodeEditorService csCodeEditorService = ServiceManager.Get<IFlowSharpCodeEditorService>();
+            var csCodeEditorService = ServiceManager.Get<IFlowSharpCodeEditorService>();
             csCodeEditorService.CreateEditor(pnlCsCodeEditor);
             csCodeEditorService.AddAssembly("Clifton.Core.dll");
 
@@ -431,9 +400,9 @@ namespace FlowSharpCodeService
 
         protected void CreateEditor(string language)
         {
-            Control docEditor = null;
-            IDockingFormService dockingService = ServiceManager.Get<IDockingFormService>();
-            Control d = FindDocument(dockingService, FlowSharpCodeServiceInterfaces.Constants.META_CSHARP_EDITOR);
+            Control docEditor;
+            var dockingService = ServiceManager.Get<IDockingFormService>();
+            var d = FindDocument(dockingService, FlowSharpCodeServiceInterfaces.Constants.META_CSHARP_EDITOR);
 
             if (d == null)
             {
@@ -443,14 +412,7 @@ namespace FlowSharpCodeService
                 {
                     d = FindDocument(dockingService, FlowSharpServiceInterfaces.Constants.META_CANVAS);
 
-                    if (d == null)
-                    {
-                        docEditor = dockingService.CreateDocument(DockState.Document, language + " Editor", FlowSharpCodeServiceInterfaces.Constants.META_SCINTILLA_EDITOR);
-                    }
-                    else
-                    {
-                        docEditor = dockingService.CreateDocument(d, DockAlignment.Bottom, language + " Editor", FlowSharpCodeServiceInterfaces.Constants.META_SCINTILLA_EDITOR, 0.50);
-                    }
+                    docEditor = d == null ? dockingService.CreateDocument(DockState.Document, language + " Editor", FlowSharpCodeServiceInterfaces.Constants.META_SCINTILLA_EDITOR) : dockingService.CreateDocument(d, DockAlignment.Bottom, language + " Editor", FlowSharpCodeServiceInterfaces.Constants.META_SCINTILLA_EDITOR, 0.50);
                 }
                 else
                 {
@@ -465,11 +427,13 @@ namespace FlowSharpCodeService
             // Panel dock = dockingService.DockPanel;
             // Interestingly, this uses the current document page, which, I guess because the C# editor was created first, means its using that pane.
             //Control pyDocEditor = dockingService.CreateDocument(DockState.Document, "Python Editor", FlowSharpCodeServiceInterfaces.Constants.META_PYTHON_EDITOR);
-            Control pnlCodeEditor = new Panel() { Dock = DockStyle.Fill, Tag = language };
-            docEditor.Controls.Add(pnlCodeEditor);
-            ((IDockDocument)docEditor).Metadata += "," + language;      // Add language to metadata so we know what editor to create.
-
-            IFlowSharpScintillaEditorService scintillaEditorService = ServiceManager.Get<IFlowSharpScintillaEditorService>();
+            var pnlCodeEditor = new Panel() { Dock = DockStyle.Fill, Tag = language };
+            if (docEditor != null)
+            {
+                docEditor.Controls.Add(pnlCodeEditor);
+                ((IDockDocument)docEditor).Metadata += "," + language; // Add language to metadata so we know what editor to create.
+            }
+            var scintillaEditorService = ServiceManager.Get<IFlowSharpScintillaEditorService>();
             scintillaEditorService.CreateEditor(pnlCodeEditor, language);
         }
 
@@ -483,7 +447,7 @@ namespace FlowSharpCodeService
             //Control pnlOutputWindow = new Panel() { Dock = DockStyle.Fill };
             //outputWindow.Controls.Add(pnlOutputWindow);
 
-            IFlowSharpCodeOutputWindowService outputWindowService = ServiceManager.Get<IFlowSharpCodeOutputWindowService>();
+            var outputWindowService = ServiceManager.Get<IFlowSharpCodeOutputWindowService>();
             outputWindowService.CreateOutputWindow();
             // outputWindowService.CreateOutputWindow(pnlOutputWindow);
         }
@@ -493,29 +457,29 @@ namespace FlowSharpCodeService
             switch (e.Metadata.LeftOf(","))
             {
                 case FlowSharpCodeServiceInterfaces.Constants.META_CSHARP_EDITOR:
-                    Panel pnlEditor = new Panel() { Dock = DockStyle.Fill, Tag = FlowSharpCodeServiceInterfaces.Constants.META_CSHARP_EDITOR};
+                    var pnlEditor = new Panel() { Dock = DockStyle.Fill, Tag = FlowSharpCodeServiceInterfaces.Constants.META_CSHARP_EDITOR};
                     e.DockContent.Controls.Add(pnlEditor);
                     e.DockContent.Text = "C# Editor";
-                    IFlowSharpCodeEditorService csCodeEditorService = ServiceManager.Get<IFlowSharpCodeEditorService>();
+                    var csCodeEditorService = ServiceManager.Get<IFlowSharpCodeEditorService>();
                     csCodeEditorService.CreateEditor(pnlEditor);
                     csCodeEditorService.AddAssembly("Clifton.Core.dll");
                     break;
 
                 case FlowSharpCodeServiceInterfaces.Constants.META_OUTPUT:
-                    Panel pnlOutputWindow = new Panel() { Dock = DockStyle.Fill, Tag = FlowSharpCodeServiceInterfaces.Constants.META_OUTPUT };
+                    var pnlOutputWindow = new Panel() { Dock = DockStyle.Fill, Tag = FlowSharpCodeServiceInterfaces.Constants.META_OUTPUT };
                     e.DockContent.Controls.Add(pnlOutputWindow);
                     e.DockContent.Text = "Output";
-                    IFlowSharpCodeOutputWindowService outputWindowService = ServiceManager.Get<IFlowSharpCodeOutputWindowService>();
+                    var outputWindowService = ServiceManager.Get<IFlowSharpCodeOutputWindowService>();
                     outputWindowService.CreateOutputWindow(pnlOutputWindow);
                     break;
 
                 case FlowSharpCodeServiceInterfaces.Constants.META_SCINTILLA_EDITOR:
-                    string language = e.Metadata.RightOf(",");
-                    Panel pnlCodeEditor = new Panel() { Dock = DockStyle.Fill, Tag = language };
+                    var language = e.Metadata.RightOf(",");
+                    var pnlCodeEditor = new Panel() { Dock = DockStyle.Fill, Tag = language };
                     e.DockContent.Controls.Add(pnlCodeEditor);
                     e.DockContent.Text = language.CamelCase() + " Editor";
 
-                    IFlowSharpScintillaEditorService scintillaEditorService = ServiceManager.Get<IFlowSharpScintillaEditorService>();
+                    var scintillaEditorService = ServiceManager.Get<IFlowSharpScintillaEditorService>();
                     scintillaEditorService.CreateEditor(pnlCodeEditor, language);
                     break;
             }
@@ -528,38 +492,35 @@ namespace FlowSharpCodeService
 
         protected void OnElementSelected(object controller, ElementEventArgs args)
         {
-            ElementProperties elementProperties = null;
-            IFlowSharpCodeEditorService csCodeEditorService = ServiceManager.Get<IFlowSharpCodeEditorService>();
-            IFlowSharpScintillaEditorService editorService = ServiceManager.Get<IFlowSharpScintillaEditorService>();
+            //ElementProperties elementProperties = null;
+            var csCodeEditorService = ServiceManager.Get<IFlowSharpCodeEditorService>();
+            var editorService = ServiceManager.Get<IFlowSharpScintillaEditorService>();
 
             if (args.Element != null)
             {
-                GraphicElement el = args.Element;
-                System.Diagnostics.Trace.WriteLine("*** ON ELEMENT SELECTED " + el.Id.ToString());
-                elementProperties = el.CreateProperties();
-                
-                if (!String.IsNullOrEmpty(csCodeEditorService.Filename))
+                var el = args.Element;
+                Trace.WriteLine("*** ON ELEMENT SELECTED " + el.Id.ToString());
+                el.CreateProperties();
+
+                if (!string.IsNullOrEmpty(csCodeEditorService.Filename))
                 {
                     // Save last position.
-                    int curpos = csCodeEditorService.GetPosition();
+                    var curpos = csCodeEditorService.GetPosition();
                     fileCaretPos[csCodeEditorService.Filename] = curpos;
-                    System.Diagnostics.Trace.WriteLine("*** " + csCodeEditorService.Filename + " => SET CURRENT POS: " + curpos);
+                    Trace.WriteLine("*** " + csCodeEditorService.Filename + " => SET CURRENT POS: " + curpos);
                 }
-                
-                string code;
-                el.Json.TryGetValue("Code", out code);
-                csCodeEditorService.SetText("C#", code ?? String.Empty);
 
-                string fn = el.Id.ToString();               // Use something that is unique for this shape's code.
-                System.Diagnostics.Trace.WriteLine("*** " + fn + " => SET ID");
+                el.Json.TryGetValue("Code", out var code);
+                csCodeEditorService.SetText("C#", code ?? string.Empty);
+
+                var fn = el.Id.ToString();               // Use something that is unique for this shape's code.
+                Trace.WriteLine("*** " + fn + " => SET ID");
                 csCodeEditorService.Filename = fn;
 
                 // Set the last known position if we have one.
-                int pos;
-
-                if (fileCaretPos.TryGetValue(fn, out pos))
+                if (fileCaretPos.TryGetValue(fn, out var pos))
                 {
-                    System.Diagnostics.Trace.WriteLine("*** " + fn + " => SET PREVIOUS POS: " + pos);
+                    Trace.WriteLine("*** " + fn + " => SET PREVIOUS POS: " + pos);
                     csCodeEditorService.SetPosition(pos);
                 }
                 else
@@ -570,12 +531,12 @@ namespace FlowSharpCodeService
                 }
 
                 el.Json.TryGetValue("python", out code);
-                editorService.SetText("python", code ?? String.Empty);
+                editorService.SetText("python", code ?? string.Empty);
             }
             else
             {
-                csCodeEditorService.SetText("C#", String.Empty);
-                editorService.SetText("python", String.Empty);
+                csCodeEditorService.SetText("C#", string.Empty);
+                editorService.SetText("python", string.Empty);
             }
         }
 
@@ -585,24 +546,20 @@ namespace FlowSharpCodeService
 
         protected void OnCSharpEditorServiceTextChanged(object sender, TextChangedEventArgs e)
         {
-            IFlowSharpCanvasService canvasService = ServiceManager.Get<IFlowSharpCanvasService>();
-            if (canvasService.ActiveController.SelectedElements.Count == 1)
-            {
-                GraphicElement el = canvasService.ActiveController.SelectedElements[0];
-                el.Json["Code"] = e.Text;           // Should we call this C# or CSharp?
-                el.Json["TextChanged"] = true.ToString();
-            }
+            var canvasService = ServiceManager.Get<IFlowSharpCanvasService>();
+            if (canvasService.ActiveController.SelectedElements.Count != 1) return;
+            var el = canvasService.ActiveController.SelectedElements[0];
+            el.Json["Code"] = e.Text;           // Should we call this C# or CSharp?
+            el.Json["TextChanged"] = true.ToString();
         }
 
         protected void OnScintillaEditorServiceTextChanged(object sender, TextChangedEventArgs e)
         {
-            IFlowSharpCanvasService canvasService = ServiceManager.Get<IFlowSharpCanvasService>();
-            if (canvasService.ActiveController.SelectedElements.Count == 1)
-            {
-                GraphicElement el = canvasService.ActiveController.SelectedElements[0];
-                el.Json[e.Language] = e.Text;         // TODO: Should we call this Script or something else?
-                el.Json["TextChanged"] = true.ToString();
-            }
+            var canvasService = ServiceManager.Get<IFlowSharpCanvasService>();
+            if (canvasService.ActiveController.SelectedElements.Count != 1) return;
+            var el = canvasService.ActiveController.SelectedElements[0];
+            el.Json[e.Language] = e.Text;         // TODO: Should we call this Script or something else?
+            el.Json["TextChanged"] = true.ToString();
         }
 
         /// <summary>
@@ -614,23 +571,18 @@ namespace FlowSharpCodeService
             Control ret = null;
 
             // dock.Controls[1].Controls[1].Controls[2].Metadata <- this is the toolbox
-            if ((ctrl is IDockDocument) && ((IDockDocument)ctrl).Metadata == tag)
+            if (ctrl is IDockDocument idoc && idoc.Metadata == tag)
             {
-                ret = ctrl;
+                return ctrl;
             }
-            else
+            foreach (Control c in ctrl.Controls)
             {
-                foreach (Control c in ctrl.Controls)
+                ret = FindPanel(c, tag);
+                if (ret != null)
                 {
-                    ret = FindPanel(c, tag);
-
-                    if (ret != null)
-                    {
-                        break;
-                    }
+                    break;
                 }
             }
-
             return ret;
         }
 

@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -33,33 +33,29 @@ namespace FlowSharpCodeShapes
 
         public void UpdateCodeBehind()
         {
-            string data = "";
-
+            var data = "";
             if (File.Exists(Filename))
             {
                 data = File.ReadAllText(Filename);
             }
-
             Json["python"] = data;
         }
 
-        public override GraphicElement CloneDefault(Canvas canvas)
+        public override GraphicElement CloneDefault(Canvas canv)
         {
-            GraphicElement el = base.CloneDefault(canvas);
+            var el = base.CloneDefault(canv);
             el.TextFont.Dispose();
             el.TextFont = new Font(FontFamily.GenericSansSerif, 10);
             el.TextAlign = ContentAlignment.TopLeft;
-
             return el;
         }
 
-        public override GraphicElement CloneDefault(Canvas canvas, Point offset)
+        public override GraphicElement CloneDefault(Canvas canv, Point offset)
         {
-            GraphicElement el = base.CloneDefault(canvas, offset);
+            GraphicElement el = base.CloneDefault(canv, offset);
             el.TextFont.Dispose();
             el.TextFont = new Font(FontFamily.GenericSansSerif, 10);
             el.TextAlign = ContentAlignment.TopLeft;
-
             return el;
         }
 
@@ -89,9 +85,7 @@ namespace FlowSharpCodeShapes
             // TODO: Use JSON dictionary instead.
             Filename = epb.ExtraData;
 
-            string strGenerateClass;
-
-            if (Json.TryGetValue("GenerateClass", out strGenerateClass))
+            if (Json.TryGetValue("GenerateClass", out var strGenerateClass))
             {
                 GenerateClass = Convert.ToBoolean(strGenerateClass);
             }
@@ -113,7 +107,7 @@ namespace FlowSharpCodeShapes
 
         public override void Update(GraphicElement el, string label)
         {
-            PythonFileBox box = (PythonFileBox)el;
+            var box = (PythonFileBox)el;
 
             (label == nameof(Filename)).If(() =>
             {

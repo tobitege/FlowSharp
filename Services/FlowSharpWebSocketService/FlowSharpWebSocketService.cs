@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -43,10 +43,10 @@ namespace FlowSharpWebSocketService
 
         public void StartServer()
         {
-            List<IPAddress> ips = GetLocalHostIPs();
-            string address = ips[0].ToString();
-            int port = 1100;
-            IPAddress ipaddr = new IPAddress(address.Split('.').Select(a => Convert.ToByte(a)).ToArray());
+            var ips = GetLocalHostIPs();
+            var address = ips[0].ToString();
+            var port = 1100;
+            var ipaddr = new IPAddress(address.Split('.').Select(a => Convert.ToByte(a)).ToArray());
             wss = new WebSocketServer(ipaddr, port, null);
             wss.AddWebSocketService<Server>("/flowsharp");
             wss.Start();
@@ -59,11 +59,8 @@ namespace FlowSharpWebSocketService
 
         protected List<IPAddress> GetLocalHostIPs()
         {
-            IPHostEntry host;
-            host = Dns.GetHostEntry(Dns.GetHostName());
-            List<IPAddress> ret = host.AddressList.Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToList();
-
-            return ret;
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            return host?.AddressList?.Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToList();
         }
     }
 
@@ -71,47 +68,42 @@ namespace FlowSharpWebSocketService
     {
         protected override void OnMessage(MessageEventArgs e)
         {
-            if (e.Type == Opcode.Text)
+            if (e.Type != Opcode.Text) return;
+            var msg = e.Data;
+            var data = ParseMessage(msg);
+            var jsonResp = PublishSemanticMessage(data);
+            if (!string.IsNullOrEmpty(jsonResp))
             {
-                string msg = e.Data;
-                Dictionary<string, string> data = ParseMessage(msg);
-                string jsonResp = PublishSemanticMessage(data);
-
-                if (jsonResp != null)
-                {
-                    Send(jsonResp);
-                }
+                Send(jsonResp);
             }
         }
 
         protected Dictionary<string, string> ParseMessage(string msg)
         {
-            Dictionary<string, string> data = new Dictionary<string, string>();
+            var data = new Dictionary<string, string>();
+            var dataPackets = msg.Split('&');
 
-            string[] dataPackets = msg.Split('&');
-
-            foreach (string dp in dataPackets)
+            foreach (var dp in dataPackets)
             {
-                string[] varValue = dp.Split('=');
+                var varValue = dp.Split('=');
                 data[varValue[0]] = varValue[1];
             }
-
             return data;
         }
 
         protected string PublishSemanticMessage(Dictionary<string, string> data)
         {
             string ret = null;
-            Type st = Type.GetType("FlowSharpServiceInterfaces." + data["cmd"] + ",FlowSharpServiceInterfaces");
-            ISemanticType t = Activator.CreateInstance(st) as ISemanticType;
+            var st = Type.GetType("FlowSharpServiceInterfaces." + data["cmd"] + ",FlowSharpServiceInterfaces");
+            var t = Activator.CreateInstance(st) as ISemanticType;
             PopulateType(t, data);
             // Synchronous, because however we're processing the commands in order, otherwise we lose the point of a web socket,
             // which keeps the messages in order.
             ServiceManager.Instance.Get<ISemanticProcessor>().ProcessInstance<FlowSharpMembrane>(t, true);
 
-            if (t is IHasResponse)
+            if (t is IHasResponse response)
             {
-                ret = ((IHasResponse)t).SerializeResponse();
+                ret = response.SerializeResponse();
             }
 
             return ret;
@@ -121,22 +113,18 @@ namespace FlowSharpWebSocketService
         {
             foreach (string key in data.Keys)
             {
-                PropertyInfo pi = packet.GetType().GetProperty(key, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                var pi = packet.GetType().GetProperty(key, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                if (pi == null) continue;
 
-                if (pi != null)
+                var ptype = pi.PropertyType;
+                if (ptype.IsGenericType)
                 {
-                    object valOfType = null;
-                    Type ptype = pi.PropertyType;
-
-                    if (ptype.IsGenericType)
-                    {
-                        // We assume it's a nullable type
-                        ptype = ptype.GenericTypeArguments[0];
-                    }
-
-                    valOfType = Convert.ChangeType(Uri.UnescapeDataString(data[key].Replace('+', ' ')), ptype);
-                    pi.SetValue(packet, valOfType);
+                    // We assume it's a nullable type
+                    ptype = ptype.GenericTypeArguments[0];
                 }
+
+                var valOfType = Convert.ChangeType(Uri.UnescapeDataString(data[key].Replace('+', ' ')), ptype);
+                pi.SetValue(packet, valOfType);
             }
         }
     }

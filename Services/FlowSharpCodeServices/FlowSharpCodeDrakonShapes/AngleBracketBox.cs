@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -45,9 +45,7 @@ namespace FlowSharpCodeDrakonShapes
         {
             base.Deserialize(epb);
 
-            string truePath;
-
-            if (Json.TryGetValue("TruePath", out truePath))
+            if (Json.TryGetValue("TruePath", out var truePath))
             {
                 TruePath = (TruePath)Enum.Parse(typeof(TruePath), truePath);
             }
@@ -57,12 +55,12 @@ namespace FlowSharpCodeDrakonShapes
         {
             path = new Point[]
             {
-                new Point(ZoomRectangle.X + INDENT_SIZE, ZoomRectangle.Y),                                                            // top left of indented left "arrow"
-                new Point(ZoomRectangle.X + ZoomRectangle.Width - INDENT_SIZE,    ZoomRectangle.Y),                                // top right of indented right "arrow"
-                new Point(ZoomRectangle.X + ZoomRectangle.Width, ZoomRectangle.Y + ZoomRectangle.Height/2),                     // right tip (middle of box)
-                new Point(ZoomRectangle.X + ZoomRectangle.Width - INDENT_SIZE, ZoomRectangle.Y + ZoomRectangle.Height),         // bottom right of indented right "arrow"
-                new Point(ZoomRectangle.X + INDENT_SIZE, ZoomRectangle.Y + ZoomRectangle.Height),                                  // bottom left of indented left "arrow"
-                new Point(ZoomRectangle.X, ZoomRectangle.Y + ZoomRectangle.Height/2),                                                            // middle left of indented left "arrow"
+                new Point(ZoomRectangle.X + INDENT_SIZE, ZoomRectangle.Y),                                               // top left of indented left "arrow"
+                new Point(ZoomRectangle.X + ZoomRectangle.Width - INDENT_SIZE,    ZoomRectangle.Y),                      // top right of indented right "arrow"
+                new Point(ZoomRectangle.X + ZoomRectangle.Width, ZoomRectangle.Y + ZoomRectangle.Height/2),              // right tip (middle of box)
+                new Point(ZoomRectangle.X + ZoomRectangle.Width - INDENT_SIZE, ZoomRectangle.Y + ZoomRectangle.Height),  // bottom right of indented right "arrow"
+                new Point(ZoomRectangle.X + INDENT_SIZE, ZoomRectangle.Y + ZoomRectangle.Height),                        // bottom left of indented left "arrow"
+                new Point(ZoomRectangle.X, ZoomRectangle.Y + ZoomRectangle.Height/2),                                    // middle left of indented left "arrow"
             };
         }
 
@@ -94,7 +92,7 @@ namespace FlowSharpCodeDrakonShapes
 
         public override GraphicElement CloneDefault(Canvas canvas, Point offset)
         {
-            AngleBracketBox shape = new AngleBracketBox(canvas);
+            var shape = new AngleBracketBox(canvas);
             shape.DisplayRectangle = shape.DefaultRectangle().Move(offset);
             shape.UpdateProperties();
             shape.UpdatePath();
@@ -106,12 +104,12 @@ namespace FlowSharpCodeDrakonShapes
         {
             path = new Point[]
             {
-                new Point(DisplayRectangle.X + INDENT_SIZE, DisplayRectangle.Y + V_ADJ),                                                                  // top left of indented left "arrow"
-                new Point(DisplayRectangle.X + DisplayRectangle.Width - INDENT_SIZE, DisplayRectangle.Y + V_ADJ),                                         // top right of indented right "arrow"
-                new Point(DisplayRectangle.X + DisplayRectangle.Width, DisplayRectangle.Y + DisplayRectangle.Height/2),                                   // right tip (middle of box)
-                new Point(DisplayRectangle.X + DisplayRectangle.Width - INDENT_SIZE, DisplayRectangle.Y + DisplayRectangle.Height - V_ADJ),               // bottom right of indented right "arrow"
-                new Point(DisplayRectangle.X + INDENT_SIZE, DisplayRectangle.Y + DisplayRectangle.Height - V_ADJ),                                        // bottom left of indented left "arrow"
-                new Point(DisplayRectangle.X, DisplayRectangle.Y + DisplayRectangle.Height/2),                                                            // middle left of indented left "arrow"
+                new Point(DisplayRectangle.X + INDENT_SIZE, DisplayRectangle.Y + V_ADJ),                                                       // top left of indented left "arrow"
+                new Point(DisplayRectangle.X + DisplayRectangle.Width - INDENT_SIZE, DisplayRectangle.Y + V_ADJ),                              // top right of indented right "arrow"
+                new Point(DisplayRectangle.X + DisplayRectangle.Width, DisplayRectangle.Y + DisplayRectangle.Height/2),                        // right tip (middle of box)
+                new Point(DisplayRectangle.X + DisplayRectangle.Width - INDENT_SIZE, DisplayRectangle.Y + DisplayRectangle.Height - V_ADJ),    // bottom right of indented right "arrow"
+                new Point(DisplayRectangle.X + INDENT_SIZE, DisplayRectangle.Y + DisplayRectangle.Height - V_ADJ),                             // bottom left of indented left "arrow"
+                new Point(DisplayRectangle.X, DisplayRectangle.Y + DisplayRectangle.Height/2),                                                 // middle left of indented left "arrow"
             };
         }
 

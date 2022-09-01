@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -28,7 +28,7 @@ namespace FlowSharpMenuService
             lbShapes.Items.AddRange(navNames.ToArray());
         }
 
-        private void lbShapes_KeyPress(object sender, KeyPressEventArgs e)
+        private void LbShapes_KeyPress(object sender, KeyPressEventArgs e)
         {
             switch (e.KeyChar)
             {
@@ -46,7 +46,7 @@ namespace FlowSharpMenuService
             }
         }
 
-        private void lbShapes_MouseClick(object sender, MouseEventArgs e)
+        private void LbShapes_MouseClick(object sender, MouseEventArgs e)
         {
             Close();
             GraphicElement shape = ((NavigateToShape)lbShapes.SelectedItem).Shape;

@@ -329,9 +329,10 @@ namespace FlowSharpService
         protected void OnActiveDocumentChanged(object document)
         {
             if (loading) return;
-            var ctrl = document as Control;
+            if (!(document is Control ctrl && ctrl.Controls?.Count > 0))
+                return;
 
-            if (ctrl != null && ctrl.Controls.Count == 1 && ((IDockDocument)document).Metadata.LeftOf(",") == Constants.META_CANVAS)
+            if (((IDockDocument)document).Metadata.LeftOf(",") == Constants.META_CANVAS)
             {
                 // System.Diagnostics.Trace.WriteLine("*** Document Changed");
                 var child = ctrl.Controls[0];
@@ -344,8 +345,7 @@ namespace FlowSharpService
 
         protected void OnDocumentClosing(object document)
         {
-            var ctrl = document as Control;
-            if (ctrl?.Controls.Count != 1)
+            if (!(document is Control ctrl && ctrl.Controls?.Count > 0))
                 return;
 
             switch(((IDockDocument)document).Metadata.LeftOf(","))

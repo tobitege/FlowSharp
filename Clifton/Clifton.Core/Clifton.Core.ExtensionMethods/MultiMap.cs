@@ -63,15 +63,13 @@ namespace Clifton.Core.ExtensionMethods
         /// <param name="value">The value.</param>
         public void Add(TKey key, TValue value)
         {
-            HashSet<TValue> container = null;
-            if (!this.TryGetValue(key, out container))
+            if (!this.TryGetValue(key, out var container))
             {
                 container = new HashSet<TValue>();
                 base.Add(key, container);
             }
             container.Add(value);
         }
-
 
         /// <summary>
         /// Determines whether this dictionary contains the specified value for the specified key 
@@ -81,15 +79,13 @@ namespace Clifton.Core.ExtensionMethods
         /// <returns>true if the value is stored for the specified key in this dictionary, false otherwise</returns>
         public bool ContainsValue(TKey key, TValue value)
         {
-            bool toReturn = false;
-            HashSet<TValue> values = null;
-            if (this.TryGetValue(key, out values))
+            var toReturn = false;
+            if (this.TryGetValue(key, out var values))
             {
                 toReturn = values.Contains(value);
             }
             return toReturn;
         }
-
 
         /// <summary>
         /// Removes the specified value for the specified key. It will leave the key in the dictionary.
@@ -98,8 +94,7 @@ namespace Clifton.Core.ExtensionMethods
         /// <param name="value">The value.</param>
         public void Remove(TKey key, TValue value)
         {
-            HashSet<TValue> container = null;
-            if (this.TryGetValue(key, out container))
+            if (this.TryGetValue(key, out var container))
             {
                 container.Remove(value);
                 if (container.Count <= 0)
@@ -108,7 +103,6 @@ namespace Clifton.Core.ExtensionMethods
                 }
             }
         }
-
 
         /// <summary>
         /// Merges the specified multivaluedictionary into this instance.
@@ -143,8 +137,7 @@ namespace Clifton.Core.ExtensionMethods
         /// </returns>
         public HashSet<TValue> GetValues(TKey key, bool returnEmptySet)
         {
-            HashSet<TValue> toReturn = null;
-            if (!base.TryGetValue(key, out toReturn) && returnEmptySet)
+            if (!base.TryGetValue(key, out var toReturn) && returnEmptySet)
             {
                 toReturn = new HashSet<TValue>();
             }

@@ -11,7 +11,6 @@ using Clifton.Core.Semantics;
 using Clifton.Core.ServiceManagement;
 using Clifton.WinForm.ServiceInterfaces;
 
-using FlowSharpServiceInterfaces;
 using FlowSharpCodeServiceInterfaces;
 
 namespace FlowSharpCodeScintillaEditorService
@@ -42,7 +41,7 @@ namespace FlowSharpCodeScintillaEditorService
 
         // Only one editor per language is allowed.
         // TODO: How would we handle multiple editors of the same language, associated with two or more shapes?
-        protected Dictionary<string, ScintillaEditor> editors;      
+        protected Dictionary<string, ScintillaEditor> editors;
 
         public ScintillaCodeEditorService()
         {
@@ -52,13 +51,13 @@ namespace FlowSharpCodeScintillaEditorService
         public override void FinishedInitialization()
         {
             base.FinishedInitialization();
-            IDockingFormService dockingService = ServiceManager.Get<IDockingFormService>();
+            var dockingService = ServiceManager.Get<IDockingFormService>();
             dockingService.DocumentClosing += (sndr, args) => OnDocumentClosing(sndr);
         }
 
         public void CreateEditor(Control parent, string language)
         {
-            ScintillaEditor editor = null;
+            ScintillaEditor editor;
 
             switch (language.ToLower())
             {
@@ -76,7 +75,10 @@ namespace FlowSharpCodeScintillaEditorService
 
                 case "css":
                     editor = CreateEditor<CssEditor>(parent);
-                    break;                
+                    break;
+
+                default:
+                    return;
             }
 
             editor.Language = language.ToLower();
@@ -88,9 +90,7 @@ namespace FlowSharpCodeScintillaEditorService
             // TODO: Set the focus to the appropriate editor.
             // If the editor doesn't exist, create it.
 
-            ScintillaEditor editor;
-
-            if (editors.TryGetValue(language.ToLower(), out editor))
+            if (editors.TryGetValue(language.ToLower(), out var editor))
             {
                 editor.Text = text;
             }
@@ -138,25 +138,23 @@ namespace FlowSharpCodeScintillaEditorService
 
         protected void Closed(string language)
         {
-            ScintillaEditor editor;
-
-            if (editors.TryGetValue(language.ToLower(), out editor))
-            {
-                editor.ContainerParent.Controls.Remove(editor);
-                editors.Remove(language.ToLower());
-                ServiceManager.Get<IFlowSharpCodeService>().EditorWindowClosed(language);
-            }
+            if (!editors.TryGetValue(language.ToLower(), out var editor)) return;
+            editor.ContainerParent.Controls.Remove(editor);
+            editors.Remove(language.ToLower());
+            ServiceManager.Get<IFlowSharpCodeService>().EditorWindowClosed(language);
         }
 
         protected void OnDocumentClosing(object document)
         {
-            Control ctrl = document as Control;
+            if (!(document is Control ctrl)) return;
 
-            if ((ctrl != null && ctrl.Controls.Count == 1) && 
-                (((IDockDocument)document).Metadata.LeftOf(",") == FlowSharpCodeServiceInterfaces.Constants.META_SCINTILLA_EDITOR))
+            if (ctrl.Controls.Count != 1 ||
+                (((IDockDocument)document).Metadata.LeftOf(",") != Constants.META_SCINTILLA_EDITOR))
+                return;
+            if (ctrl.Controls[0].Controls.Count > 0 &&
+                ctrl.Controls[0].Controls[0] is ScintillaEditor edi)
             {
-                string language = ((ctrl.Controls[0].Controls[0]) as ScintillaEditor).Language;
-                Closed(language);
+                Closed(edi.Language);
             }
         }
     }

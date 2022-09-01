@@ -69,7 +69,7 @@ namespace FlowSharpLib
             { _name = name; _action = action; _done = false; _finishGroup = finishGroup; }
             DoOrUndo _action;
             bool _done; // debug check
-                        // To group a series of actions into one undo command, _finishGroup should 
+                        // To group a series of actions into one undo command, _finishGroup should
                         // be false on all actions except the final one.
             bool _finishGroup;
             string _name;
@@ -82,8 +82,8 @@ namespace FlowSharpLib
             public Command WithSeparatorFlag(bool finishGroup) { var copy = this; copy._finishGroup = finishGroup; return copy; }
         }
 
-        protected Stack<Command> _undoStack = new Stack<Command>();
-        protected Stack<Command> _redoStack = new Stack<Command>();
+        protected readonly Stack<Command> _undoStack = new Stack<Command>();
+        protected readonly Stack<Command> _redoStack = new Stack<Command>();
 
         public virtual void ClearStacks()
         {
@@ -111,9 +111,10 @@ namespace FlowSharpLib
         }
 
         /// <summary>Executes an action and adds it to the undo stack.</summary>
+        /// <param name="name">Name</param>
         /// <param name="action">Action to take. Initially called with an argument of true.</param>
         /// <param name="finishGroup">If you want to group multiple actions together
-        /// so that one undo command undoes all of them, this parameter should be 
+        /// so that one undo command undoes all of them, this parameter should be
         /// true only on the last action.</param>
         /// <remarks>If there are any actions on the tentative stack, they are accepted
         /// and grouped with this new action.</remarks>
@@ -121,59 +122,49 @@ namespace FlowSharpLib
         {
             Performing = ActionState.Do;
 
-            if (action != null)
-            {
-                AcceptTentativeAction(false);
-                _undoStack.Push(new Command(name, action, finishGroup).Do());
-                _redoStack.Clear();
-                AfterAction.Fire(this, EventArgs.Empty);
-                // AfterAction(true);
-            }
+            if (action == null) return;
+            AcceptTentativeAction(false);
+            _undoStack.Push(new Command(name, action, finishGroup).Do());
+            _redoStack.Clear();
+            AfterAction.Fire(this, EventArgs.Empty);
+            // AfterAction(true);
         }
 
         public void FinishGroup(bool finish = true)
         {
-            if (_undoStack.Count > 0)
-            {
-                _undoStack.Push(_undoStack.Pop().WithSeparatorFlag(finish));
-                AfterAction.Fire(this, EventArgs.Empty);
-            }
+            if (_undoStack.Count <= 0) return;
+            _undoStack.Push(_undoStack.Pop().WithSeparatorFlag(finish));
+            AfterAction.Fire(this, EventArgs.Empty);
         }
 
         public virtual bool Undo(bool run = true)
         {
             Performing = ActionState.Undo;
             UndoTentativeAction();
-            if (_undoStack.Count == 0)
-                return false;
-            if (run)
+            if (_undoStack.Count == 0) return false;
+            if (!run) return true;
+            do
             {
-                do
-                {
-                    _redoStack.Push(_undoStack.Pop().Undo());
-                } while (_undoStack.Count != 0 && !_undoStack.Peek().FinishGroup);
+                _redoStack.Push(_undoStack.Pop().Undo());
+            } while (_undoStack.Count != 0 && !_undoStack.Peek().FinishGroup);
 
-                AfterAction.Fire(this, EventArgs.Empty);
-                // AfterAction(false);
-            }
+            AfterAction.Fire(this, EventArgs.Empty);
+            // AfterAction(false);
             return true;
         }
 
         public virtual bool Redo(bool run = true)
         {
             Performing = ActionState.Redo;
-            if (_redoStack.Count == 0)
-                return false;
-            if (run)
+            if (_redoStack.Count == 0) return false;
+            if (!run) return true;
+            do
             {
-                do
-                {
-                    _undoStack.Push(_redoStack.Pop().Redo());
-                } while (!_undoStack.Peek().FinishGroup);
+                _undoStack.Push(_redoStack.Pop().Redo());
+            } while (!_undoStack.Peek().FinishGroup);
 
-                AfterAction.Fire(this, EventArgs.Empty);
-                // AfterAction(true);
-            }
+            AfterAction.Fire(this, EventArgs.Empty);
+            // AfterAction(true);
             return true;
         }
 
@@ -185,31 +176,28 @@ namespace FlowSharpLib
 
         /// <summary>Performs an action without clearing the redo stack.</summary>
         /// <remarks>All tentative actions pending at the same time are placed
-        /// in the same undo group. Call <see cref="AcceptTentativeAction"/> or 
-        /// <see cref="Do"/> to finalize, or <see cref="UndoTetativeAction"/> to
-        /// undo.
+        /// in the same undo group. Call <see cref="AcceptTentativeAction"/> or
+        /// <see cref="Do"/> to finalize, or <see cref="UndoTentativeAction"/> to
+        /// undo.</remarks>
         public virtual void DoTentatively(DoOrUndo action)
         {
             _tempStack.Push(new Command("", action, false).Do());
             // AfterAction(true);
         }
-        /// <summary>If tentative action(s) have been performed, they are now added 
+        /// <summary>If tentative action(s) have been performed, they are now added
         /// to the undo stack and the redo stack is cleared.</summary>
         /// <param name="finish">Whether the tentative action is completed
         /// (if so, further actions are placed in a new undo group)</param>
         public bool AcceptTentativeAction(bool finish = true)
         {
-            if (_tempStack.Count > 0)
-            {
-                _tempStack.Push(_tempStack.Pop().WithSeparatorFlag(finish));
+            if (_tempStack.Count <= 0) return false;
+            _tempStack.Push(_tempStack.Pop().WithSeparatorFlag(finish));
 
-                _redoStack.Clear();
-                foreach (var item in _tempStack)
-                    _undoStack.Push(item);
-                _tempStack.Clear();
-                return true;
-            }
-            return false;
+            _redoStack.Clear();
+            foreach (var item in _tempStack)
+                _undoStack.Push(item);
+            _tempStack.Clear();
+            return true;
         }
 
         /// <summary>Undoes any temporary actions performed with <see cref="DoTentatively"/>.</summary>

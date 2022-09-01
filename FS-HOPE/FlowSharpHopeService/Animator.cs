@@ -52,8 +52,10 @@ namespace FlowSharpHopeService
 
             if (ShowAnimation)
             {
-                CarrierShape carrier = new CarrierShape(canvasController.Canvas);
-                carrier.DisplayRectangle = new Rectangle(elSrc.DisplayRectangle.Center().X, elSrc.DisplayRectangle.Center().Y, 10, 10);
+                var carrier = new CarrierShape(canvasController.Canvas)
+                {
+                    DisplayRectangle = new Rectangle(elSrc.DisplayRectangle.Center().X, elSrc.DisplayRectangle.Center().Y, 10, 10)
+                };
 
                 canvasController.Canvas.FindForm().BeginInvoke(() =>
                 {

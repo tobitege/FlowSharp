@@ -13,6 +13,9 @@ using System.Windows.Forms;
 using Newtonsoft.Json;
 
 using Clifton.Core.ExtensionMethods;
+// ReSharper disable NotAccessedVariable
+// ReSharper disable RedundantAssignment
+// ReSharper disable InconsistentNaming
 
 namespace FlowSharpLib
 {
@@ -27,6 +30,7 @@ namespace FlowSharpLib
 
     public class PropertiesChangedEventArgs : EventArgs
     {
+        // ReSharper disable once UnusedAutoPropertyAccessor.Global
         public GraphicElement GraphicElement { get; protected set; }
 
         public PropertiesChangedEventArgs(GraphicElement el)
@@ -256,17 +260,17 @@ namespace FlowSharpLib
             return UpdateRectangle.Contains(p);
         }
 
-        public virtual GraphicElement CloneDefault(Canvas canvas)
+        public virtual GraphicElement CloneDefault(Canvas canv)
         {
-            return CloneDefault(canvas, Point.Empty);
+            return CloneDefault(canv, Point.Empty);
         }
 
         /// <summary>
         /// Clone onto the specified canvas the default shape.
         /// </summary>
-        public virtual GraphicElement CloneDefault(Canvas canvas, Point offset)
+        public virtual GraphicElement CloneDefault(Canvas canv, Point offset)
         {
-            var el = (GraphicElement)Activator.CreateInstance(GetType(), new object[] { canvas });
+            var el = (GraphicElement)Activator.CreateInstance(GetType(), new object[] { canv });
             el.DisplayRectangle = el.DefaultRectangle();
             el.Move(offset);
             el.UpdateProperties();
@@ -277,7 +281,7 @@ namespace FlowSharpLib
 
         public virtual TextBox CreateTextBox(Point mousePosition)
         {
-            TextBox tb = new TextBox
+            var tb = new TextBox
             {
                 Multiline = Multiline,
                 WordWrap = false
@@ -362,7 +366,7 @@ namespace FlowSharpLib
             Id = epb.Id;
             Visible = epb.Visible;
 
-            if (!String.IsNullOrEmpty(epb.Json))
+            if (!string.IsNullOrEmpty(epb.Json))
             {
                 Json = JsonConvert.DeserializeObject<Dictionary<string, string>>(epb.Json);
             }
@@ -380,7 +384,7 @@ namespace FlowSharpLib
             TextAlign = epb.TextAlign == 0 ? ContentAlignment.MiddleCenter : epb.TextAlign;
             Multiline = epb.Multiline;
             TextFont.Dispose();
-            FontStyle fontStyle = (epb.TextFontUnderline ? FontStyle.Underline : FontStyle.Regular) | (epb.TextFontItalic ? FontStyle.Italic : FontStyle.Regular) | (epb.TextFontStrikeout ? FontStyle.Strikeout : FontStyle.Regular) | (epb.TextFontBold ? FontStyle.Bold : FontStyle.Regular); ;
+            var fontStyle = (epb.TextFontUnderline ? FontStyle.Underline : FontStyle.Regular) | (epb.TextFontItalic ? FontStyle.Italic : FontStyle.Regular) | (epb.TextFontStrikeout ? FontStyle.Strikeout : FontStyle.Regular) | (epb.TextFontBold ? FontStyle.Bold : FontStyle.Regular);
             TextFont = new Font(epb.TextFontFamily, epb.TextFontSize, fontStyle);
 
             HasCornerAnchors = epb.HasCornerAnchors;
@@ -450,9 +454,9 @@ namespace FlowSharpLib
             // Connections.SingleOrDefault(c=>c.ElementConnectionPoint.Type == gr)
         }
 
-        public virtual void SetCanvas(Canvas canvas)
+        public virtual void SetCanvas(Canvas canv)
         {
-            this.canvas = canvas;
+            this.canvas = canv;
         }
 
         public virtual void Erase()
@@ -462,7 +466,7 @@ namespace FlowSharpLib
 
         public virtual void Draw()
         {
-            Graphics gr = canvas.AntiAliasGraphics;
+            var gr = canvas.AntiAliasGraphics;
 
             if (Visible)
             {
@@ -474,7 +478,7 @@ namespace FlowSharpLib
 
                 // Draw text before anchors and CP's, otherwise centered text will overlay
                 // on top of any center anchor/CP.
-                if (!String.IsNullOrEmpty(Text))
+                if (!string.IsNullOrEmpty(Text))
                 {
                     DrawText(gr);
                 }
@@ -517,18 +521,18 @@ namespace FlowSharpLib
 
         public virtual ShapeAnchor GetBottomRightAnchor()
         {
-            Size anchorSize = new Size(anchorWidthHeight, anchorWidthHeight);
-            Rectangle r = new Rectangle(ZoomRectangle.BottomRightCorner().Move(-anchorWidthHeight, -anchorWidthHeight), anchorSize);
-            ShapeAnchor anchor = new ShapeAnchor(GripType.BottomRight, r, Cursors.SizeNWSE);
+            var anchorSize = new Size(anchorWidthHeight, anchorWidthHeight);
+            var r = new Rectangle(ZoomRectangle.BottomRightCorner().Move(-anchorWidthHeight, -anchorWidthHeight), anchorSize);
+            var anchor = new ShapeAnchor(GripType.BottomRight, r, Cursors.SizeNWSE);
 
             return anchor;
         }
 
         public virtual List<ShapeAnchor> GetAnchors()
         {
-            List<ShapeAnchor> anchors = new List<ShapeAnchor>();
+            var anchors = new List<ShapeAnchor>();
             Rectangle r;
-            Size anchorSize = new Size(anchorWidthHeight, anchorWidthHeight);
+            var anchorSize = new Size(anchorWidthHeight, anchorWidthHeight);
 
             if (HasCornerAnchors)
             {
@@ -569,7 +573,7 @@ namespace FlowSharpLib
 
         public virtual List<ConnectionPoint> GetConnectionPoints()
         {
-            List<ConnectionPoint> connectionPoints = new List<ConnectionPoint>();
+            var connectionPoints = new List<ConnectionPoint>();
 
             if (HasCornerConnections)
             {
@@ -631,21 +635,19 @@ namespace FlowSharpLib
         public void UpdateZoomRectangle()
         {
             // TODO: canvas controller is null when saving as PNG!
-            if (canvas.Controller != null)
-            {
-                double dz = canvas.Controller.Zoom / 100.0;
+            if (canvas.Controller == null) return;
+            double dz = canvas.Controller.Zoom / 100.0;
 
-                ZoomRectangle = new Rectangle(
-                    (int)(DisplayRectangle.X * dz),
-                    (int)(DisplayRectangle.Y * dz),
-                    (int)(DisplayRectangle.Width * dz),
-                    (int)(DisplayRectangle.Height * dz));
-            }
+            ZoomRectangle = new Rectangle(
+                (int)(DisplayRectangle.X * dz),
+                (int)(DisplayRectangle.Y * dz),
+                (int)(DisplayRectangle.Width * dz),
+                (int)(DisplayRectangle.Height * dz));
         }
 
         protected void InternalUpdateScreen(int ix, int iy)
         {
-            Rectangle r = canvas.Clip(UpdateRectangle.Grow(ix, iy));
+            var r = canvas.Clip(UpdateRectangle.Grow(ix, iy));
 
             if (canvas.OnScreen(r))
             {
@@ -655,14 +657,12 @@ namespace FlowSharpLib
 
         protected void InternalErase()
         {
-            if (canvas.OnScreen(backgroundRectangle))
-            {
-                Trace.WriteLine("Shape:Erase " + ToString());
-                background?.Erase(canvas, backgroundRectangle);
-                // canvas.Graphics.DrawRectangle(selectionPen, backgroundRectangle);
-                background?.Dispose();
-                background = null;
-            }
+            if (!canvas.OnScreen(backgroundRectangle)) return;
+            Trace.WriteLine("Shape:Erase " + ToString());
+            background?.Erase(canvas, backgroundRectangle);
+            // canvas.Graphics.DrawRectangle(selectionPen, backgroundRectangle);
+            background?.Dispose();
+            background = null;
         }
 
 
@@ -686,37 +686,21 @@ namespace FlowSharpLib
 
         protected virtual void DrawSelection(Graphics gr)
         {
-            if (BorderPen.Color.ToArgb() == selectionPen.Color.ToArgb())
-            {
-                Rectangle r = ZoomRectangle;
-                gr.DrawRectangle(altSelectionPen, r);
-            }
-            else
-            {
-                Rectangle r = ZoomRectangle;
-                gr.DrawRectangle(selectionPen, r);
-            }
+            var r = ZoomRectangle;
+            gr.DrawRectangle(BorderPen.Color.ToArgb() == selectionPen.Color.ToArgb() ? altSelectionPen : selectionPen, r);
         }
 
         protected virtual void DrawTag(Graphics gr)
         {
-            if (FillBrush.Color.ToArgb() == tagPen.Color.ToArgb())
-            {
-                Rectangle r = DisplayRectangle.Grow(-2);
-                gr.DrawRectangle(altTagPen, r);
-            }
-            else
-            {
-                Rectangle r = DisplayRectangle.Grow(-2);
-                gr.DrawRectangle(tagPen, r);
-            }
+            var r = DisplayRectangle.Grow(-2);
+            gr.DrawRectangle(FillBrush.Color.ToArgb() == tagPen.Color.ToArgb() ? altTagPen : tagPen, r);
         }
 
         // For illustration / debugging of what's being updated.
         protected virtual void DrawUpdateRectangle(Graphics gr)
         {
-            Pen pen = new Pen(Color.Gray);
-            Rectangle r = UpdateRectangle.Grow(-1);
+            var pen = new Pen(Color.Gray);
+            var r = UpdateRectangle.Grow(-1);
             gr.DrawRectangle(pen, r);
             pen.Dispose();
         }
@@ -757,7 +741,7 @@ namespace FlowSharpLib
 
         protected Point AdjustForZoom(Point p)
         {
-            Point ret = p;
+            var ret = p;
 
             // TODO: canvas.Controller is null when saving image as PNG!
             if (canvas.Controller != null && canvas.Controller.Zoom != 100)
@@ -770,8 +754,8 @@ namespace FlowSharpLib
 
         protected virtual void DrawBookmark(Graphics gr)
         {
-            Brush bookmarkBrush = new SolidBrush(Color.Green);
-            Rectangle r = UpdateRectangle;
+            var bookmarkBrush = new SolidBrush(Color.Green);
+            var r = UpdateRectangle;
             r.Width = 5;
             r.Height = 5;
             gr.FillRectangle(bookmarkBrush, r);
@@ -785,11 +769,10 @@ namespace FlowSharpLib
 
         protected virtual void DrawText(Graphics gr, string text, Font textFont, Color textColor, ContentAlignment textAlign)
         {
-            SizeF size = gr.MeasureString(text, textFont);
-            Brush brush = new SolidBrush(textColor);
-            Point textpos;
-            Font font = textFont;
-            bool disposeFont = false;
+            var size = gr.MeasureString(text, textFont);
+            var brush = new SolidBrush(textColor);
+            var font = textFont;
+            var disposeFont = false;
 
             // TODO: Should we just create the font and dispose it every time we draw?
             // TODO: canvas.Controller is null when we save the drawing as a PNG!
@@ -813,6 +796,7 @@ namespace FlowSharpLib
             //TextFormatFlags flags = TextFormatFlags.Right | TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak;
             //TextRenderer.DrawText(gr, Text, TextFont, DisplayRectangle, TextColor, flags);
 
+            Point textpos;
             switch (textAlign)
             {
                 case ContentAlignment.TopLeft:
@@ -856,7 +840,7 @@ namespace FlowSharpLib
                     break;
             }
 
-            TextFormatFlags tff = TextFormatFlags.Default;
+            var tff = TextFormatFlags.Default;
 
             switch (textAlign)
             {

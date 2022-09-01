@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.btnUpdate = new System.Windows.Forms.Button();
+            this.BtnUpdate = new System.Windows.Forms.Button();
             this.tvShapes = new System.Windows.Forms.TreeView();
             this.label2 = new System.Windows.Forms.Label();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
@@ -37,25 +37,25 @@
             this.ckShapeEvents = new System.Windows.Forms.CheckBox();
             this.ckRoutingEvents = new System.Windows.Forms.CheckBox();
             this.ckTraceEnabled = new System.Windows.Forms.CheckBox();
-            this.btnClearTrace = new System.Windows.Forms.Button();
+            this.BtnClearTrace = new System.Windows.Forms.Button();
             this.tbTrace = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
-            this.btnDelete = new System.Windows.Forms.Button();
+            this.BtnDelete = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             this.SuspendLayout();
             // 
-            // btnUpdate
+            // BtnUpdate
             // 
-            this.btnUpdate.Location = new System.Drawing.Point(515, 10);
-            this.btnUpdate.Name = "btnUpdate";
-            this.btnUpdate.Size = new System.Drawing.Size(75, 23);
-            this.btnUpdate.TabIndex = 2;
-            this.btnUpdate.Text = "Update";
-            this.btnUpdate.UseVisualStyleBackColor = true;
-            this.btnUpdate.Click += new System.EventHandler(this.btnUpdate_Click);
+            this.BtnUpdate.Location = new System.Drawing.Point(515, 10);
+            this.BtnUpdate.Name = "BtnUpdate";
+            this.BtnUpdate.Size = new System.Drawing.Size(75, 23);
+            this.BtnUpdate.TabIndex = 2;
+            this.BtnUpdate.Text = "Update";
+            this.BtnUpdate.UseVisualStyleBackColor = true;
+            this.BtnUpdate.Click += new System.EventHandler(this.BtnUpdate_Click);
             // 
             // tvShapes
             // 
@@ -85,11 +85,11 @@
             // 
             // splitContainer1.Panel1
             // 
-            this.splitContainer1.Panel1.Controls.Add(this.btnDelete);
+            this.splitContainer1.Panel1.Controls.Add(this.BtnDelete);
             this.splitContainer1.Panel1.Controls.Add(this.tbUndoEvents);
             this.splitContainer1.Panel1.Controls.Add(this.label3);
             this.splitContainer1.Panel1.Controls.Add(this.tvShapes);
-            this.splitContainer1.Panel1.Controls.Add(this.btnUpdate);
+            this.splitContainer1.Panel1.Controls.Add(this.BtnUpdate);
             this.splitContainer1.Panel1.Controls.Add(this.label2);
             // 
             // splitContainer1.Panel2
@@ -97,7 +97,7 @@
             this.splitContainer1.Panel2.Controls.Add(this.ckShapeEvents);
             this.splitContainer1.Panel2.Controls.Add(this.ckRoutingEvents);
             this.splitContainer1.Panel2.Controls.Add(this.ckTraceEnabled);
-            this.splitContainer1.Panel2.Controls.Add(this.btnClearTrace);
+            this.splitContainer1.Panel2.Controls.Add(this.BtnClearTrace);
             this.splitContainer1.Panel2.Controls.Add(this.tbTrace);
             this.splitContainer1.Panel2.Controls.Add(this.label1);
             this.splitContainer1.Size = new System.Drawing.Size(1002, 724);
@@ -157,16 +157,16 @@
             this.ckTraceEnabled.Text = "Enabled";
             this.ckTraceEnabled.UseVisualStyleBackColor = true;
             // 
-            // btnClearTrace
+            // BtnClearTrace
             // 
-            this.btnClearTrace.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnClearTrace.Location = new System.Drawing.Point(919, 8);
-            this.btnClearTrace.Name = "btnClearTrace";
-            this.btnClearTrace.Size = new System.Drawing.Size(75, 23);
-            this.btnClearTrace.TabIndex = 13;
-            this.btnClearTrace.Text = "Clear";
-            this.btnClearTrace.UseVisualStyleBackColor = true;
-            this.btnClearTrace.Click += new System.EventHandler(this.btnClearTrace_Click);
+            this.BtnClearTrace.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.BtnClearTrace.Location = new System.Drawing.Point(919, 8);
+            this.BtnClearTrace.Name = "BtnClearTrace";
+            this.BtnClearTrace.Size = new System.Drawing.Size(75, 23);
+            this.BtnClearTrace.TabIndex = 13;
+            this.BtnClearTrace.Text = "Clear";
+            this.BtnClearTrace.UseVisualStyleBackColor = true;
+            this.BtnClearTrace.Click += new System.EventHandler(this.BtnClearTrace_Click);
             // 
             // tbTrace
             // 
@@ -189,15 +189,15 @@
             this.label1.TabIndex = 11;
             this.label1.Text = "Trace:";
             // 
-            // btnDelete
+            // BtnDelete
             // 
-            this.btnDelete.Location = new System.Drawing.Point(422, 10);
-            this.btnDelete.Name = "btnDelete";
-            this.btnDelete.Size = new System.Drawing.Size(75, 23);
-            this.btnDelete.TabIndex = 9;
-            this.btnDelete.Text = "Delete";
-            this.btnDelete.UseVisualStyleBackColor = true;
-            this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
+            this.BtnDelete.Location = new System.Drawing.Point(422, 10);
+            this.BtnDelete.Name = "BtnDelete";
+            this.BtnDelete.Size = new System.Drawing.Size(75, 23);
+            this.BtnDelete.TabIndex = 9;
+            this.BtnDelete.Text = "Delete";
+            this.BtnDelete.UseVisualStyleBackColor = true;
+            this.BtnDelete.Click += new System.EventHandler(this.BtnDelete_Click);
             // 
             // DlgDebugWindow
             // 
@@ -218,18 +218,18 @@
         }
 
         #endregion
-        private System.Windows.Forms.Button btnUpdate;
+        private System.Windows.Forms.Button BtnUpdate;
         private System.Windows.Forms.TreeView tvShapes;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.CheckBox ckShapeEvents;
         private System.Windows.Forms.CheckBox ckRoutingEvents;
         private System.Windows.Forms.CheckBox ckTraceEnabled;
-        private System.Windows.Forms.Button btnClearTrace;
+        private System.Windows.Forms.Button BtnClearTrace;
         public System.Windows.Forms.TextBox tbTrace;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox tbUndoEvents;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.Button btnDelete;
+        private System.Windows.Forms.Button BtnDelete;
     }
 }

@@ -39,8 +39,8 @@
             this.lbShapes.Name = "lbShapes";
             this.lbShapes.Size = new System.Drawing.Size(471, 313);
             this.lbShapes.TabIndex = 0;
-            this.lbShapes.MouseClick += new System.Windows.Forms.MouseEventHandler(this.lbShapes_MouseClick);
-            this.lbShapes.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.lbShapes_KeyPress);
+            this.lbShapes.MouseClick += new System.Windows.Forms.MouseEventHandler(this.LbShapes_MouseClick);
+            this.lbShapes.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.LbShapes_KeyPress);
             // 
             // NavigateDlg
             // 

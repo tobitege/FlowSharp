@@ -6,7 +6,7 @@ namespace HopeShapes.PropertyGridHelpers
     // From: https://www.codeproject.com/Articles/9280/Add-Remove-Items-to-from-PropertyGrid-at-Runtime
     public class CustomPropertyDescriptor : PropertyDescriptor
     {
-        CustomProperty m_Property;
+        public readonly CustomProperty m_Property;
 
         public CustomPropertyDescriptor(ref CustomProperty myProperty, Attribute[] attrs) : base(myProperty.Name, attrs)
         {

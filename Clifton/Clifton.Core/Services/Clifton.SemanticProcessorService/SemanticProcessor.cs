@@ -31,13 +31,12 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
-using MoreLinq;
-
 using Clifton.Core.ExtensionMethods;
 using Clifton.Core.Semantics;
 using Clifton.Core.ServiceManagement;
 using Clifton.Core.Utils;
 
+// ReSharper disable once CheckNamespace
 namespace Clifton.Core.Services.SemanticProcessorService
 {
     public abstract class ProcessCall
@@ -454,7 +453,7 @@ namespace Clifton.Core.Services.SemanticProcessorService
             where M : IMembrane, new()
             where T : ISemanticType
         {
-            var mtype = typeof(M);
+            //var mtype = typeof(M);
             var membrane = RegisterMembrane<M>();
             ProcessInstanceFrom(fromMembrane, fromReceptor, membrane, obj, processOnCallerThread);
         }
@@ -723,7 +722,7 @@ namespace Clifton.Core.Services.SemanticProcessorService
         {
             // Only stateful receptors can have qualifiers, since the qualifier tests against a receptor state.
             var checkReceptors = qualifiers.Where(q => q.Receptor == receptor && q.SemanticType == obj.GetType());
-            return checkReceptors?.Any(q => qstate[q]) == true;
+            return checkReceptors.Any(q => qstate[q]);
         }
 
         /// <summary>
@@ -852,7 +851,7 @@ namespace Clifton.Core.Services.SemanticProcessorService
         {
             for (var i = 0; i < MAX_WORKER_THREADS; i++)
             {
-                var thread = new Thread(new ParameterizedThreadStart(ProcessPoolItem))
+                var thread = new Thread(ProcessPoolItem)
                 {
                     IsBackground = true
                 };
@@ -887,7 +886,7 @@ namespace Clifton.Core.Services.SemanticProcessorService
                     }
                     catch (Exception ex)
                     {
-                        var ex2 = ex;
+                        //var ex2 = ex;
                         // Prevent recursion if the exception process itself throws an exception.
                         if (!(rc.SemanticInstance is ST_Exception))
                         {
@@ -931,7 +930,7 @@ namespace Clifton.Core.Services.SemanticProcessorService
             }
             catch (Exception ex)
             {
-                var ex2 = ex;
+                //var ex2 = ex;
                 // Prevent recursion if the exception process itself throws an exception.
                 if (!(rc.SemanticInstance is ST_Exception))
                 {
@@ -961,8 +960,8 @@ namespace Clifton.Core.Services.SemanticProcessorService
                 }
                 */
             }
-            finally
-            {
+            //finally
+            //{
                 // TODO:
                 // This looks wrong as well.  If the call is on a thread, the receptor should be disposed once the call completes.
                 // And oddly enough, we're setting autodispose to false on synchronous calls!  The logic for this needs to be fixed,
@@ -971,7 +970,7 @@ namespace Clifton.Core.Services.SemanticProcessorService
                 //{
                 //	((IDisposable)rc.Receptor).Dispose();
                 //}
-            }
+            //}
         }
 
         // From https://stackoverflow.com/questions/4359910/is-it-possible-to-abort-a-task-like-aborting-a-thread-thread-abort-method

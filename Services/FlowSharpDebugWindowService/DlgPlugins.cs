@@ -15,7 +15,7 @@ namespace FlowSharpDebugWindowService
             tbPlugins.Text = plugins;
         }
 
-        private void btnUpdate_Click(object sender, EventArgs e)
+        private void BtnUpdate_Click(object sender, EventArgs e)
         {
             File.WriteAllText(Constants.PLUGIN_FILE_LIST, tbPlugins.Text);
             Close();

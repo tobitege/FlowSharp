@@ -48,9 +48,9 @@ namespace FlowSharpLib
         public static bool operator ==(ConnectionPoint cp1, ConnectionPoint cp2)
         {
             // Alternate: object.ReferenceEquals(cp1, null), etc...
-            if ((object)cp1 == null || (object)cp2 == null)
+            if (cp1 is null || cp2 is null)
             {
-                return (object)cp1 == (object)cp2;
+                return cp1 == cp2;
             }
             return cp1.Type == cp2.Type && cp1.Point == cp2.Point;
         }
@@ -58,9 +58,9 @@ namespace FlowSharpLib
         public static bool operator !=(ConnectionPoint cp1, ConnectionPoint cp2)
         {
             // Alternate: object.ReferenceEquals(cp1, null), etc...
-            if ((object)cp1 == null || (object)cp2 == null)
+            if (cp1 is null || cp2 is null)
             {
-                return (object)cp1 != (object)cp2;
+                return cp1 != cp2;
             }
             return cp1.Type != cp2.Type || cp1.Point != cp2.Point;
         }
@@ -72,6 +72,7 @@ namespace FlowSharpLib
 
         public override int GetHashCode()
         {
+            // ReSharper disable once BaseObjectGetHashCodeCallInGetHashCode
             return base.GetHashCode();
         }
     }

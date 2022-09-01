@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.pgSemanticType = new System.Windows.Forms.PropertyGrid();
-            this.btnPublish = new System.Windows.Forms.Button();
+            this.BtnPublish = new System.Windows.Forms.Button();
             this.ckUnload = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
@@ -42,15 +42,15 @@
             this.pgSemanticType.TabIndex = 0;
             this.pgSemanticType.ToolbarVisible = false;
             // 
-            // btnPublish
+            // BtnPublish
             // 
-            this.btnPublish.Location = new System.Drawing.Point(522, 13);
-            this.btnPublish.Name = "btnPublish";
-            this.btnPublish.Size = new System.Drawing.Size(75, 23);
-            this.btnPublish.TabIndex = 1;
-            this.btnPublish.Text = "Publish";
-            this.btnPublish.UseVisualStyleBackColor = true;
-            this.btnPublish.Click += new System.EventHandler(this.btnPublish_Click);
+            this.BtnPublish.Location = new System.Drawing.Point(522, 13);
+            this.BtnPublish.Name = "BtnPublish";
+            this.BtnPublish.Size = new System.Drawing.Size(75, 23);
+            this.BtnPublish.TabIndex = 1;
+            this.BtnPublish.Text = "Publish";
+            this.BtnPublish.UseVisualStyleBackColor = true;
+            this.BtnPublish.Click += new System.EventHandler(this.BtnPublish_Click);
             // 
             // ckUnload
             // 
@@ -70,7 +70,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(609, 305);
             this.Controls.Add(this.ckUnload);
-            this.Controls.Add(this.btnPublish);
+            this.Controls.Add(this.BtnPublish);
             this.Controls.Add(this.pgSemanticType);
             this.Name = "PublishSemanticType";
             this.Text = "Publish Semantic Type";
@@ -82,7 +82,7 @@
         #endregion
 
         private System.Windows.Forms.PropertyGrid pgSemanticType;
-        private System.Windows.Forms.Button btnPublish;
+        private System.Windows.Forms.Button BtnPublish;
         public System.Windows.Forms.CheckBox ckUnload;
     }
 }

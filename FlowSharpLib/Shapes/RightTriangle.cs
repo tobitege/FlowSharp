@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 
+// ReSharper disable once CheckNamespace
 namespace FlowSharpLib
 {
     [ToolboxOrder(5)]
@@ -21,22 +22,24 @@ namespace FlowSharpLib
 
         public override List<ConnectionPoint> GetConnectionPoints()
         {
-            List<ConnectionPoint> connectionPoints = new List<ConnectionPoint>();
-            connectionPoints.Add(new ConnectionPoint(GripType.LeftMiddle, ZoomRectangle.LeftMiddle()));
-            connectionPoints.Add(new ConnectionPoint(GripType.RightMiddle, ZoomRectangle.RightMiddle()));
-            connectionPoints.Add(new ConnectionPoint(GripType.TopLeft, ZoomRectangle.TopLeftCorner()));
-            connectionPoints.Add(new ConnectionPoint(GripType.BottomLeft, ZoomRectangle.BottomLeftCorner()));
+            var connectionPoints = new List<ConnectionPoint>
+            {
+                new ConnectionPoint(GripType.LeftMiddle, ZoomRectangle.LeftMiddle()),
+                new ConnectionPoint(GripType.RightMiddle, ZoomRectangle.RightMiddle()),
+                new ConnectionPoint(GripType.TopLeft, ZoomRectangle.TopLeftCorner()),
+                new ConnectionPoint(GripType.BottomLeft, ZoomRectangle.BottomLeftCorner())
+            };
 
             return connectionPoints;
         }
 
         public override void UpdatePath()
         {
-            Rectangle r = ZoomRectangle;
-            path = new Point[]
+            var r = ZoomRectangle;
+            path = new[]
             {
                 new Point(r.X + r.Width, r.Y + r.Height/2),        // right, middle
-                new Point(r.X,           r.Y),                              // left, top
+                new Point(r.X,           r.Y),                     // left, top
                 new Point(r.X,           r.Y + r.Height),          // left, bottom
                 new Point(r.X + r.Width, r.Y + r.Height/2),        // right, middle
             };
@@ -44,19 +47,19 @@ namespace FlowSharpLib
 
         protected Point[] ZPath()
         {
-            Rectangle r = ZoomRectangle; 
+            var r = ZoomRectangle;
             r.X = 0;
             r.Y = 0;
-            int adjust = (int)((BorderPen.Width + 0) / 2);
-            Point[] path = new Point[]
+            var adjust = (int)((BorderPen.Width + 0) / 2);
+            var p = new[]
             {
                 new Point(r.X + r.Width - adjust, r.Y + r.Height/2),        // right, middle
-                new Point(r.X + adjust,           r.Y + adjust),                              // left, top
-                new Point(r.X + adjust,           r.Y + r.Height - adjust),          // left, bottom
+                new Point(r.X + adjust,           r.Y + adjust),            // left, top
+                new Point(r.X + adjust,           r.Y + r.Height - adjust), // left, bottom
                 new Point(r.X + r.Width - adjust, r.Y + r.Height/2),        // right, middle
             };
 
-            return path;
+            return p;
         }
 
         public override void Draw(Graphics gr, bool showSelection = true)
@@ -74,13 +77,13 @@ namespace FlowSharpLib
 
             // Drawing onto a bitmap that constrains the drawing area fixes the trail problem
             // but still has issues with larger pen widths (try 10) as triangle points are clipped.
-            Rectangle r = ZoomRectangle.Grow(2);
-            Bitmap bitmap = new Bitmap(r.Width, r.Height);
-            Graphics g2 = Graphics.FromImage(bitmap);
+            var r = ZoomRectangle.Grow(2);
+            var bitmap = new Bitmap(r.Width, r.Height);
+            var g2 = Graphics.FromImage(bitmap);
             g2.SmoothingMode = SmoothingMode.AntiAlias;
-            Point[] path = ZPath();
-            g2.FillPolygon(FillBrush, path);
-            g2.DrawPolygon(BorderPen, path);
+            var p = ZPath();
+            g2.FillPolygon(FillBrush, p);
+            g2.DrawPolygon(BorderPen, p);
             gr.DrawImage(bitmap, ZoomRectangle.X, ZoomRectangle.Y);
             bitmap.Dispose();
             g2.Dispose();

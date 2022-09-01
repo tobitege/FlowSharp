@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -20,11 +20,11 @@ namespace FlowSharpCodeShapes
     public class CSharpClassBox : Box, ICSharpClass
     {
         public string Filename { get; set; }
-		public string NamespaceName { get; set; } = "Namespace";
-		public string ClassName { get; set; } = "Class";
-		public string MethodName { get; set; } = "Method";
+        public string NamespaceName { get; set; } = "Namespace";
+        public string ClassName { get; set; } = "Class";
+        public string MethodName { get; set; } = "Method";
 
-		public CSharpClassBox(Canvas canvas) : base(canvas)
+        public CSharpClassBox(Canvas canvas) : base(canvas)
         {
             Text = ".cs";
             TextFont.Dispose();
@@ -34,7 +34,7 @@ namespace FlowSharpCodeShapes
 
         public void UpdateCodeBehind()
         {
-            string data = "";
+            var data = "";
 
             if (File.Exists(Filename))
             {
@@ -46,7 +46,7 @@ namespace FlowSharpCodeShapes
 
         public override GraphicElement CloneDefault(Canvas canvas)
         {
-            GraphicElement el = base.CloneDefault(canvas);
+            var el = base.CloneDefault(canvas);
             el.TextFont.Dispose();
             el.TextFont = new Font(FontFamily.GenericSansSerif, 10);
             el.TextAlign = ContentAlignment.TopLeft;
@@ -56,7 +56,7 @@ namespace FlowSharpCodeShapes
 
         public override GraphicElement CloneDefault(Canvas canvas, Point offset)
         {
-            GraphicElement el = base.CloneDefault(canvas, offset);
+            var el = base.CloneDefault(canvas, offset);
             el.TextFont.Dispose();
             el.TextFont = new Font(FontFamily.GenericSansSerif, 10);
             el.TextAlign = ContentAlignment.TopLeft;
@@ -80,9 +80,9 @@ namespace FlowSharpCodeShapes
                 File.WriteAllText(Filename, Json["csharp"]);
             }
 
-			Json["NamespaceName"] = NamespaceName;
-			Json["ClassName"] = ClassName;
-			Json["MethodName"] = MethodName;
+            Json["NamespaceName"] = NamespaceName;
+            Json["ClassName"] = ClassName;
+            Json["MethodName"] = MethodName;
 
             base.Serialize(epb, elementsBeingSerialized);
         }
@@ -93,49 +93,45 @@ namespace FlowSharpCodeShapes
             // TODO: Use JSON dictionary instead.
             Filename = epb.ExtraData;
 
-			string strClassName;
-			string strMethodName;
-			string strNamespaceName;
+            if (Json.TryGetValue("NamespaceName", out var strNamespaceName))
+            {
+                NamespaceName = strNamespaceName;
+            }
 
-			if (Json.TryGetValue("NamespaceName", out strNamespaceName))
-			{
-				NamespaceName = strNamespaceName;
-			}
+            if (Json.TryGetValue("ClassName", out var strClassName))
+            {
+                ClassName = strClassName;
+            }
 
-			if (Json.TryGetValue("ClassName", out strClassName))
-			{
-				ClassName = strClassName;
-			}
-
-			if (Json.TryGetValue("MethodName", out strMethodName))
-			{
-				MethodName = strMethodName;
-			}
-		}
-	}
+            if (Json.TryGetValue("MethodName", out var strMethodName))
+            {
+                MethodName = strMethodName;
+            }
+        }
+    }
 
     public class CSharpClassBoxProperties : ShapeProperties
     {
         [Category("Class")]
         public string Filename { get; set; }
-		[Category("Class")]
-		public string NamespaceName { get; set; }
-		[Category("Class")]
-		public string ClassName { get; set; }
-		[Category("Class")]
-		public string MethodName { get; set; }
+        [Category("Class")]
+        public string NamespaceName { get; set; }
+        [Category("Class")]
+        public string ClassName { get; set; }
+        [Category("Class")]
+        public string MethodName { get; set; }
 
-		public CSharpClassBoxProperties(CSharpClassBox el) : base(el)
+        public CSharpClassBoxProperties(CSharpClassBox el) : base(el)
         {
             Filename = el.Filename;
-			NamespaceName = el.NamespaceName;
-			ClassName = el.ClassName;
-			MethodName = el.MethodName;
+            NamespaceName = el.NamespaceName;
+            ClassName = el.ClassName;
+            MethodName = el.MethodName;
         }
 
         public override void Update(GraphicElement el, string label)
         {
-            CSharpClassBox box = (CSharpClassBox)el;
+            var box = (CSharpClassBox)el;
 
             (label == nameof(Filename)).If(() =>
             {
@@ -144,9 +140,9 @@ namespace FlowSharpCodeShapes
                 box.Text = string.IsNullOrEmpty(Filename) ? "?.cs" : (Path.GetFileName(Filename));
             });
 
-			(label == nameof(NamespaceName)).If(() => box.NamespaceName = NamespaceName);
-			(label == nameof(ClassName)).If(() => box.ClassName = ClassName);
-			(label == nameof(MethodName)).If(() => box.MethodName = MethodName);
+            (label == nameof(NamespaceName)).If(() => box.NamespaceName = NamespaceName);
+            (label == nameof(ClassName)).If(() => box.ClassName = ClassName);
+            (label == nameof(MethodName)).If(() => box.MethodName = MethodName);
 
             base.Update(el, label);
         }

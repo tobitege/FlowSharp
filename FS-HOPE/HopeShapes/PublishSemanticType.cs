@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Dynamic;
-using System.Data;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -47,16 +46,16 @@ namespace HopeShapes
             }
         }
 
-        private void btnPublish_Click(object sender, EventArgs e)
+        private void BtnPublish_Click(object sender, EventArgs e)
         {
-            string json = CreateJson(pc, pgSemanticType.SelectedObject);
+            var json = CreateJson(pc, pgSemanticType.SelectedObject);
             // hope.Publish(typeName, pgSemanticType.SelectedObject);
             hope.Publish(typeName, json);
         }
 
         private string CreateJson(PropertyContainer pc, object obj)
         {
-            StringBuilder sb = new StringBuilder("{");
+            var sb = new StringBuilder("{");
             SerializeProperties(sb, pc, obj);
             sb.Append("}");
 
@@ -66,24 +65,21 @@ namespace HopeShapes
         // TODO: As per comment in SemanticTypeShapes.cs, this does not account for properties with the same name.
         private void SerializeProperties(StringBuilder sb, PropertyContainer pc, object obj)
         {
-            string comma = SerializeValueTypes(sb, pc.Types, obj);
+            var comma = SerializeValueTypes(sb, pc.Types, obj);
             SerializeObjectTypes(sb, pc.Types, obj, comma);
         }
 
         private string SerializeValueTypes(StringBuilder sb, List<PropertyData> propertyData, object obj)
         {
-            string comma = "";
+            var comma = "";
 
             propertyData.Where(t => t.ChildType == null).ForEach(ct =>
             {
-                string val = ((CustomClass)obj)[ct.Name]?.Value?.ToString();
-
-                if (val != null)
-                {
-                    sb.Append(comma);
-                    sb.Append(ct.Name.Quote() + ":" + val.Quote());
-                    comma = ", ";
-                }
+                var val = ((CustomClass)obj)[ct.Name]?.Value?.ToString();
+                if (val == null) return;
+                sb.Append(comma);
+                sb.Append(ct.Name.Quote() + ":" + val.Quote());
+                comma = ", ";
             });
 
             return comma;
@@ -95,7 +91,7 @@ namespace HopeShapes
             {
                 sb.Append(comma);
                 sb.Append(ct.Name.Quote() + ":{");
-                string comma2 = SerializeValueTypes(sb, ct.ChildType.Types, obj);
+                var comma2 = SerializeValueTypes(sb, ct.ChildType.Types, obj);
                 SerializeObjectTypes(sb, ct.ChildType.Types, obj, comma2);
                 sb.Append("}");
                 comma = ", ";

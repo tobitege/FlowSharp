@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
-using Clifton.Core.ExtensionMethods;
 using Clifton.Core.ServiceManagement;
 
 using FlowSharpLib;
@@ -32,30 +30,28 @@ namespace FlowSharpDebugWindowService
 
         public void Trace(string msg)
         {
-            if (ckTraceEnabled.Checked)
+            if (!ckTraceEnabled.Checked) return;
+            if (msg.StartsWith("Route:") && ckRoutingEvents.Checked)
             {
-                if (msg.StartsWith("Route:") && ckRoutingEvents.Checked)
-                {
-                    tbTrace.AppendText(msg);
-                }
+                tbTrace.AppendText(msg);
+            }
 
-                if (msg.StartsWith("Shape:") && ckShapeEvents.Checked)
-                {
-                    tbTrace.AppendText(msg);
-                }
+            if (msg.StartsWith("Shape:") && ckShapeEvents.Checked)
+            {
+                tbTrace.AppendText(msg);
+            }
 
-                // Always emit messages starting with *** as this is an important notification of a possible error.
-                if (msg.StartsWith("***"))
-                {
-                    tbTrace.AppendText(msg);
-                }
+            // Always emit messages starting with *** as this is an important notification of a possible error.
+            if (msg.StartsWith("***"))
+            {
+                tbTrace.AppendText(msg);
             }
         }
 
         public void UpdateUndoStack()
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            List<string> undoEvents = canvasController.UndoStack.GetStackInfo();
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var undoEvents = canvasController.UndoStack.GetStackInfo();
 
             tbUndoEvents.Clear();
             //undoEvents.Where(s=>s.EndsWith("F")).ForEach(s => tbUndoEvents.AppendText(s+"\r\n"));
@@ -73,35 +69,29 @@ namespace FlowSharpDebugWindowService
         public void FindShape(GraphicElement shape)
         {
             selectedElement = shape;
+            if (shape == null) return;
 
-            if (shape != null)
-            {
-                TreeNode node = tvShapes.Nodes.Cast<TreeNode>().SingleOrDefault(n => n.Tag == shape);
-
-                if (node != null)
-                {
-                    System.Diagnostics.Trace.WriteLine("*** Select Node " + shape.ToString());
-                    tvShapes.SelectedNode = node;
-                }
-            }
+            var node = tvShapes.Nodes.Cast<TreeNode>().SingleOrDefault(n => n.Tag == shape);
+            if (node == null) return;
+            System.Diagnostics.Trace.WriteLine("*** Select Node " + shape.ToString());
+            tvShapes.SelectedNode = node;
         }
 
-        private void btnUpdate_Click(object sender, EventArgs e)
+        private void BtnUpdate_Click(object sender, EventArgs e)
         {
             UpdateShapeTree();
         }
 
         protected void PopulateWithShapes()
         {
-            BaseController controller = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-
-            foreach (GraphicElement el in controller.Elements.OrderBy(el=>controller.Elements.IndexOf(el)))
+            var controller = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            foreach (var el in controller.Elements.OrderBy(el=>controller.Elements.IndexOf(el)))
             {
-                TreeNode node = CreateTreeNode(el);
+                var node = CreateTreeNode(el);
 
                 if (el.IsConnector)
                 {
-                    Connector c = (Connector)el;
+                    var c = (Connector)el;
                     ShowConnectedShapes(node, c);
                 }
 
@@ -114,12 +104,10 @@ namespace FlowSharpDebugWindowService
 
         protected void ShowConnectors(TreeNode node, GraphicElement el)
         {
-            if (el.Connections.Any())
-            {
-                TreeNode connectors = new TreeNode("Connectors");
-                node.Nodes.Add(connectors);
-                AddConnections(connectors, el);
-            }
+            if (el.Connections?.Any() != true) return;
+            var connectors = new TreeNode("Connectors");
+            node.Nodes.Add(connectors);
+            AddConnections(connectors, el);
         }
 
         protected void ShowConnectedShapes(TreeNode node, Connector c)
@@ -137,26 +125,24 @@ namespace FlowSharpDebugWindowService
 
         protected void ShowGroupedChildren(TreeNode node, GraphicElement el)
         {
-            if (el.GroupChildren.Any())
+            if (el.GroupChildren?.Any() != true) return;
+            var children = new TreeNode("Children");
+            node.Nodes.Add(children);
+
+            foreach (var child in el.GroupChildren)
             {
-                TreeNode children = new TreeNode("Children");
-                node.Nodes.Add(children);
+                var childNode = CreateTreeNode(child);
+                children.Nodes.Add(childNode);
 
-                foreach (GraphicElement child in el.GroupChildren)
+                // TODO: Same code as in PopulateWithShapes
+                if (child.IsConnector)
                 {
-                    TreeNode childNode = CreateTreeNode(child);
-                    children.Nodes.Add(childNode);
-
-                    // TODO: Same code as in PopulateWithShapes
-                    if (child.IsConnector)
-                    {
-                        Connector c = (Connector)child;
-                        ShowConnectedShapes(childNode, c);
-                    }
-
-                    ShowConnectors(childNode, child);
-                    ShowGroupedChildren(childNode, child);
+                    var c = (Connector)child;
+                    ShowConnectedShapes(childNode, c);
                 }
+
+                ShowConnectors(childNode, child);
+                ShowGroupedChildren(childNode, child);
             }
         }
 
@@ -170,13 +156,15 @@ namespace FlowSharpDebugWindowService
 
         protected TreeNode CreateTreeNode(GraphicElement el, string prefix = "")
         {
-            TreeNode node = new TreeNode(prefix + el.ToString());
-            node.Tag = el;
+            var node = new TreeNode(prefix + el.ToString())
+            {
+                Tag = el
+            };
 
             return node;
         }
 
-        private void btnClearTrace_Click(object sender, EventArgs e)
+        private void BtnClearTrace_Click(object sender, EventArgs e)
         {
             tbTrace.Text = "";
         }
@@ -190,41 +178,36 @@ namespace FlowSharpDebugWindowService
         private void OnLostFocus(object sender, EventArgs e)
         {
             selectedElement = null;
-            BaseController controller = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var controller = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
             UntagTaggedElement(controller);
         }
 
         private void OnSelect(object sender, TreeViewEventArgs e)
         {
-            GraphicElement elTag = (GraphicElement)e.Node?.Tag;
+            var elTag = (GraphicElement)e.Node?.Tag;
 
-            if (elTag != null && elTag != selectedElement)
-            {
-                BaseController controller = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-                UntagTaggedElement(controller);
-                elTag.SetTag();
-                elTag.Redraw();
-                controller.FocusOn(elTag);
-            }
+            if (elTag == null || elTag == selectedElement) return;
+            var controller = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            UntagTaggedElement(controller);
+            elTag.SetTag();
+            elTag.Redraw();
+            controller.FocusOn(elTag);
         }
 
         protected void UntagTaggedElement(BaseController controller)
         {
-            GraphicElement untag = controller.Elements.FirstOrDefault(el => el.Tagged);
+            var untag = controller.Elements.FirstOrDefault(el => el.Tagged);
             untag?.ClearTag();
             untag?.Redraw();
         }
 
-        private void btnDelete_Click(object sender, EventArgs e)
+        private void BtnDelete_Click(object sender, EventArgs e)
         {
-            GraphicElement el = (GraphicElement)tvShapes.SelectedNode?.Tag;
-
-            if (el != null)
-            {
-                BaseController controller = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-                controller.DeleteElement(el);
-                UpdateShapeTree();
-            }
+            var el = (GraphicElement)tvShapes.SelectedNode?.Tag;
+            if (el == null) return;
+            var controller = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            controller.DeleteElement(el);
+            UpdateShapeTree();
         }
     }
 }

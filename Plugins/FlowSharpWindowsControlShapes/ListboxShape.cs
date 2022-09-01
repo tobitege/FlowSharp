@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -69,10 +69,8 @@ namespace FlowSharpWindowsControlShapes
         public override void Deserialize(ElementPropertyBag epb)
         {
             base.Deserialize(epb);
-            string idFieldName;
-            string valueFieldName;
-            Json.TryGetValue("IdFieldName", out idFieldName);
-            Json.TryGetValue("DisplayFieldName", out valueFieldName);
+            Json.TryGetValue("IdFieldName", out var idFieldName);
+            Json.TryGetValue("DisplayFieldName", out var valueFieldName);
 
             DisplayFieldName = valueFieldName;
             IdFieldName = idFieldName;
@@ -81,7 +79,7 @@ namespace FlowSharpWindowsControlShapes
         public override void Draw(Graphics gr, bool showSelection = true)
         {
             base.Draw(gr, showSelection);
-            Rectangle r = ZoomRectangle.Grow(-4);
+            var r = ZoomRectangle.Grow(-4);
 
             if (control.Location != r.Location)
             {
@@ -109,17 +107,19 @@ namespace FlowSharpWindowsControlShapes
         /// </summary>
         private void UpdateList()
         {
-            ListBox lb = (ListBox)control;
+            var lb = (ListBox)control;
             lb.Items.Clear();
 
             dynamic items = JArray.Parse(JsonItems);
-            List<ListBoxItem> cbItems = new List<ListBoxItem>();
+            var cbItems = new List<ListBoxItem>();
 
             foreach (var item in items)
             {
-                ListBoxItem cbItem = new ListBoxItem();
-                cbItem.Id = item[IdFieldName];
-                cbItem.Display = item[DisplayFieldName].ToString();
+                var cbItem = new ListBoxItem
+                {
+                    Id = item[IdFieldName],
+                    Display = item[DisplayFieldName].ToString()
+                };
                 cbItems.Add(cbItem);
             }
 
@@ -137,7 +137,7 @@ namespace FlowSharpWindowsControlShapes
     {
         public const string TOOLBOX_TEXT = "lbbox";
 
-        protected Brush brush = new SolidBrush(Color.Black);
+        protected readonly Brush brush = new SolidBrush(Color.Black);
 
         public ToolboxListBoxShape(Canvas canvas) : base(canvas)
         {
@@ -152,7 +152,7 @@ namespace FlowSharpWindowsControlShapes
 
         public override GraphicElement CloneDefault(Canvas canvas, Point offset)
         {
-            ListBoxShape shape = new ListBoxShape(canvas);
+            var shape = new ListBoxShape(canvas);
             shape.DisplayRectangle = shape.DefaultRectangle().Move(offset);
             shape.UpdateProperties();
             shape.UpdatePath();
@@ -162,8 +162,8 @@ namespace FlowSharpWindowsControlShapes
 
         public override void Draw(Graphics gr, bool showSelection = true)
         {
-            SizeF size = gr.MeasureString(TOOLBOX_TEXT, TextFont);
-            Point textpos = DisplayRectangle.Center().Move((int)(-size.Width / 2), (int)(-size.Height / 2));
+            var size = gr.MeasureString(TOOLBOX_TEXT, TextFont);
+            var textpos = DisplayRectangle.Center().Move((int)(-size.Width / 2), (int)(-size.Height / 2));
             gr.DrawString(TOOLBOX_TEXT, TextFont, brush, textpos);
             base.Draw(gr, showSelection);
         }

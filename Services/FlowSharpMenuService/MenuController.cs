@@ -16,6 +16,7 @@ using Clifton.Core.ServiceManagement;
 
 using FlowSharpLib;
 using FlowSharpServiceInterfaces;
+// ReSharper disable UnusedParameter.Local
 
 namespace FlowSharpMenuService
 {
@@ -52,9 +53,9 @@ namespace FlowSharpMenuService
             Initialize();
         }
 
-        public void Initialize(Form mainForm)
+        public void Initialize(Form mainFrm)
         {
-            this.mainForm = mainForm;
+            this.mainForm = mainFrm;
             mru = new List<string>();
             InitializeMenuHandlers();
             PopulateMostRecentFiles();
@@ -82,9 +83,9 @@ namespace FlowSharpMenuService
         // TODO: The save/load operations might be best moved to the edit service?
         public bool SaveOrSaveAs(bool forceSaveAs = false, bool selectionOnly = false)
         {
-            bool ret = true;
+            var ret = true;
 
-            if (String.IsNullOrEmpty(filename) || forceSaveAs)
+            if (string.IsNullOrEmpty(filename) || forceSaveAs)
             {
                 ret = SaveAs(selectionOnly);
             }
@@ -98,7 +99,7 @@ namespace FlowSharpMenuService
 
         public void UpdateMenu(bool elementSelected)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
             mnuBottommost.Enabled = elementSelected;
             mnuTopmost.Enabled = elementSelected;
             mnuMoveUp.Enabled = elementSelected;
@@ -113,12 +114,12 @@ namespace FlowSharpMenuService
             mnuUngroup.Enabled = canvasController.SelectedElements.Count == 1 && canvasController.SelectedElements[0].GroupChildren.Any();
 
             mnuCollapseGroup.Enabled = canvasController.SelectedElements.Count == 1
-                && (canvasController.SelectedElements[0] is FlowSharpLib.GroupBox)
-                && ((FlowSharpLib.GroupBox)canvasController.SelectedElements[0]).State==FlowSharpLib.GroupBox.CollapseState.Expanded;
+                && (canvasController.SelectedElements[0] is FlowSharpLib.GroupBox box)
+                && box.State==FlowSharpLib.GroupBox.CollapseState.Expanded;
 
             mnuExpandGroup.Enabled = canvasController.SelectedElements.Count == 1
-                && (canvasController.SelectedElements[0] is FlowSharpLib.GroupBox)
-                && ((FlowSharpLib.GroupBox)canvasController.SelectedElements[0]).State == FlowSharpLib.GroupBox.CollapseState.Collapsed;
+                && (canvasController.SelectedElements[0] is FlowSharpLib.GroupBox box1)
+                && box1.State == FlowSharpLib.GroupBox.CollapseState.Collapsed;
 
             mnuUndo.Enabled = canvasController.UndoStack.CanUndo;
             mnuRedo.Enabled = canvasController.UndoStack.CanRedo;
@@ -134,31 +135,28 @@ namespace FlowSharpMenuService
 
         protected void InitializeMenuHandlers()
         {
-            mnuClearCanvas.Click += mnuNew_Click;
-            mnuOpen.Click += mnuOpen_Click;
-            mnuImport.Click += (sndr, args) =>
-            {
-                mnuImport_Click(sndr, args);
-            };
-            mnuSave.Click += mnuSave_Click;
-            mnuSaveAs.Click += mnuSaveAs_Click;
-            mnuSaveSelectionAs.Click += mnuSaveSelectionAs_Click;
-            mnuExit.Click += mnuExit_Click;
-            mnuCopy.Click += mnuCopy_Click;
-            mnuPaste.Click += mnuPaste_Click;
-            mnuDelete.Click += mnuDelete_Click;
-            mnuTopmost.Click += mnuTopmost_Click;
-            mnuBottommost.Click += mnuBottommost_Click;
-            mnuMoveUp.Click += mnuMoveUp_Click;
-            mnuMoveDown.Click += mnuMoveDown_Click;
+            mnuClearCanvas.Click += MnuNew_Click;
+            mnuOpen.Click += MnuOpen_Click;
+            mnuImport.Click += MnuImport_Click;
+            mnuSave.Click += MnuSave_Click;
+            mnuSaveAs.Click += MnuSaveAs_Click;
+            mnuSaveSelectionAs.Click += MnuSaveSelectionAs_Click;
+            mnuExit.Click += MnuExit_Click;
+            mnuCopy.Click += MnuCopy_Click;
+            mnuPaste.Click += MnuPaste_Click;
+            mnuDelete.Click += MnuDelete_Click;
+            mnuTopmost.Click += MnuTopmost_Click;
+            mnuBottommost.Click += MnuBottommost_Click;
+            mnuMoveUp.Click += MnuMoveUp_Click;
+            mnuMoveDown.Click += MnuMoveDown_Click;
 
-            mnuGroup.Click += mnuGroup_Click;
-            mnuUngroup.Click += mnuUngroup_Click;
-            mnuCollapseGroup.Click += mnuCollapseGroup_Click;
-            mnuExpandGroup.Click += mnuExpandGroup_Click;
+            mnuGroup.Click += MnuGroup_Click;
+            mnuUngroup.Click += MnuUngroup_Click;
+            mnuCollapseGroup.Click += MnuCollapseGroup_Click;
+            mnuExpandGroup.Click += MnuExpandGroup_Click;
 
-            mnuUndo.Click += mnuUndo_Click;
-            mnuRedo.Click += mnuRedo_Click;
+            mnuUndo.Click += MnuUndo_Click;
+            mnuRedo.Click += MnuRedo_Click;
             mnuEdit.Click += (sndr, args) => serviceManager.Get<IFlowSharpEditService>().EditText();
             mnuDebugWindow.Click += (sndr, args) => serviceManager.Get<IFlowSharpDebugWindowService>().ShowDebugWindow();
             mnuPlugins.Click += (sndr, args) => serviceManager.Get<IFlowSharpDebugWindowService>().EditPlugins();
@@ -200,10 +198,10 @@ namespace FlowSharpMenuService
 
         private void AlignLefts(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            List<GraphicElement> selectedElements = new List<GraphicElement>(canvasController.SelectedElements);        // For closure
-            Dictionary<GraphicElement, int> shapeOffsets = new Dictionary<GraphicElement, int>();                       // For closure
-            int minLeft = selectedElements.Min(el => el.DisplayRectangle.Left);
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var selectedElements = new List<GraphicElement>(canvasController.SelectedElements);   // For closure
+            var shapeOffsets = new Dictionary<GraphicElement, int>();                             // For closure
+            var minLeft = selectedElements.Min(el => el.DisplayRectangle.Left);
             selectedElements.ForEach(el => shapeOffsets[el] = el.DisplayRectangle.Left - minLeft);
 
             canvasController.UndoStack.UndoRedo("AlignLefts",
@@ -219,10 +217,10 @@ namespace FlowSharpMenuService
 
         private void AlignRights(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            List<GraphicElement> selectedElements = new List<GraphicElement>(canvasController.SelectedElements);        // For closure
-            Dictionary<GraphicElement, int> shapeOffsets = new Dictionary<GraphicElement, int>();                       // For closure
-            int maxRight = canvasController.SelectedElements.Max(el => el.DisplayRectangle.Right);
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var selectedElements = new List<GraphicElement>(canvasController.SelectedElements);    // For closure
+            var shapeOffsets = new Dictionary<GraphicElement, int>();                              // For closure
+            var maxRight = canvasController.SelectedElements.Max(el => el.DisplayRectangle.Right);
             selectedElements.ForEach(el => shapeOffsets[el] = maxRight - el.DisplayRectangle.Right);
 
             canvasController.UndoStack.UndoRedo("AlignRights",
@@ -238,10 +236,10 @@ namespace FlowSharpMenuService
 
     private void AlignTops(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            List<GraphicElement> selectedElements = new List<GraphicElement>(canvasController.SelectedElements);        // For closure
-            Dictionary<GraphicElement, int> shapeOffsets = new Dictionary<GraphicElement, int>();                       // For closure
-            int minTop = canvasController.SelectedElements.Min(el => el.DisplayRectangle.Top);
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var selectedElements = new List<GraphicElement>(canvasController.SelectedElements);     // For closure
+            var shapeOffsets = new Dictionary<GraphicElement, int>();                               // For closure
+            var minTop = canvasController.SelectedElements.Min(el => el.DisplayRectangle.Top);
             selectedElements.ForEach(el => shapeOffsets[el] = el.DisplayRectangle.Top - minTop);
 
             canvasController.UndoStack.UndoRedo("AlignTops",
@@ -257,10 +255,10 @@ namespace FlowSharpMenuService
 
         private void AlignBottoms(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            List<GraphicElement> selectedElements = new List<GraphicElement>(canvasController.SelectedElements);        // For closure
-            Dictionary<GraphicElement, int> shapeOffsets = new Dictionary<GraphicElement, int>();                       // For closure
-            int maxBottom = canvasController.SelectedElements.Max(el => el.DisplayRectangle.Bottom);
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var selectedElements = new List<GraphicElement>(canvasController.SelectedElements);    // For closure
+            var shapeOffsets = new Dictionary<GraphicElement, int>();                              // For closure
+            var maxBottom = canvasController.SelectedElements.Max(el => el.DisplayRectangle.Bottom);
             selectedElements.ForEach(el => shapeOffsets[el] = maxBottom - el.DisplayRectangle.Bottom);
 
             canvasController.UndoStack.UndoRedo("AlignBottoms",
@@ -281,53 +279,51 @@ namespace FlowSharpMenuService
             // If the shapes are horizontally aligned (more or less), we center vertically.
             // If the shapes are vertically aligned (more or less), we center horizontally.
 
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            List<GraphicElement> selectedElements = new List<GraphicElement>(canvasController.SelectedElements);        // For closure
-            Dictionary<GraphicElement, int> shapeOffsets = new Dictionary<GraphicElement, int>();                       // For closure
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var selectedElements = new List<GraphicElement>(canvasController.SelectedElements);    // For closure
+            var shapeOffsets = new Dictionary<GraphicElement, int>();                              // For closure
 
-            int dx = 0;
-            int dy = 0;
+            var dx = 0;
+            var dy = 0;
 
-            if (selectedElements.Count >= 2)
+            if (selectedElements.Count < 2) return;
+            for (var n = 1; n < selectedElements.Count; n++)
             {
-                for (int n = 1; n < selectedElements.Count; n++)
-                {
-                    dx += Math.Abs(selectedElements[n - 1].DisplayRectangle.Center().X - selectedElements[n].DisplayRectangle.Center().X);
-                    dy += Math.Abs(selectedElements[n - 1].DisplayRectangle.Center().Y - selectedElements[n].DisplayRectangle.Center().Y);
-                }
+                dx += Math.Abs(selectedElements[n - 1].DisplayRectangle.Center().X - selectedElements[n].DisplayRectangle.Center().X);
+                dy += Math.Abs(selectedElements[n - 1].DisplayRectangle.Center().Y - selectedElements[n].DisplayRectangle.Center().Y);
+            }
 
-                if (dx < dy)
-                {
-                    // Center vertically
-                    int avgx = (int)selectedElements.Average(el => el.DisplayRectangle.Center().X);
-                    selectedElements.ForEach(el => shapeOffsets[el] = el.DisplayRectangle.Center().X - avgx);
+            if (dx < dy)
+            {
+                // Center vertically
+                var avgx = (int)selectedElements.Average(el => el.DisplayRectangle.Center().X);
+                selectedElements.ForEach(el => shapeOffsets[el] = el.DisplayRectangle.Center().X - avgx);
 
-                    canvasController.UndoStack.UndoRedo("AlignCenters",
-                        () =>
-                        {
-                            selectedElements.ForEach(el => canvasController.MoveElement(el, new Point(-shapeOffsets[el], 0)));
-                        },
-                        () =>
-                        {
-                            selectedElements.ForEach(el => canvasController.MoveElement(el, new Point(shapeOffsets[el], 0)));
-                        });
-                }
-                else
-                {
-                    // Center horizontally
-                    int avgy = (int)selectedElements.Average(el => el.DisplayRectangle.Center().Y);
-                    selectedElements.ForEach(el => shapeOffsets[el] = el.DisplayRectangle.Center().Y - avgy);
+                canvasController.UndoStack.UndoRedo("AlignCenters",
+                    () =>
+                    {
+                        selectedElements.ForEach(el => canvasController.MoveElement(el, new Point(-shapeOffsets[el], 0)));
+                    },
+                    () =>
+                    {
+                        selectedElements.ForEach(el => canvasController.MoveElement(el, new Point(shapeOffsets[el], 0)));
+                    });
+            }
+            else
+            {
+                // Center horizontally
+                var avgy = (int)selectedElements.Average(el => el.DisplayRectangle.Center().Y);
+                selectedElements.ForEach(el => shapeOffsets[el] = el.DisplayRectangle.Center().Y - avgy);
 
-                    canvasController.UndoStack.UndoRedo("AlignCenters",
-                        () =>
-                        {
-                            selectedElements.ForEach(el => canvasController.MoveElement(el, new Point(0, -shapeOffsets[el])));
-                        },
-                        () =>
-                        {
-                            selectedElements.ForEach(el => canvasController.MoveElement(el, new Point(0, shapeOffsets[el])));
-                        });
-                }
+                canvasController.UndoStack.UndoRedo("AlignCenters",
+                    () =>
+                    {
+                        selectedElements.ForEach(el => canvasController.MoveElement(el, new Point(0, -shapeOffsets[el])));
+                    },
+                    () =>
+                    {
+                        selectedElements.ForEach(el => canvasController.MoveElement(el, new Point(0, shapeOffsets[el])));
+                    });
             }
         }
 
@@ -339,49 +335,47 @@ namespace FlowSharpMenuService
         /// </summary>
         private void AlignSizes(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            List<GraphicElement> selectedElements = new List<GraphicElement>(canvasController.SelectedElements);            // For closure
-            Dictionary<GraphicElement, Size> shapeSizes = new Dictionary<GraphicElement, Size>();                           // For closure
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var selectedElements = new List<GraphicElement>(canvasController.SelectedElements);     // For closure
+            var shapeSizes = new Dictionary<GraphicElement, Size>();                                // For closure
 
-            if (selectedElements.Count >= 2)
-            {
-                Size setToSize = selectedElements[0].DisplayRectangle.Size;
-                selectedElements.ForEach(el => shapeSizes[el] = el.DisplayRectangle.Size);
+            if (selectedElements.Count < 2) return;
+            var setToSize = selectedElements[0].DisplayRectangle.Size;
+            selectedElements.ForEach(el => shapeSizes[el] = el.DisplayRectangle.Size);
 
-                canvasController.UndoStack.UndoRedo("AlignSizes",
-                    () =>
+            canvasController.UndoStack.UndoRedo("AlignSizes",
+                () =>
+                {
+                    // Do/redo:
+                    selectedElements.Skip(1).ForEach(el =>
                     {
-                        // Do/redo:
-                        selectedElements.Skip(1).ForEach(el =>
+                        canvasController.Redraw(el, _ =>
                         {
-                            canvasController.Redraw(el, _ =>
-                            {
-                                el.DisplayRectangle = new Rectangle(el.DisplayRectangle.Location, setToSize);
-                                el.UpdatePath();
-                                canvasController.UpdateConnections(el);
-                            });
-                        });
-                    },
-                    () =>
-                    {
-                        // Undo:
-                        selectedElements.Skip(1).ForEach(el =>
-                        {
-                            canvasController.Redraw(el, _ =>
-                            {
-                                el.DisplayRectangle = new Rectangle(el.DisplayRectangle.Location, shapeSizes[el]);
-                                el.UpdatePath();
-                                canvasController.UpdateConnections(el);
-                            });
+                            el.DisplayRectangle = new Rectangle(el.DisplayRectangle.Location, setToSize);
+                            el.UpdatePath();
+                            canvasController.UpdateConnections(el);
                         });
                     });
-            }
+                },
+                () =>
+                {
+                    // Undo:
+                    selectedElements.Skip(1).ForEach(el =>
+                    {
+                        canvasController.Redraw(el, _ =>
+                        {
+                            el.DisplayRectangle = new Rectangle(el.DisplayRectangle.Location, shapeSizes[el]);
+                            el.UpdatePath();
+                            canvasController.UpdateConnections(el);
+                        });
+                    });
+                });
         }
 
         private void GoToShape(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            List<NavigateToShape> navShapes = canvasController.Elements.
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var navShapes = canvasController.Elements.
                 Where(el => !el.IsConnector).
                 Select(el => new NavigateToShape() { Shape = el, Name = el.NavigateName }).
                 OrderBy(s => s.Name).
@@ -391,8 +385,8 @@ namespace FlowSharpMenuService
 
         private void GoToBookmark(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            List<NavigateToShape> navShapes = canvasController.Elements.
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var navShapes = canvasController.Elements.
                 Where(el=>el.IsBookmarked).
                 Select(el => new NavigateToShape() { Shape = el, Name = el.NavigateName }).
                 OrderBy(s=>s).
@@ -402,7 +396,7 @@ namespace FlowSharpMenuService
 
         private void ToogleBookmark(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
             canvasController.SelectedElements?.ForEach(el =>
             {
                 el.ToggleBookmark();
@@ -412,7 +406,7 @@ namespace FlowSharpMenuService
 
         private void ClearBookmarks(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
             canvasController.ClearBookmarks();
         }
 
@@ -423,41 +417,38 @@ namespace FlowSharpMenuService
 
         protected void PopulateMostRecentFiles()
         {
-            if (File.Exists(MRU_FILENAME))
+            if (!File.Exists(MRU_FILENAME)) return;
+            mru = File.ReadAllLines(MRU_FILENAME).ToList();
+            foreach (var f in mru)
             {
-                mru = File.ReadAllLines(MRU_FILENAME).ToList();
-
-                foreach (string f in mru)
-                {
-                    ToolStripItem tsi = new ToolStripMenuItem(f);
-                    tsi.Click += OnRecentFileSelected;
-                    mnuRecentFiles.DropDownItems.Add(tsi);
-                }
+                ToolStripItem tsi = new ToolStripMenuItem(f);
+                tsi.Click += OnRecentFileSelected;
+                mnuRecentFiles.DropDownItems.Add(tsi);
             }
         }
 
-        protected void UpdateMru(string filename)
+        protected void UpdateMru(string fname)
         {
             // Any existing MRU, remove, and regardless, insert at beginning of list.
-            mru.Remove(filename);
-            mru.Insert(0, filename);
+            mru.Remove(fname);
+            mru.Insert(0, fname);
             File.WriteAllLines(MRU_FILENAME, mru);
         }
 
         private void OnRecentFileSelected(object sender, EventArgs e)
         {
             if (CheckForChanges()) return;
-            ToolStripItem tsi = sender as ToolStripItem;
-            filename = tsi.Text;
-            IFlowSharpCanvasService canvasService = serviceManager.Get<IFlowSharpCanvasService>();
+            var tsi = sender as ToolStripItem;
+            filename = tsi?.Text ?? "unknown";
+            var canvasService = serviceManager.Get<IFlowSharpCanvasService>();
             canvasService.LoadDiagrams(filename);
             UpdateCaption();
         }
 
-        private void mnuTopmost_Click(object sender, EventArgs e)
+        private void MnuTopmost_Click(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            List<ZOrderMap> originalZOrder = canvasController.GetZOrderOfSelectedElements();
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var originalZOrder = canvasController.GetZOrderOfSelectedElements();
 
             canvasController.UndoStack.UndoRedo("Z-Top",
                 () =>
@@ -470,10 +461,10 @@ namespace FlowSharpMenuService
                 });
         }
 
-        private void mnuBottommost_Click(object sender, EventArgs e)
+        private void MnuBottommost_Click(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            List<ZOrderMap> originalZOrder = canvasController.GetZOrderOfSelectedElements();
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var originalZOrder = canvasController.GetZOrderOfSelectedElements();
 
             canvasController.UndoStack.UndoRedo("Z-Bottom",
                 () =>
@@ -486,10 +477,10 @@ namespace FlowSharpMenuService
                 });
         }
 
-        private void mnuMoveUp_Click(object sender, EventArgs e)
+        private void MnuMoveUp_Click(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            List<ZOrderMap> originalZOrder = canvasController.GetZOrderOfSelectedElements();
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var originalZOrder = canvasController.GetZOrderOfSelectedElements();
 
             canvasController.UndoStack.UndoRedo("Z-Up",
                 () =>
@@ -502,11 +493,10 @@ namespace FlowSharpMenuService
                 });
         }
 
-        private void mnuMoveDown_Click(object sender, EventArgs e)
+        private void MnuMoveDown_Click(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            List<ZOrderMap> originalZOrder = canvasController.GetZOrderOfSelectedElements();
-
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var originalZOrder = canvasController.GetZOrderOfSelectedElements();
             canvasController.UndoStack.UndoRedo("Z-Down",
                 () =>
                 {
@@ -518,46 +508,48 @@ namespace FlowSharpMenuService
                 });
         }
 
-        private void mnuCopy_Click(object sender, EventArgs e)
+        private void MnuCopy_Click(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
             if (canvasController.SelectedElements.Count > 0)
             {
                 serviceManager.Get<IFlowSharpEditService>().Copy();
             }
         }
 
-        private void mnuPaste_Click(object sender, EventArgs e)
+        private void MnuPaste_Click(object sender, EventArgs e)
         {
             serviceManager.Get<IFlowSharpEditService>().Paste();
         }
 
-        private void mnuDelete_Click(object sender, EventArgs e)
+        private void MnuDelete_Click(object sender, EventArgs e)
         {
             serviceManager.Get<IFlowSharpEditService>().Delete();
         }
 
-        private void mnuNew_Click(object sender, EventArgs e)
+        private void MnuNew_Click(object sender, EventArgs e)
         {
             if (CheckForChanges()) return;
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
             serviceManager.Get<IFlowSharpEditService>().ResetSavePoint();
             canvasController.Clear();
             canvasController.UndoStack.ClearStacks();
             // ElementCache.Instance.ClearCache();
             serviceManager.Get<IFlowSharpMouseControllerService>().ClearState();
             canvasController.Canvas.Invalidate();
-            filename = String.Empty;
-            canvasController.Filename = String.Empty;
+            filename = string.Empty;
+            canvasController.Filename = string.Empty;
             UpdateCaption();
         }
 
-        private void mnuOpen_Click(object sender, EventArgs e)
+        private void MnuOpen_Click(object sender, EventArgs e)
         {
             if (CheckForChanges()) return;
-            OpenFileDialog ofd = new OpenFileDialog();
-            ofd.Filter = "FlowSharp (*.fsd)|*.fsd";
-            DialogResult res = ofd.ShowDialog();
+            var ofd = new OpenFileDialog
+            {
+                Filter = "FlowSharp (*.fsd)|*.fsd"
+            };
+            var res = ofd.ShowDialog();
 
             if (res == DialogResult.OK)
             {
@@ -568,47 +560,47 @@ namespace FlowSharpMenuService
                 return;
             }
 
-            IFlowSharpCanvasService canvasService = serviceManager.Get<IFlowSharpCanvasService>();
+            var canvasService = serviceManager.Get<IFlowSharpCanvasService>();
             canvasService.LoadDiagrams(filename);
             UpdateCaption();
             UpdateMru(filename);
         }
 
-        private void mnuImport_Click(object sender, EventArgs e)
+        private void MnuImport_Click(object sender, EventArgs e)
         {
-            OpenFileDialog ofd = new OpenFileDialog();
-            ofd.Filter = "FlowSharp (*.fsd)|*.fsd";
-            DialogResult res = ofd.ShowDialog();
-
-            if (res == DialogResult.OK)
+            var ofd = new OpenFileDialog
             {
-                BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-                string importFilename = ofd.FileName;
-                string data = File.ReadAllText(importFilename);
-                List<GraphicElement> els = Persist.Deserialize(canvasController.Canvas, data);
-                List<GraphicElement> selectedElements = canvasController.SelectedElements.ToList();
+                Filter = "FlowSharp (*.fsd)|*.fsd"
+            };
+            var res = ofd.ShowDialog();
 
-                canvasController.UndoStack.UndoRedo("Import",
-                    () =>
-                    {
-                        canvasController.DeselectCurrentSelectedElements();
-                        canvasController.AddElements(els);
-                        canvasController.Elements.ForEach(el => el.UpdatePath());
-                        canvasController.SelectElements(els);
-                        canvasController.Canvas.Invalidate();
-                    },
-                    () =>
-                    {
-                        canvasController.DeselectCurrentSelectedElements();
-                        els.ForEach(el => canvasController.DeleteElement(el));
-                        canvasController.SelectElements(selectedElements);
-                    });
-            }
+            if (res != DialogResult.OK) return;
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var importFilename = ofd.FileName;
+            var data = File.ReadAllText(importFilename);
+            var els = Persist.Deserialize(canvasController.Canvas, data);
+            var selectedElements = canvasController.SelectedElements.ToList();
+
+            canvasController.UndoStack.UndoRedo("Import",
+                () =>
+                {
+                    canvasController.DeselectCurrentSelectedElements();
+                    canvasController.AddElements(els);
+                    canvasController.Elements.ForEach(el => el.UpdatePath());
+                    canvasController.SelectElements(els);
+                    canvasController.Canvas.Invalidate();
+                },
+                () =>
+                {
+                    canvasController.DeselectCurrentSelectedElements();
+                    els.ForEach(el => canvasController.DeleteElement(el));
+                    canvasController.SelectElements(selectedElements);
+                });
         }
 
-        private void mnuSave_Click(object sender, EventArgs e)
+        private void MnuSave_Click(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
 
             if (canvasController.Elements.Count > 0)
             {
@@ -621,9 +613,9 @@ namespace FlowSharpMenuService
             }
         }
 
-        private void mnuSaveAs_Click(object sender, EventArgs e)
+        private void MnuSaveAs_Click(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
 
             if (canvasController.Elements.Count > 0)
             {
@@ -636,9 +628,9 @@ namespace FlowSharpMenuService
             }
         }
 
-        private void mnuSaveSelectionAs_Click(object sender, EventArgs e)
+        private void MnuSaveSelectionAs_Click(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
 
             if (canvasController.SelectedElements.Count > 0)
             {
@@ -651,87 +643,79 @@ namespace FlowSharpMenuService
             }
         }
 
-        private void mnuExit_Click(object sender, EventArgs e)
+        private void MnuExit_Click(object sender, EventArgs e)
         {
             if (CheckForChanges()) return;
             mainForm.Close();
         }
 
-        private void mnuGroup_Click(object sender, EventArgs e)
+        private void MnuGroup_Click(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
 
-            if (canvasController.SelectedElements.Any())
-            {
-                List<GraphicElement> selectedShapes = canvasController.SelectedElements.ToList();
-                FlowSharpLib.GroupBox groupBox = new FlowSharpLib.GroupBox(canvasController.Canvas);
+            if (!canvasController.SelectedElements.Any()) return;
+            var selectedShapes = canvasController.SelectedElements.ToList();
+            FlowSharpLib.GroupBox groupBox = new FlowSharpLib.GroupBox(canvasController.Canvas);
 
-                canvasController.UndoStack.UndoRedo("Group",
-                    () =>
-                    {
-                        // ElementCache.Instance.Remove(groupBox);
-                        canvasController.GroupShapes(groupBox);
-                        canvasController.DeselectCurrentSelectedElements();
-                        canvasController.SelectElement(groupBox);
-                    },
-                    () =>
-                    {
-                        // ElementCache.Instance.Add(groupBox);
-                        canvasController.UngroupShapes(groupBox, false);
-                        canvasController.DeselectCurrentSelectedElements();
-                        canvasController.SelectElements(selectedShapes);
-                    });
-            }
+            canvasController.UndoStack.UndoRedo("Group",
+                () =>
+                {
+                    // ElementCache.Instance.Remove(groupBox);
+                    canvasController.GroupShapes(groupBox);
+                    canvasController.DeselectCurrentSelectedElements();
+                    canvasController.SelectElement(groupBox);
+                },
+                () =>
+                {
+                    // ElementCache.Instance.Add(groupBox);
+                    canvasController.UngroupShapes(groupBox, false);
+                    canvasController.DeselectCurrentSelectedElements();
+                    canvasController.SelectElements(selectedShapes);
+                });
         }
 
-        private void mnuUngroup_Click(object sender, EventArgs e)
+        private void MnuUngroup_Click(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
 
             // At this point, we can only ungroup one group.
-            if (canvasController.SelectedElements.Count == 1)
-            {
-                FlowSharpLib.GroupBox groupBox = canvasController.SelectedElements[0] as FlowSharpLib.GroupBox;
+            if (canvasController.SelectedElements.Count != 1) return;
+            if (!(canvasController.SelectedElements[0] is FlowSharpLib.GroupBox groupBox)) return;
+            var groupedShapes = new List<GraphicElement>(groupBox.GroupChildren);
+            var collapsed = groupBox.State == FlowSharpLib.GroupBox.CollapseState.Collapsed; // For closure.
 
-                if (groupBox != null)
+            canvasController.UndoStack.UndoRedo("Ungroup",
+                () =>
                 {
-                    List<GraphicElement> groupedShapes = new List<GraphicElement>(groupBox.GroupChildren);
-                    bool collapsed = groupBox.State == FlowSharpLib.GroupBox.CollapseState.Collapsed;            // For closure.
-
-                    canvasController.UndoStack.UndoRedo("Ungroup",
-                    () =>
+                    if (collapsed)
                     {
-                        if (collapsed)
-                        {
-                            var children = canvasController.Elements.Where(el => el.Parent == groupBox);
-                            ExpandGroupBox(canvasController, groupBox, children);
-                        }
+                        var children = canvasController.Elements.Where(el => el.Parent == groupBox);
+                        ExpandGroupBox(canvasController, groupBox, children);
+                    }
 
-                        // ElementCache.Instance.Add(groupBox);
-                        canvasController.UngroupShapes(groupBox, false);
-                        canvasController.DeselectCurrentSelectedElements();
-                        canvasController.SelectElements(groupedShapes);
-                    },
-                    () =>
+                    // ElementCache.Instance.Add(groupBox);
+                    canvasController.UngroupShapes(groupBox, false);
+                    canvasController.DeselectCurrentSelectedElements();
+                    canvasController.SelectElements(groupedShapes);
+                },
+                () =>
+                {
+                    // ElementCache.Instance.Remove(groupBox);
+                    canvasController.GroupShapes(groupBox);
+                    canvasController.DeselectCurrentSelectedElements();
+                    canvasController.SelectElement(groupBox);
+
+                    if (collapsed)
                     {
-                        // ElementCache.Instance.Remove(groupBox);
-                        canvasController.GroupShapes(groupBox);
-                        canvasController.DeselectCurrentSelectedElements();
-                        canvasController.SelectElement(groupBox);
-
-                        if (collapsed)
-                        {
-                            var children = canvasController.Elements.Where(el => el.Parent == groupBox);
-                            CollapseGroupBox(canvasController, groupBox, children);
-                        }
-                    });
-                }
-            }
+                        var children = canvasController.Elements.Where(el => el.Parent == groupBox);
+                        CollapseGroupBox(canvasController, groupBox, children);
+                    }
+                });
         }
 
-        private void mnuCollapseGroup_Click(object sender, EventArgs e)
+        private void MnuCollapseGroup_Click(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
             var gb = ((FlowSharpLib.GroupBox)canvasController.SelectedElements[0]);
             var children = canvasController.Elements.Where(el => el.Parent == gb);
 
@@ -741,9 +725,9 @@ namespace FlowSharpMenuService
                 );
         }
 
-        private void mnuExpandGroup_Click(object sender, EventArgs e)
+        private void MnuExpandGroup_Click(object sender, EventArgs e)
         {
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
             var gb = ((FlowSharpLib.GroupBox)canvasController.SelectedElements[0]);
             var children = canvasController.Elements.Where(el => el.Parent == gb);
 
@@ -760,7 +744,7 @@ namespace FlowSharpMenuService
                 gb.SetCollapsedState();
                 gb.SaveExpandedSize();
                 canvasController.Elements.Where(el => el.Parent == gb).ForEach(el => el.Visible = false);
-                Rectangle r = gb.DisplayRectangle;
+                var r = gb.DisplayRectangle;
                 gb.DisplayRectangle = new Rectangle(r.Location, new Size(r.Width, 30));
                 // Update connections after display rectangle has been updated, as this adjusts the connection points.
                 canvasController.UpdateConnections(gb);
@@ -773,7 +757,7 @@ namespace FlowSharpMenuService
             canvasController.Redraw(gb, _ =>
             {
                 gb.SetExpandedState();
-                Rectangle r = gb.DisplayRectangle;
+                var r = gb.DisplayRectangle;
                 gb.DisplayRectangle = new Rectangle(r.Location, gb.ExpandedSize);
                 // Update connections after display rectangle has been updated, as this adjusts the connection points.
                 canvasController.UpdateConnections(gb);
@@ -787,12 +771,12 @@ namespace FlowSharpMenuService
             });
         }
 
-        private void mnuUndo_Click(object sender, EventArgs e)
+        private void MnuUndo_Click(object sender, EventArgs e)
         {
             serviceManager.Get<IFlowSharpEditService>().Undo();
         }
 
-        private void mnuRedo_Click(object sender, EventArgs e)
+        private void MnuRedo_Click(object sender, EventArgs e)
         {
             serviceManager.Get<IFlowSharpEditService>().Redo();
         }
@@ -802,9 +786,9 @@ namespace FlowSharpMenuService
         /// </summary>
         protected bool CheckForChanges()
         {
-            bool ret = true;
+            var ret = true;
 
-            ClosingState state = serviceManager.Get<IFlowSharpEditService>().CheckForChanges();
+            var state = serviceManager.Get<IFlowSharpEditService>().CheckForChanges();
 
             if (state == ClosingState.SaveChanges)
             {
@@ -812,8 +796,7 @@ namespace FlowSharpMenuService
             }
             else if (state != ClosingState.CancelClose)
             {
-                BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-
+                var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
                 if (canvasController != null)
                 {
                     canvasController.UndoStack.ClearStacks();       // Prevents second "are you sure" when exiting with Ctrl+X
@@ -821,57 +804,56 @@ namespace FlowSharpMenuService
 
                 ret = false;
             }
-
             return ret;
         }
 
         protected bool SaveAs(bool selectionOnly = false)
         {
-            SaveFileDialog sfd = new SaveFileDialog();
-            sfd.Filter = "FlowSharp (*.fsd)|*.fsd|PNG (*.png)|*.png";
-            DialogResult res = sfd.ShowDialog();
-            string ext = ".fsd";
-            BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-
-            if (res == DialogResult.OK)
+            var sfd = new SaveFileDialog
             {
-                ext = Path.GetExtension(sfd.FileName).ToLower();
+                Filter = "FlowSharp (*.fsd)|*.fsd|PNG (*.png)|*.png"
+            };
+            var res = sfd.ShowDialog();
+            var ext = ".fsd";
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
 
-                if (ext == ".png")
+            if (res != DialogResult.OK) return false;
+            ext = Path.GetExtension(sfd.FileName).ToLower();
+
+            if (ext == ".png")
+            {
+                canvasController.SaveAsPng(sfd.FileName, selectionOnly);
+            }
+            else
+            {
+                filename = sfd.FileName;
+                // TODO: What about other canvases that are open in the diagram?
+
+                if (!selectionOnly)
                 {
-                    canvasController.SaveAsPng(sfd.FileName, selectionOnly);
+                    canvasController.Filename = String.Empty;       // Force blank filename so filename is saved to the new destination.  See FlowSharpCanvasService.cs, SaveDiagrams
                 }
-                else
+
+                // Let canvas controller assign filenames.
+                SaveDiagram(filename, selectionOnly);
+
+                if (!selectionOnly)
                 {
-                    filename = sfd.FileName;
-                    // TODO: What about other canvases that are open in the diagram?
-
-                    if (!selectionOnly)
-                    {
-                        canvasController.Filename = String.Empty;       // Force blank filename so filename is saved to the new destination.  See FlowSharpCanvasService.cs, SaveDiagrams
-                    }
-
-                    // Let canvas controller assign filenames.
-                    SaveDiagram(filename, selectionOnly);
-
-                    if (!selectionOnly)
-                    {
-                        UpdateCaption();
-                        UpdateMru(filename);
-                    }
+                    UpdateCaption();
+                    UpdateMru(filename);
                 }
             }
 
-            return res == DialogResult.OK && ext != ".png";
+            return ext != ".png";
         }
 
-        protected void SaveDiagram(string filename, bool selectionOnly = false)
+        protected void SaveDiagram(string fname, bool selectionOnly = false)
         {
-            IFlowSharpCanvasService canvasService = serviceManager.Get<IFlowSharpCanvasService>();
-            canvasService.SaveDiagramsAndLayout(filename, selectionOnly);
-            //BaseController canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
-            //string data = Persist.Serialize(canvasController.Elements);
-            //File.WriteAllText(filename, data);
+            var canvasService = serviceManager.Get<IFlowSharpCanvasService>();
+            canvasService.SaveDiagramsAndLayout(fname, selectionOnly);
+            //var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+            //var data = Persist.Serialize(canvasController.Elements);
+            //File.WriteAllText(fname, data);
 
             if (!selectionOnly)
             {

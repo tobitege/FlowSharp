@@ -23,6 +23,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+
 // ReSharper disable CheckNamespace
 // ReSharper disable InconsistentNaming
 
@@ -31,34 +33,34 @@ namespace Clifton.Core.Semantics
     public class Membrane : IMembrane
     {
         protected Membrane Parent { get; set; }
-        protected List<Membrane> childMembranes { get; set; }
-        protected List<Type> _outboundPermeableTo { get; set; }
-        protected List<Type> inboundPermeableTo { get; set; }
+        protected List<Membrane> ChildMembranes { get; set; }
+        protected List<Type> OutbndPermeableTo { get; set; }
+        protected List<Type> InbndPermeableTo { get; set; }
 
         protected Membrane()
         {
             Parent = null;
-            childMembranes = new List<Membrane>();
-            _outboundPermeableTo = new List<Type>();
-            inboundPermeableTo = new List<Type>();
+            ChildMembranes = new List<Membrane>();
+            OutbndPermeableTo = new List<Type>();
+            InbndPermeableTo = new List<Type>();
         }
 
         public void AddChild(Membrane child)
         {
-            childMembranes.Add(child);
+            ChildMembranes.Add(child);
             child.Parent = this;
         }
 
         public void OutboundPermeableTo<T>()
             where T : ISemanticType
         {
-            _outboundPermeableTo.Add(typeof(T));
+            OutbndPermeableTo.Add(typeof(T));
         }
 
         public void InboundPermeableTo<T>()
             where T : ISemanticType
         {
-            inboundPermeableTo.Add(typeof(T));
+            InbndPermeableTo.Add(typeof(T));
         }
 
         /// <summary>
@@ -69,21 +71,15 @@ namespace Clifton.Core.Semantics
             var ret = new List<IMembrane>();
             var sttype = st.GetType();
 
-            if (!_outboundPermeableTo.Contains(sttype)) return ret;
+            if (!OutbndPermeableTo.Contains(sttype)) return ret;
             // Can we traverse to the parent?
-            if ((Parent != null) && (Parent.inboundPermeableTo.Contains(sttype)))
+            if ((Parent != null) && (Parent.InbndPermeableTo.Contains(sttype)))
             {
                 ret.Add(Parent);
             }
 
             // Can we traverse to children?
-            foreach (var child in childMembranes)
-            {
-                if (child.inboundPermeableTo.Contains(sttype))
-                {
-                    ret.Add(child);
-                }
-            }
+            ret.AddRange(ChildMembranes.Where(child => child.InbndPermeableTo.Contains(sttype)).Cast<IMembrane>());
 
             return ret;
         }
