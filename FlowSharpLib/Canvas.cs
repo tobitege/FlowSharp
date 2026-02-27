@@ -15,6 +15,9 @@ namespace FlowSharpLib
 {
     public class Canvas : Panel
     {
+        private const int ResizeRefreshIntervalMs = 33;     // ~30 FPS during drag/resize.
+        private const int BitmapGrowthPadding = 128;
+
         public IServiceManager ServiceManager { get; set; }
         public Action<Canvas> PaintComplete { get; set; }
         public Color BackgroundColor => canvasBrush.Color;
@@ -30,6 +33,9 @@ namespace FlowSharpLib
 
         protected Graphics graphics;
         protected Graphics antiAliasGraphics;
+        protected Timer resizeRefreshTimer;
+        protected bool resizeRefreshPending;
+        protected Control parentControl;
 
         public Graphics Graphics => graphics;
         public Graphics AntiAliasGraphics => antiAliasGraphics;
@@ -53,11 +59,25 @@ namespace FlowSharpLib
 
             if (disposing)
             {
-                graphics.Dispose();
-                antiAliasGraphics.Dispose();
-                canvasBrush.Dispose();
-                gridPen.Dispose();
-                bitmap.Dispose();
+                if (parentControl != null)
+                {
+                    parentControl.Resize -= OnParentResize;
+                    parentControl = null;
+                }
+
+                if (resizeRefreshTimer != null)
+                {
+                    resizeRefreshTimer.Stop();
+                    resizeRefreshTimer.Tick -= OnResizeRefreshTimerTick;
+                    resizeRefreshTimer.Dispose();
+                    resizeRefreshTimer = null;
+                }
+
+                graphics?.Dispose();
+                antiAliasGraphics?.Dispose();
+                canvasBrush?.Dispose();
+                gridPen?.Dispose();
+                bitmap?.Dispose();
             }
         }
 
@@ -69,20 +89,19 @@ namespace FlowSharpLib
         {
             Dock = DockStyle.Fill;
             parent.Controls.Add(this);
+            parentControl = parent;
 
             if (NotMinimized())
             {
                 CreateBitmap();
             }
 
-            parent.Resize += (sndr, args) =>
+            resizeRefreshTimer = new Timer
             {
-                if (NotMinimized())
-                {
-                    CreateBitmap();
-                    Invalidate();
-                }
+                Interval = ResizeRefreshIntervalMs
             };
+            resizeRefreshTimer.Tick += OnResizeRefreshTimerTick;
+            parent.Resize += OnParentResize;
         }
 
         public void DrawImage(Bitmap img, Rectangle r)
@@ -144,6 +163,66 @@ namespace FlowSharpLib
             bitmap?.Dispose();
             bitmap = new Bitmap(ClientSize.Width, ClientSize.Height);
             CreateGraphicsObjects();
+        }
+
+        protected void EnsureBitmapCapacity(int width, int height)
+        {
+            if (width <= 0 || height <= 0)
+            {
+                return;
+            }
+
+            if (bitmap == null)
+            {
+                CreateBitmap(width, height);
+                return;
+            }
+
+            if (width <= bitmap.Width && height <= bitmap.Height)
+            {
+                return;
+            }
+
+            int targetWidth = Math.Max(width, bitmap.Width + BitmapGrowthPadding);
+            int targetHeight = Math.Max(height, bitmap.Height + BitmapGrowthPadding);
+            CreateBitmap(targetWidth, targetHeight);
+        }
+
+        protected void OnParentResize(object sender, EventArgs e)
+        {
+            if (!NotMinimized())
+            {
+                return;
+            }
+
+            resizeRefreshPending = true;
+
+            if (!resizeRefreshTimer.Enabled)
+            {
+                resizeRefreshTimer.Start();
+            }
+        }
+
+        protected void OnResizeRefreshTimerTick(object sender, EventArgs e)
+        {
+            if (!resizeRefreshPending)
+            {
+                resizeRefreshTimer.Stop();
+                return;
+            }
+
+            resizeRefreshPending = false;
+
+            if (NotMinimized())
+            {
+                EnsureBitmapCapacity(ClientSize.Width, ClientSize.Height);
+                Invalidate();
+            }
+
+            if (!resizeRefreshPending)
+            {
+                resizeRefreshTimer.Stop();
+            }
         }
 
         protected void CreateGraphicsObjects()

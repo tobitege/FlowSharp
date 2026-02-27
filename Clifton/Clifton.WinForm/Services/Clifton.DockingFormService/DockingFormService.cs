@@ -23,6 +23,11 @@ namespace Clifton.DockingFormService
 
     public class DockingFormService : ServiceBase, IDockingFormService
     {
+        private const int LeftDockSplitterWidth = 6;
+        private const int MinSplitterDragPixelDelta = 2;
+        private const double MinDockLeftPortion = 0.10;
+        private const double MaxDockLeftPortion = 0.80;
+
         public event EventHandler<ContentLoadedEventArgs> ContentLoaded;
         public event EventHandler<EventArgs> ActiveDocumentChanged;
         public event EventHandler<EventArgs> DocumentClosing;
@@ -31,6 +36,9 @@ namespace Clifton.DockingFormService
         public List<IDockDocument> Documents => dockPanel.DocumentsToArray().Cast<IDockDocument>().ToList();
 
         protected DockPanel dockPanel;
+        protected Panel leftDockSplitter;
+        protected bool draggingLeftDockSplitter;
+        protected int lastLeftDockSplitterX = -1;
         //protected VS2015LightTheme theme = new VS2015LightTheme();
 
         public Form CreateMainForm<T>() where T : Form, new()
@@ -42,6 +50,7 @@ namespace Clifton.DockingFormService
             };
             //dockPanel.Theme = theme;
             form.Controls.Add(dockPanel);
+            InitializeLeftDockSplitter();
 
             dockPanel.ActiveDocumentChanged += (sndr, args) => ActiveDocumentChanged.Fire(dockPanel.ActiveDocument);
 
@@ -109,14 +118,135 @@ namespace Clifton.DockingFormService
 
         public void SaveLayout(string filename)
         {
-            dockPanel.SaveAsXml(filename);      // layout.xml
+            string resolvedFilename = ResolveLayoutPath(filename, requireExistingFile: false);
+            dockPanel.SaveAsXml(resolvedFilename);      // layout.xml
         }
 
         public void LoadLayout(string filename)
         {
+            string resolvedFilename = ResolveLayoutPath(filename, requireExistingFile: true);
             CloseAllDocuments();
-            dockPanel.LoadFromXml(filename, new DeserializeDockContent(GetContentFromPersistString));
-            LoadApplicationContent(Path.GetDirectoryName(filename));
+            dockPanel.LoadFromXml(resolvedFilename, new DeserializeDockContent(GetContentFromPersistString));
+            LoadApplicationContent(Path.GetDirectoryName(resolvedFilename));
+            UpdateLeftDockSplitter();
+        }
+
+        protected virtual string ResolveLayoutPath(string filename, bool requireExistingFile)
+        {
+            if (Path.IsPathRooted(filename))
+            {
+                return filename;
+            }
+
+            if (File.Exists(filename))
+            {
+                return filename;
+            }
+
+            string appBasePath = AppContext.BaseDirectory;
+            string appBaseFilename = Path.Combine(appBasePath, filename);
+
+            if (!requireExistingFile || File.Exists(appBaseFilename))
+            {
+                return appBaseFilename;
+            }
+
+            return filename;
+        }
+
+        protected virtual void InitializeLeftDockSplitter()
+        {
+            leftDockSplitter = new Panel
+            {
+                Width = LeftDockSplitterWidth,
+                Cursor = Cursors.VSplit,
+                BackColor = System.Drawing.Color.Silver,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+
+            leftDockSplitter.MouseDown += OnLeftDockSplitterMouseDown;
+            leftDockSplitter.MouseMove += OnLeftDockSplitterMouseMove;
+            leftDockSplitter.MouseUp += OnLeftDockSplitterMouseUp;
+            dockPanel.DockWindows[WeifenLuo.WinFormsUI.Docking.DockState.DockLeft].Resize += (sndr, args) => UpdateLeftDockSplitter();
+            dockPanel.Resize += (sndr, args) => UpdateLeftDockSplitter();
+            dockPanel.Controls.Add(leftDockSplitter);
+            UpdateLeftDockSplitter();
+        }
+
+        protected virtual void OnLeftDockSplitterMouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                draggingLeftDockSplitter = true;
+                lastLeftDockSplitterX = dockPanel.PointToClient(Cursor.Position).X;
+            }
+        }
+
+        protected virtual void OnLeftDockSplitterMouseMove(object sender, MouseEventArgs e)
+        {
+            if (!draggingLeftDockSplitter)
+            {
+                return;
+            }
+
+            int mouseXInDockPanel = dockPanel.PointToClient(Cursor.Position).X;
+            int clampedX = Math.Max(80, Math.Min(dockPanel.Width - 80, mouseXInDockPanel));
+
+            if (lastLeftDockSplitterX >= 0 && Math.Abs(clampedX - lastLeftDockSplitterX) < MinSplitterDragPixelDelta)
+            {
+                return;
+            }
+
+            lastLeftDockSplitterX = clampedX;
+            double dockLeftPortion = (double)clampedX / Math.Max(1, dockPanel.Width);
+            dockPanel.DockLeftPortion = Math.Max(MinDockLeftPortion, Math.Min(MaxDockLeftPortion, dockLeftPortion));
+            UpdateLeftDockSplitter();
+        }
+
+        protected virtual void OnLeftDockSplitterMouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                draggingLeftDockSplitter = false;
+                lastLeftDockSplitterX = -1;
+            }
+        }
+
+        protected virtual void UpdateLeftDockSplitter()
+        {
+            if (leftDockSplitter == null || dockPanel == null || dockPanel.Width <= 0 || dockPanel.Height <= 0)
+            {
+                return;
+            }
+
+            int leftWidth = GetCurrentLeftDockBoundaryX();
+
+            if (leftWidth <= 0)
+            {
+                leftWidth = dockPanel.DockLeftPortion > 1
+                ? (int)Math.Round(dockPanel.DockLeftPortion)
+                : (int)Math.Round(dockPanel.Width * dockPanel.DockLeftPortion);
+            }
+
+            int x = Math.Max(80, Math.Min(dockPanel.Width - 80, leftWidth));
+            leftDockSplitter.Bounds = new System.Drawing.Rectangle(
+                x - (LeftDockSplitterWidth / 2),
+                0,
+                LeftDockSplitterWidth,
+                dockPanel.Height);
+            leftDockSplitter.BringToFront();
+        }
+
+        protected virtual int GetCurrentLeftDockBoundaryX()
+        {
+            DockWindow leftDockWindow = dockPanel.DockWindows[WeifenLuo.WinFormsUI.Docking.DockState.DockLeft];
+
+            if (leftDockWindow == null || !leftDockWindow.Visible || leftDockWindow.Width <= 0)
+            {
+                return 0;
+            }
+
+            return leftDockWindow.Right;
         }
 
         protected IDockContent GetContentFromPersistString(string persistString)

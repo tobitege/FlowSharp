@@ -18,6 +18,9 @@ namespace FlowSharp
     static partial class Program
     {
         public static ServiceManager ServiceManager;
+        internal static Action<string> BootstrapCore = DefaultBootstrapCore;
+        internal static Action<string, string, MessageBoxButtons, MessageBoxIcon> ShowMessageBox =
+            (text, caption, buttons, icon) => MessageBox.Show(text, caption, buttons, icon);
 
         static void Bootstrap(string moduleFilename = "modules.xml")
         {
@@ -26,11 +29,7 @@ namespace FlowSharp
 
             try
             {
-                IModuleManager moduleMgr = (IModuleManager)ServiceManager.Get<IServiceModuleManager>();
-                List<AssemblyFileName> modules = GetModuleList(XmlFileName.Create(moduleFilename));
-                moduleMgr.RegisterModules(modules);
-                List<Exception> exceptions = ServiceManager.FinishSingletonInitialization();
-                ShowAnyExceptions(exceptions);
+                BootstrapCore(moduleFilename);
             }
             catch(ReflectionTypeLoadException lex)
             {
@@ -41,12 +40,21 @@ namespace FlowSharp
                     sb.AppendLine(ex.Message);
                 }
 
-                MessageBox.Show(sb.ToString(), "Initialization Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ShowMessageBox(sb.ToString(), "Initialization Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message + "\r\n" + ex.StackTrace, "Initialization Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ShowMessageBox(ex.Message + "\r\n" + ex.StackTrace, "Initialization Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private static void DefaultBootstrapCore(string moduleFilename)
+        {
+            IModuleManager moduleMgr = (IModuleManager)ServiceManager.Get<IServiceModuleManager>();
+            List<AssemblyFileName> modules = GetModuleList(XmlFileName.Create(moduleFilename));
+            moduleMgr.RegisterModules(modules);
+            List<Exception> exceptions = ServiceManager.FinishSingletonInitialization();
+            ShowAnyExceptions(exceptions);
         }
 
         /// <summary>
@@ -55,10 +63,38 @@ namespace FlowSharp
         /// </summary>
         static private List<AssemblyFileName> GetModuleList(XmlFileName filename)
         {
-            Assert.That(File.Exists(filename.Value), "Module definition file " + filename.Value + " does not exist.");
-            XDocument xdoc = XDocument.Load(filename.Value);
+            string moduleDefinitionFile = ResolveModuleDefinitionPath(filename.Value);
+            Assert.That(File.Exists(moduleDefinitionFile), "Module definition file " + moduleDefinitionFile + " does not exist.");
+            XDocument xdoc = XDocument.Load(moduleDefinitionFile);
 
             return GetModuleList(xdoc);
+        }
+
+        /// <summary>
+        /// Resolve module definition path robustly for shell launches where the working directory
+        /// differs from the application base directory.
+        /// </summary>
+        static private string ResolveModuleDefinitionPath(string moduleFilename)
+        {
+            if (Path.IsPathRooted(moduleFilename))
+            {
+                return moduleFilename;
+            }
+
+            if (File.Exists(moduleFilename))
+            {
+                return moduleFilename;
+            }
+
+            string appBasePath = AppContext.BaseDirectory;
+            string modulePathInAppBase = Path.Combine(appBasePath, moduleFilename);
+
+            if (File.Exists(modulePathInAppBase))
+            {
+                return modulePathInAppBase;
+            }
+
+            return moduleFilename;
         }
 
         /// <summary>

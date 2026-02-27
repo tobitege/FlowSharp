@@ -26,26 +26,35 @@ namespace FlowSharpToolboxService
 
         public void InitializePlugins()
         {
-            if (File.Exists(Constants.PLUGIN_FILE_LIST))
+            string pluginFileListPath = ResolvePluginFileListPath();
+
+            if (File.Exists(pluginFileListPath))
             {
-                string[] plugins = File.ReadAllLines(Constants.PLUGIN_FILE_LIST);
+                string[] plugins = File.ReadAllLines(pluginFileListPath);
 
                 foreach (string plugin in plugins.Where(p => !String.IsNullOrWhiteSpace(p) && !p.BeginsWith("#")))
                 {
-                    RegisterPlugin(plugin);
+                    RegisterPlugin(ResolvePluginAssemblyPath(pluginFileListPath, plugin));
                 }
             }
         }
 
         public void UpdatePlugins()
         {
-            if (File.Exists(Constants.PLUGIN_FILE_LIST))
-            {
-                string[] plugins = File.ReadAllLines(Constants.PLUGIN_FILE_LIST);
+            string pluginFileListPath = ResolvePluginFileListPath();
 
-                foreach (string plugin in plugins.Where(p => !String.IsNullOrWhiteSpace(p) && !pluginFiles.Contains(p) && !p.BeginsWith("#")))
+            if (File.Exists(pluginFileListPath))
+            {
+                string[] plugins = File.ReadAllLines(pluginFileListPath);
+
+                foreach (string plugin in plugins.Where(p => !String.IsNullOrWhiteSpace(p) && !p.BeginsWith("#")))
                 {
-                    RegisterPlugin(plugin);
+                    string resolvedPluginPath = ResolvePluginAssemblyPath(pluginFileListPath, plugin);
+
+                    if (!pluginFiles.Contains(resolvedPluginPath))
+                    {
+                        RegisterPlugin(resolvedPluginPath);
+                    }
                 }
             }
         }
@@ -76,6 +85,33 @@ namespace FlowSharpToolboxService
             {
                 MessageBox.Show(plugin + "\r\n" + ex.Message, "Plugin Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        protected virtual string ResolvePluginFileListPath()
+        {
+            if (File.Exists(Constants.PLUGIN_FILE_LIST))
+            {
+                return Constants.PLUGIN_FILE_LIST;
+            }
+
+            string appBasePath = AppContext.BaseDirectory;
+            return Path.Combine(appBasePath, Constants.PLUGIN_FILE_LIST);
+        }
+
+        protected virtual string ResolvePluginAssemblyPath(string pluginFileListPath, string pluginAssemblyPath)
+        {
+            if (Path.IsPathRooted(pluginAssemblyPath))
+            {
+                return pluginAssemblyPath;
+            }
+
+            if (File.Exists(pluginAssemblyPath))
+            {
+                return pluginAssemblyPath;
+            }
+
+            string pluginListDirectory = Path.GetDirectoryName(pluginFileListPath) ?? AppContext.BaseDirectory;
+            return Path.Combine(pluginListDirectory, pluginAssemblyPath);
         }
 
         protected Assembly AssemblyResolver(AssemblyName assyName)

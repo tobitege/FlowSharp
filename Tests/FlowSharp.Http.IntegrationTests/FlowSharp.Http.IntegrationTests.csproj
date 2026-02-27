@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>FlowSharp.Http.IntegrationTests</AssemblyName>
+    <RootNamespace>FlowSharp.Http.IntegrationTests</RootNamespace>
+    <IsTestProject>true</IsTestProject>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="MSTest.TestAdapter" />
+    <PackageReference Include="MSTest.TestFramework" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Clifton\Clifton.Core\Clifton.Core.csproj" />
+    <ProjectReference Include="..\..\Services\FlowSharpRestService\FlowSharpRestService.csproj" Aliases="RestServiceAlias" />
+    <ProjectReference Include="..\..\FS-HOPE\StandAloneRunner\StandAloneRunner.csproj" Aliases="StandAloneRunnerAlias" />
+    <ProjectReference Include="..\..\FS-HOPE\CodeTester\CodeTester.csproj" Aliases="CodeTesterAlias" />
+  </ItemGroup>
+</Project>
