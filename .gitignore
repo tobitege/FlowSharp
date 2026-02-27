@@ -70,6 +70,7 @@ StyleCopReport.xml
 *.ilk
 *.meta
 *.obj
+ibs
 *.iobj
 *.pch
 *.pdb
@@ -343,3 +344,6 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 language-server-log.txt
+**/bin
+**/obj
+libs

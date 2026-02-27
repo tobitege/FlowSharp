@@ -1,103 +1,54 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{98E63D19-3D7A-4CB1-8EA9-31173D4BE05F}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>FlowSharp</RootNamespace>
     <AssemblyName>FlowSharp</AssemblyName>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup>
+    <RootNamespace>FlowSharp</RootNamespace>
+    <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>FlowSharp.ico</ApplicationIcon>
+    <EnableDefaultItems>false</EnableDefaultItems>
   </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="Clifton.Core, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\Debug\Clifton.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="Clifton.DockingFormService">
-      <HintPath>Libs\Clifton.DockingFormService.dll</HintPath>
-    </Reference>
-    <Reference Include="Clifton.SemanticProcessorService, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\Debug\Clifton.SemanticProcessorService.dll</HintPath>
-    </Reference>
-    <Reference Include="Clifton.WinForm.ServiceInterfaces, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\Debug\Clifton.WinForm.ServiceInterfaces.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Deployment" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml" />
-    <Reference Include="WeifenLuo.WinFormsUI.Docking, Version=2.1.6643.41644, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Libs\WeifenLuo.WinFormsUI.Docking.dll</HintPath>
-    </Reference>
-  </ItemGroup>
+
   <ItemGroup>
     <Compile Include="Bootstrap.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <None Include=".editorconfig" />
-    <None Include="packages.config" />
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <None Include="README.md" />
   </ItemGroup>
+
   <ItemGroup>
-    <None Include="App.config" />
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include=".editorconfig" />
+    <None Include="README.md" />
+    <None Include="App.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <None Include="defaultLayout.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="plugins.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\FlowSharp.ico" />
+  </ItemGroup>
+
   <ItemGroup>
     <Content Include="FlowSharpCodeModules.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -108,115 +59,35 @@
     <Content Include="personOfInterest.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="defaultLayout.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <Content Include="FlowSharp.ico" />
-    <None Include="plugins.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Resources\FlowSharp.ico" />
   </ItemGroup>
+
   <ItemGroup>
-    <ProjectReference Include="FS-HOPE\FlowSharpHopeCommon\FlowSharpHopeCommon.csproj">
-      <Project>{7b0e168e-8b6b-4dbf-9763-46b6232a2da7}</Project>
-      <Name>FlowSharpHopeCommon</Name>
-    </ProjectReference>
-    <ProjectReference Include="FS-HOPE\FlowSharpHopeService\FlowSharpHopeService.csproj">
-      <Project>{85be4c98-f377-4e78-b3ef-01c675a25db8}</Project>
-      <Name>FlowSharpHopeService</Name>
-    </ProjectReference>
-    <ProjectReference Include="FS-HOPE\HopeRunnerAppDomainInterface\HopeRunnerAppDomainInterface.csproj">
-      <Project>{eb69e349-53a1-45ca-8982-988b9bc557a3}</Project>
-      <Name>HopeRunnerAppDomainInterface</Name>
-    </ProjectReference>
-    <ProjectReference Include="FS-HOPE\HopeShapes\HopeShapes.csproj">
-      <Project>{d2031348-e8a6-4895-a4b8-a7f6093be054}</Project>
-      <Name>HopeShapes</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpCanvasService\FlowSharpCanvasService.csproj">
-      <Project>{8072dc59-f5de-46c3-98a2-e483484b253c}</Project>
-      <Name>FlowSharpCanvasService</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeCompilerService\FlowSharpCodeCompilerService.csproj">
-      <Project>{91fcf1d4-91e0-41fa-a675-c3174f131104}</Project>
-      <Name>FlowSharpCodeCompilerService</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeDrakonShapes\FlowSharpCodeDrakonShapes.csproj">
-      <Project>{82de83b7-6a8e-4bcb-8b12-5e80e30ddbad}</Project>
-      <Name>FlowSharpCodeDrakonShapes</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeICSharpDevelopService\FlowSharpCodeICSharpDevelopService.csproj">
-      <Project>{0f9d2405-725f-4859-ab13-75dfafa6ba35}</Project>
-      <Name>FlowSharpCodeICSharpDevelopService</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeOutputWindowService\FlowSharpCodeOutputWindowService.csproj">
-      <Project>{5fa0c1a5-bde5-41fb-b031-eb8285fc549b}</Project>
-      <Name>FlowSharpCodeOutputWindowService</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodePythonCompilerService\FlowSharpCodePythonCompilerService.csproj">
-      <Project>{526a7092-2ee6-49a6-beee-2c22f1e7cdce}</Project>
-      <Name>FlowSharpCodePythonCompilerService</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeScintillaEditorService\FlowSharpCodeScintillaEditorService.csproj">
-      <Project>{3452537d-7fa0-4916-baa9-b4985f11581e}</Project>
-      <Name>FlowSharpCodeScintillaEditorService</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeService\FlowSharpCodeService.csproj">
-      <Project>{d11163a6-8f20-4b74-9627-02831d1df1b2}</Project>
-      <Name>FlowSharpCodeService</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeShapes\FlowSharpCodeShapes.csproj">
-      <Project>{ef1bb007-e326-4305-94f0-c4a589fdb08a}</Project>
-      <Name>FlowSharpCodeShapes</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpDebugWindowService\FlowSharpDebugWindowService.csproj">
-      <Project>{ef3a8598-238b-4b29-9d77-79cd805cd0e7}</Project>
-      <Name>FlowSharpDebugWindowService</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpEditService\FlowSharpEditService.csproj">
-      <Project>{0d8ce8a3-cd6c-4905-a9bd-b7ae36a7b053}</Project>
-      <Name>FlowSharpEditService</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpMenuService\FlowSharpMenuService.csproj">
-      <Project>{4143c634-39f8-4143-98ba-5f20e533d7af}</Project>
-      <Name>FlowSharpMenuService</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpMouseControllerService\FlowSharpMouseControllerService.csproj">
-      <Project>{51bae79c-a873-4885-a39e-70d66155f78d}</Project>
-      <Name>FlowSharpMouseControllerService</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpPropertyGridService\FlowSharpPropertyGridService.csproj">
-      <Project>{ad2b1b25-b4f5-4eae-867e-636c58af0f57}</Project>
-      <Name>FlowSharpPropertyGridService</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpRestService\FlowSharpRestService.csproj">
-      <Project>{51d2b194-cffc-4905-8f06-90f1a0000df2}</Project>
-      <Name>FlowSharpRestService</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpServiceInterfaces\FlowSharpServiceInterfaces.csproj">
-      <Project>{caa4fd23-1392-4dee-907a-cb3dc7315a98}</Project>
-      <Name>FlowSharpServiceInterfaces</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpService\FlowSharpService.csproj">
-      <Project>{d6dfd9f7-45ff-45d9-8d45-ee5259441fbf}</Project>
-      <Name>FlowSharpService</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpToolboxService\FlowSharpToolboxService.csproj">
-      <Project>{aae37a5e-07fe-4cdb-b4d4-a176213fce2b}</Project>
-      <Name>FlowSharpToolboxService</Name>
-    </ProjectReference>
-    <ProjectReference Include="Services\FlowSharpWebSocketService\FlowSharpWebSocketService.csproj">
-      <Project>{3548af21-b8cb-4c45-88b6-80fad43eb561}</Project>
-      <Name>FlowSharpWebSocketService</Name>
-    </ProjectReference>
+    <ProjectReference Include="clifton\Clifton.WinForm\Services\Clifton.DockingFormService\Clifton.DockingFormService.csproj" />
+    <ProjectReference Include="FS-HOPE\FlowSharpHopeCommon\FlowSharpHopeCommon.csproj" />
+    <ProjectReference Include="FS-HOPE\FlowSharpHopeService\FlowSharpHopeService.csproj" />
+    <ProjectReference Include="FS-HOPE\HopeRunnerAppDomainInterface\HopeRunnerAppDomainInterface.csproj" />
+    <ProjectReference Include="FS-HOPE\HopeShapes\HopeShapes.csproj" />
+    <ProjectReference Include="Plugins\FlowSharpWindowsControlShapes\FlowSharpWindowsControlShapes.csproj" />
+    <ProjectReference Include="Plugins\PluginExample\PluginExample.csproj" />
+    <ProjectReference Include="Services\FlowSharpCanvasService\FlowSharpCanvasService.csproj" />
+    <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeCompilerService\FlowSharpCodeCompilerService.csproj" />
+    <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeDrakonShapes\FlowSharpCodeDrakonShapes.csproj" />
+    <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeICSharpDevelopService\FlowSharpCodeICSharpDevelopService.csproj" />
+    <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeOutputWindowService\FlowSharpCodeOutputWindowService.csproj" />
+    <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodePythonCompilerService\FlowSharpCodePythonCompilerService.csproj" />
+    <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeScintillaEditorService\FlowSharpCodeScintillaEditorService.csproj" />
+    <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeService\FlowSharpCodeService.csproj" />
+    <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeShapes\FlowSharpCodeShapes.csproj" />
+    <ProjectReference Include="Services\FlowSharpDebugWindowService\FlowSharpDebugWindowService.csproj" />
+    <ProjectReference Include="Services\FlowSharpEditService\FlowSharpEditService.csproj" />
+    <ProjectReference Include="Services\FlowSharpMenuService\FlowSharpMenuService.csproj" />
+    <ProjectReference Include="Services\FlowSharpMouseControllerService\FlowSharpMouseControllerService.csproj" />
+    <ProjectReference Include="Services\FlowSharpPropertyGridService\FlowSharpPropertyGridService.csproj" />
+    <ProjectReference Include="Services\FlowSharpRestService\FlowSharpRestService.csproj" />
+    <ProjectReference Include="Services\FlowSharpServiceInterfaces\FlowSharpServiceInterfaces.csproj" />
+    <ProjectReference Include="Services\FlowSharpService\FlowSharpService.csproj" />
+    <ProjectReference Include="Services\FlowSharpToolboxService\FlowSharpToolboxService.csproj" />
+    <ProjectReference Include="Services\FlowSharpWebSocketService\FlowSharpWebSocketService.csproj" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

@@ -1,4 +1,4 @@
-﻿/* The MIT License (MIT)
+/* The MIT License (MIT)
 * 
 * Copyright (c) 2015 Marc Clifton
 * 
@@ -151,11 +151,6 @@ namespace Clifton.Core.TemplateEngine
 
 			return ret;
 		}
-
-		//public bool IsCached(string template)
-		//{
-		//	return cachedAssemblies.ContainsKey(GetHash(template));
-		//}
 
 		public bool IsCached(string template, out IRuntimeAssembly t)
 		{

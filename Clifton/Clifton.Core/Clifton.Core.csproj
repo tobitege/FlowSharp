@@ -1,128 +1,41 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{54E73707-81C4-4C7F-9739-446C6D7D5FEA}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Clifton.Core</RootNamespace>
     <AssemblyName>Clifton.Core</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
+    <RootNamespace>Clifton.Core</RootNamespace>
+    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>..\..\bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>..\..\bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>E:\software\c#\FlowSharp-master\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.ComponentModel.DataAnnotations" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data.Linq" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="System.IO.Ports" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Clifton.Core.Assertions\Assert.cs" />
-    <Compile Include="Clifton.Core.Exceptions\ModuleManagerException.cs" />
-    <Compile Include="Clifton.Core.ExtensionMethods\ContextExtensionMethods.cs" />
-    <Compile Include="Clifton.Core.ExtensionMethods\DistinctBy.cs" />
-    <Compile Include="Clifton.Core.ExtensionMethods\DropLast.cs" />
-    <Compile Include="Clifton.Core.ExtensionMethods\ExtensionMethods.cs" />
-    <Compile Include="Clifton.Core.ExtensionMethods\MultiMap.cs" />
-    <Compile Include="Clifton.Core.ExtensionMethods\WinFormExtensionMethods.cs" />
-    <Compile Include="Clifton.Core.ModelTableManagement\Attributes.cs" />
-    <Compile Include="Clifton.Core.ModelTableManagement\ICreateUpdate.cs" />
-    <Compile Include="Clifton.Core.ModelTableManagement\IEntity.cs" />
-    <Compile Include="Clifton.Core.ModelTableManagement\INamedEntity.cs" />
-    <Compile Include="Clifton.Core.ModelTableManagement\MappedRecord.cs" />
-    <Compile Include="Clifton.Core.ModelTableManagement\ModelMgr.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Clifton.Core.ModelTableManagement\ModelTable.cs" />
-    <Compile Include="Clifton.Core.ModelTableManagement\ModelView.cs" />
-    <Compile Include="Clifton.Core.ModelTableManagement\NamedEntity.cs" />
-    <Compile Include="Clifton.Core.ModuleManagement\IModule.cs" />
-    <Compile Include="Clifton.Core.ModuleManagement\IModuleManager.cs" />
-    <Compile Include="Clifton.Core.ModuleManagement\IServiceModuleManager.cs" />
-    <Compile Include="Clifton.Core.ModuleManagement\ModuleManager.cs" />
-    <Compile Include="Clifton.Core.ModuleManagement\ServiceModuleManager.cs" />
-    <Compile Include="Clifton.Core.Pipes\BasicPipe.cs" />
-    <Compile Include="Clifton.Core.Pipes\ClientPipe.cs" />
-    <Compile Include="Clifton.Core.Pipes\PipeEventArgs.cs" />
-    <Compile Include="Clifton.Core.Pipes\ServerPipe.cs" />
-    <Compile Include="Clifton.Core.Semantics\Attributes.cs" />
-    <Compile Include="Clifton.Core.Semantics\SemanticTypes.cs" />
-    <Compile Include="Clifton.Core.Semantics\ImmutableSemanticType.cs" />
-    <Compile Include="Clifton.Core.Semantics\Interfaces.cs" />
-    <Compile Include="Clifton.Core.Semantics\Membrane.cs" />
-    <Compile Include="Clifton.Core.SerialIO\CommPort.cs" />
-    <Compile Include="Clifton.Core.ServiceInterfaces\IAppConfigService.cs" />
-    <Compile Include="Clifton.Core.ServiceInterfaces\IConfigService.cs" />
-    <Compile Include="Clifton.Core.ServiceInterfaces\IConsoleCriticalExceptionService.cs" />
-    <Compile Include="Clifton.Core.ServiceInterfaces\IConsoleLoggerService.cs" />
-    <Compile Include="Clifton.Core.ServiceInterfaces\ICriticalExceptionService.cs" />
-    <Compile Include="Clifton.Core.ServiceInterfaces\IDbContextService.cs" />
-    <Compile Include="Clifton.Core.ServiceInterfaces\IEmailExceptionLoggerService.cs" />
-    <Compile Include="Clifton.Core.ServiceInterfaces\IEmailService.cs" />
-    <Compile Include="Clifton.Core.ServiceInterfaces\ILoggerService.cs" />
-    <Compile Include="Clifton.Core.ServiceInterfaces\IMessageBoxLoggerService.cs" />
-    <Compile Include="Clifton.Core.ServiceInterfaces\IPaperTrailAppLoggerService.cs" />
-    <Compile Include="Clifton.Core.ServiceManagement\IService.cs" />
-    <Compile Include="Clifton.Core.ServiceManagement\IServiceManager.cs" />
-    <Compile Include="Clifton.Core.ServiceManagement\ServiceBase.cs" />
-    <Compile Include="Clifton.Core.ServiceManagement\ServiceManager.cs" />
-    <Compile Include="Clifton.Core.StateManagement\IStateContext.cs" />
-    <Compile Include="Clifton.Core.StateManagement\StateInfo.cs" />
-    <Compile Include="Clifton.Core.StateManagement\StateManager.cs" />
-    <Compile Include="Clifton.Core.StateManagement\StateTransition.cs" />
-    <Compile Include="Clifton.Core.ThreadQueue\ThreadedQueue.cs" />
-    <Compile Include="Clifton.Core.Utils\ConcurrentList.cs" />
-    <Compile Include="Clifton.Core.Utils\Converter.cs" />
-    <Compile Include="Clifton.Core.Utils\PasswordHash.cs" />
-    <Compile Include="Clifton.Core.Utils\ProcessHelper.cs" />
-    <Compile Include="Clifton.Core.Utils\RestCall.cs" />
-    <Compile Include="Clifton.Core.Utils\Serialization.cs" />
-    <Compile Include="Clifton.Core.Workflow\Workflow.cs" />
-    <Compile Include="Clifton.Core.Workflow\WorkflowContinuation.cs" />
-    <Compile Include="Clifton.Core.Workflow\WorkflowItem.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json">
-      <Version>13.0.1</Version>
-    </PackageReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
+
+  <!-- 
+    Exclude directories that are separate projects or use incompatible technologies:
+    - TemplateEngine: separate solution
+    - ModelTableManagement: uses System.Data.Linq (LINQ to SQL - .NET Framework only)
+    - Services: separate projects
+    - WebInterfaces: separate project
   -->
+  <ItemGroup>
+    <Compile Remove="Clifton.Core.TemplateEngine\**" />
+    <Compile Remove="Clifton.Core.ModelTableManagement\**" />
+    <Compile Remove="Services\**" />
+    <Compile Remove="Clifton.WebInterfaces\**" />
+    <EmbeddedResource Remove="Clifton.Core.TemplateEngine\**" />
+    <EmbeddedResource Remove="Clifton.Core.ModelTableManagement\**" />
+    <EmbeddedResource Remove="Services\**" />
+    <EmbeddedResource Remove="Clifton.WebInterfaces\**" />
+    <None Remove="Clifton.Core.TemplateEngine\**" />
+    <None Remove="Clifton.Core.ModelTableManagement\**" />
+    <None Remove="Services\**" />
+    <None Remove="Clifton.WebInterfaces\**" />
+  </ItemGroup>
+
+  <!-- Exclude files that depend on ModelTableManagement/LINQ to SQL -->
+  <ItemGroup>
+    <Compile Remove="Clifton.Core.ExtensionMethods\ContextExtensionMethods.cs" />
+    <Compile Remove="Clifton.Core.ServiceInterfaces\IDbContextService.cs" />
+  </ItemGroup>
 </Project>

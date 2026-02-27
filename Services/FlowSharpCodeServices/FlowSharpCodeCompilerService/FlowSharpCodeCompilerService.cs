@@ -1,5 +1,4 @@
-﻿using System;
-using System.CodeDom.Compiler;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -8,7 +7,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 
-using Microsoft.CSharp;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Emit;
 
 using Clifton.Core.ExtensionMethods;
 using Clifton.Core.ModuleManagement;
@@ -135,7 +136,7 @@ namespace FlowSharpCodeCompilerService
 
         protected readonly Dictionary<string, string> tempToTextBoxMap = new Dictionary<string, string>();
         protected string exeFilename;
-        protected CompilerResults results;
+        protected RoslynCompileResults results;
         protected Process runningProcess;
 
         public override void FinishedInitialization()
@@ -569,42 +570,12 @@ namespace FlowSharpCodeCompilerService
 
         protected bool Compile(string assyFilename, List<string> sources, List<string> refs, bool generateExecutable = false)
         {
-            var provider = new CSharpCodeProvider();
-            var parameters = new CompilerParameters
-            {
-                IncludeDebugInformation = true,
-                GenerateInMemory = false,
-                GenerateExecutable = generateExecutable,
-                OutputAssembly = assyFilename
-            };
-
-            parameters.ReferencedAssemblies.Add("System.dll");
-            parameters.ReferencedAssemblies.Add("System.Core.dll");
-            parameters.ReferencedAssemblies.Add("System.Data.dll");
-            parameters.ReferencedAssemblies.Add("System.Data.Linq.dll");
-            parameters.ReferencedAssemblies.Add("System.Drawing.dll");
-            parameters.ReferencedAssemblies.Add("System.Net.dll");
-            parameters.ReferencedAssemblies.Add("System.Net.Http.dll");
-            // parameters.ReferencedAssemblies.Add("System.Speech.dll");
-            parameters.ReferencedAssemblies.Add("System.Xml.dll");
-            parameters.ReferencedAssemblies.Add("System.Xml.Linq.dll");
-            // parameters.ReferencedAssemblies.Add("Clifton.Core.dll");
-            // parameters.ReferencedAssemblies.Add("websocket-sharp.dll");
-            parameters.ReferencedAssemblies.AddRange(refs.ToArray());
-
-            if (generateExecutable)
-            {
-                parameters.MainClass = "App.Program";
-            }
-
-            // results = provider.CompileAssemblyFromSource(parameters, sources.ToArray());
-
-            results = provider.CompileAssemblyFromFile(parameters, sources.ToArray());
+            results = CompileWithRoslyn(assyFilename, sources, refs, generateExecutable);
 
             if (!results.Errors.HasErrors) return true;
             var sb = new StringBuilder();
 
-            foreach (CompilerError error in results.Errors)
+            foreach (var error in results.Errors)
             {
                 try
                 {
@@ -612,14 +583,164 @@ namespace FlowSharpCodeCompilerService
                 }
                 catch
                 {
-                    sb.AppendLine(error.ErrorText);     // other errors, like "process in use", do not have an associated filename, so general catch-all here.
+                    sb.AppendLine(error.ErrorText);
                 }
             }
 
-            // MessageBox.Show(sb.ToString(), assyFilename, MessageBoxButtons.OK, MessageBoxIcon.Error);
             ServiceManager.Get<IFlowSharpCodeOutputWindowService>().WriteLine(sb.ToString());
 
             return false;
+        }
+
+        protected RoslynCompileResults CompileWithRoslyn(string assyFilename, List<string> sources, List<string> refs, bool generateExecutable)
+        {
+            var compileResults = new RoslynCompileResults();
+            var allRefs = new List<string>
+            {
+                "System.dll",
+                "System.Core.dll",
+                "System.Data.dll",
+                "System.Data.Linq.dll",
+                "System.Drawing.dll",
+                "System.Net.dll",
+                "System.Net.Http.dll",
+                "System.Xml.dll",
+                "System.Xml.Linq.dll"
+            };
+            allRefs.AddRange(refs);
+
+            var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.CSharp7_3);
+            var syntaxTrees = sources
+                .Select(sourceFile => CSharpSyntaxTree.ParseText(File.ReadAllText(sourceFile), parseOptions, sourceFile, Encoding.UTF8))
+                .ToList();
+            var metadataReferences = ResolveMetadataReferences(allRefs);
+
+            var compilationOptions = new CSharpCompilationOptions(
+                generateExecutable ? OutputKind.WindowsApplication : OutputKind.DynamicallyLinkedLibrary,
+                optimizationLevel: OptimizationLevel.Debug,
+                mainTypeName: generateExecutable ? "App.Program" : null);
+
+            var compilation = CSharpCompilation.Create(
+                Path.GetFileNameWithoutExtension(assyFilename),
+                syntaxTrees,
+                metadataReferences,
+                compilationOptions);
+
+            var outputPath = Path.GetFullPath(assyFilename);
+            var outputDirectory = Path.GetDirectoryName(outputPath);
+
+            if (!string.IsNullOrEmpty(outputDirectory))
+            {
+                Directory.CreateDirectory(outputDirectory);
+            }
+
+            using (var peStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            using (var pdbStream = new FileStream(Path.ChangeExtension(outputPath, ".pdb"), FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                EmitResult emitResult = compilation.Emit(peStream, pdbStream);
+
+                if (!emitResult.Success)
+                {
+                    emitResult.Diagnostics
+                        .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+                        .ToList()
+                        .ForEach(diagnostic =>
+                        {
+                            var lineSpan = diagnostic.Location.GetLineSpan();
+                            compileResults.Errors.Add(new RoslynCompileError
+                            {
+                                FileName = lineSpan.Path ?? string.Empty,
+                                Line = lineSpan.StartLinePosition.Line + 1,
+                                ErrorText = diagnostic.GetMessage()
+                            });
+                        });
+                }
+            }
+
+            return compileResults;
+        }
+
+        protected List<MetadataReference> ResolveMetadataReferences(List<string> refs)
+        {
+            var metadataReferences = new List<MetadataReference>();
+            var trustedPlatformAssemblies = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES"))
+                .Split(Path.PathSeparator)
+                .ToList();
+            var resolvedReferencePaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            trustedPlatformAssemblies
+                .ForEach(path =>
+                {
+                    var normalizedPath = Path.GetFullPath(path);
+                    if (resolvedReferencePaths.Add(normalizedPath))
+                    {
+                        metadataReferences.Add(MetadataReference.CreateFromFile(normalizedPath));
+                    }
+                });
+
+            refs
+                .Where(reference => !string.IsNullOrWhiteSpace(reference))
+                .Select(reference => reference.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList()
+                .ForEach(reference =>
+                {
+                    string resolvedPath = null;
+
+                    if (File.Exists(reference))
+                    {
+                        resolvedPath = Path.GetFullPath(reference);
+                    }
+                    else
+                    {
+                        var trustedPath = trustedPlatformAssemblies.FirstOrDefault(path =>
+                            Path.GetFileName(path).Equals(reference, StringComparison.OrdinalIgnoreCase) ||
+                            path.EndsWith(reference, StringComparison.OrdinalIgnoreCase));
+
+                        resolvedPath = trustedPath;
+                    }
+
+                    if (string.IsNullOrEmpty(resolvedPath))
+                    {
+                        return;
+                    }
+
+                    resolvedPath = Path.GetFullPath(resolvedPath);
+                    if (!resolvedReferencePaths.Add(resolvedPath))
+                    {
+                        return;
+                    }
+
+                    if (File.Exists(resolvedPath) && !trustedPlatformAssemblies.Contains(resolvedPath, StringComparer.OrdinalIgnoreCase))
+                    {
+                        // Load custom references from bytes to avoid long-lived memory-mapped file handles
+                        // on generated assemblies that tests and workflows may need to delete immediately.
+                        metadataReferences.Add(MetadataReference.CreateFromImage(File.ReadAllBytes(resolvedPath)));
+                    }
+                    else
+                    {
+                        metadataReferences.Add(MetadataReference.CreateFromFile(resolvedPath));
+                    }
+                });
+
+            return metadataReferences;
+        }
+
+        protected class RoslynCompileResults
+        {
+            public RoslynCompileErrors Errors { get; } = new RoslynCompileErrors();
+        }
+
+        protected class RoslynCompileErrors : List<RoslynCompileError>
+        {
+            public bool HasErrors => Count > 0;
+        }
+
+        protected class RoslynCompileError
+        {
+            public string FileName { get; set; }
+            public int Line { get; set; }
+            public string ErrorText { get; set; }
         }
 
         protected List<IAssemblyReferenceBox> GetReferences(BaseController canvasController)

@@ -1,104 +1,26 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{85BE4C98-F377-4E78-B3EF-01C675A25DB8}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>FlowSharpHopeService</RootNamespace>
     <AssemblyName>FlowSharpHopeService</AssemblyName>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
+    <RootNamespace>FlowSharpHopeService</RootNamespace>
+    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>..\..\bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>..\..\bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="Clifton.Core">
-      <HintPath>..\..\bin\Debug\Clifton.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="Clifton.SemanticProcessorService">
-      <HintPath>..\..\bin\Debug\Clifton.SemanticProcessorService.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data.Linq" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="Animator.cs" />
-    <Compile Include="CarrierShape.cs" />
-    <Compile Include="HigherOrderProgrammingService.cs" />
-    <Compile Include="InAppRunner.cs" />
-    <Compile Include="IRunner.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RouteHandlers.cs" />
-    <Compile Include="StandAloneRunner.cs" />
+    <ProjectReference Include="..\..\FlowSharpLib\FlowSharpLib.csproj" />
+    <ProjectReference Include="..\..\Services\FlowSharpCodeServices\FlowSharpCodeServiceInterfaces\FlowSharpCodeServiceInterfaces.csproj" />
+    <ProjectReference Include="..\..\Services\FlowSharpCodeServices\FlowSharpCodeShapeInterfaces\FlowSharpCodeShapeInterfaces.csproj" />
+    <ProjectReference Include="..\..\Services\FlowSharpServiceInterfaces\FlowSharpServiceInterfaces.csproj" />
+    <ProjectReference Include="..\FlowSharpHopeCommon\FlowSharpHopeCommon.csproj" />
+    <ProjectReference Include="..\FlowSharpHopeServiceInterfaces\FlowSharpHopeServiceInterfaces.csproj" />
+    <ProjectReference Include="..\FlowSharpHopeShapeInterfaces\FlowSharpHopeShapeInterfaces.csproj" />
+    <ProjectReference Include="..\HopeRunnerAppDomainInterface\HopeRunnerAppDomainInterface.csproj" />
+    <ProjectReference Include="..\..\Clifton\Clifton.Core\Clifton.Core.csproj" />
+    <ProjectReference Include="..\..\Clifton\Clifton.Core\Services\Clifton.SemanticProcessorService\Clifton.SemanticProcessorService.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\FlowSharpLib\FlowSharpLib.csproj">
-      <Project>{07f65ca7-b8d3-4716-bfbf-812ef4da68be}</Project>
-      <Name>FlowSharpLib</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Services\FlowSharpCodeServices\FlowSharpCodeServiceInterfaces\FlowSharpCodeServiceInterfaces.csproj">
-      <Project>{f8d75cfd-fb07-4a09-97d6-0ac3871aa35a}</Project>
-      <Name>FlowSharpCodeServiceInterfaces</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Services\FlowSharpCodeServices\FlowSharpCodeShapeInterfaces\FlowSharpCodeShapeInterfaces.csproj">
-      <Project>{8c7d37d1-f9d9-4633-b863-eac44b9dd999}</Project>
-      <Name>FlowSharpCodeShapeInterfaces</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Services\FlowSharpServiceInterfaces\FlowSharpServiceInterfaces.csproj">
-      <Project>{caa4fd23-1392-4dee-907a-cb3dc7315a98}</Project>
-      <Name>FlowSharpServiceInterfaces</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\FlowSharpHopeCommon\FlowSharpHopeCommon.csproj">
-      <Project>{7b0e168e-8b6b-4dbf-9763-46b6232a2da7}</Project>
-      <Name>FlowSharpHopeCommon</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\FlowSharpHopeServiceInterfaces\FlowSharpHopeServiceInterfaces.csproj">
-      <Project>{5484797e-7b0e-40ac-962b-185073672e7c}</Project>
-      <Name>FlowSharpHopeServiceInterfaces</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\FlowSharpHopeShapeInterfaces\FlowSharpHopeShapeInterfaces.csproj">
-      <Project>{087e600f-f5a4-430f-97a9-94e5f52673f8}</Project>
-      <Name>FlowSharpHopeShapeInterfaces</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\HopeRunnerAppDomainInterface\HopeRunnerAppDomainInterface.csproj">
-      <Project>{eb69e349-53a1-45ca-8982-988b9bc557a3}</Project>
-      <Name>HopeRunnerAppDomainInterface</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <None Include="packages.config" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

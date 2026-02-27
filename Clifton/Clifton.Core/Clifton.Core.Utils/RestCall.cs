@@ -1,4 +1,4 @@
-﻿/* The MIT License (MIT)
+/* The MIT License (MIT)
 *
 * Copyright (c) 2015 Marc Clifton
 *
@@ -22,9 +22,7 @@
 */
 
 using System;
-using System.IO;
-using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Text;
 
 using Newtonsoft.Json;
@@ -37,19 +35,10 @@ namespace Clifton.Core.Utils
     {
         public static string Get(string url)
         {
-            var request = (HttpWebRequest)WebRequest.Create(url);
-            request.Method = "GET";
-
-            var ret = "";
-            var resp = request.GetResponse();
-            var respStream = resp?.GetResponseStream();
-            if (respStream != null)
+            using (var client = new HttpClient())
             {
-                ret = new StreamReader(respStream).ReadToEnd();
+                return client.GetStringAsync(url).GetAwaiter().GetResult();
             }
-            resp.Close();
-
-            return ret;
         }
 
         public static R Post<R>(string url, object obj)
@@ -57,24 +46,21 @@ namespace Clifton.Core.Utils
             var target = Activator.CreateInstance<R>();
             var json = JsonConvert.SerializeObject(obj);
 
-            var request = (HttpWebRequest)WebRequest.Create(url);
-            request.Method = "POST";
-            request.ContentType = "application/json";
-            request.ContentLength = json.Length;
-
-            var st = request.GetRequestStream();
-            var bytes = Encoding.UTF8.GetBytes(json);
-            st.Write(bytes, 0, bytes.Length);
-            var resp = request.GetResponse();
-            var respStream = resp?.GetResponseStream();
-            if (respStream != null)
+            using (var client = new HttpClient())
             {
-                var retjson = new StreamReader(respStream).ReadToEnd();
-                JObject jobj = JObject.Parse(retjson);
-                JsonConvert.PopulateObject(jobj.ToString(), target);
+                using (var content = new StringContent(json, Encoding.UTF8, "application/json"))
+                {
+                    var response = client.PostAsync(url, content).GetAwaiter().GetResult();
+                    response.EnsureSuccessStatusCode();
+                    var retjson = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                    if (!string.IsNullOrWhiteSpace(retjson))
+                    {
+                        JObject jobj = JObject.Parse(retjson);
+                        JsonConvert.PopulateObject(jobj.ToString(), target);
+                    }
+                }
             }
-            resp.Close();
-            st.Close();
 
             return target;
         }

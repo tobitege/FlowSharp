@@ -1,4 +1,4 @@
-﻿/* The MIT License (MIT)
+/* The MIT License (MIT)
 *
 * Copyright (c) 2015 Marc Clifton
 *
@@ -1238,14 +1238,16 @@ namespace Clifton.Core.ExtensionMethods
 
             using (var ms = new MemoryStream())
             {
-                using (var AES = new RijndaelManaged())
+                using (var AES = Aes.Create())
                 {
                     AES.KeySize = 256;
                     AES.BlockSize = 128;
 
-                    var key = new Rfc2898DeriveBytes(passwordBytes, saltBytes, 1000);
-                    AES.Key = key.GetBytes(AES.KeySize / 8);
-                    AES.IV = key.GetBytes(AES.BlockSize / 8);
+                    using (var key = new Rfc2898DeriveBytes(passwordBytes, saltBytes, 1000, HashAlgorithmName.SHA1))
+                    {
+                        AES.Key = key.GetBytes(AES.KeySize / 8);
+                        AES.IV = key.GetBytes(AES.BlockSize / 8);
+                    }
 
                     AES.Mode = CipherMode.CBC; // Cipher Block Chaining.
 
@@ -1270,14 +1272,16 @@ namespace Clifton.Core.ExtensionMethods
 
             using (var ms = new MemoryStream())
             {
-                using (var AES = new RijndaelManaged())
+                using (var AES = Aes.Create())
                 {
                     AES.KeySize = 256;
                     AES.BlockSize = 128;
 
-                    var key = new Rfc2898DeriveBytes(passwordBytes, saltBytes, 1000);
-                    AES.Key = key.GetBytes(AES.KeySize / 8);
-                    AES.IV = key.GetBytes(AES.BlockSize / 8);
+                    using (var key = new Rfc2898DeriveBytes(passwordBytes, saltBytes, 1000, HashAlgorithmName.SHA1))
+                    {
+                        AES.Key = key.GetBytes(AES.KeySize / 8);
+                        AES.IV = key.GetBytes(AES.BlockSize / 8);
+                    }
 
                     AES.Mode = CipherMode.CBC; // Cipher Block Chaining.
 
@@ -1468,9 +1472,13 @@ namespace Clifton.Core.ExtensionMethods
         public static string SHA1(this string str)
         {
             var bytes = Encoding.UTF8.GetBytes(str);
-            SHA1 sha = new SHA1CryptoServiceProvider();
-            var id = sha.ComputeHash(bytes);
-            var ret = id.ToBase64();
+            string ret;
+
+            using (var sha = System.Security.Cryptography.SHA1.Create())
+            {
+                var id = sha.ComputeHash(bytes);
+                ret = id.ToBase64();
+            }
 
             return ret;
         }

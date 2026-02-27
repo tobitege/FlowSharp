@@ -1,4 +1,4 @@
-﻿/* The MIT License (MIT)
+/* The MIT License (MIT)
 * 
 * Copyright (c) 2015 Marc Clifton
 * 
@@ -162,35 +162,65 @@ namespace Clifton.Core.TemplateEngine
   
 		private string VariableReplacement(string line)
 		{
-			string remainder = line;
-			string parsedLine = String.Empty;
+			StringBuilder sb = new StringBuilder();
+			int idx = 0;
 
-			// Regular handling:
-			// Example usage: @:alert("foobar")
-
-			while (remainder.Contains("@"))
+			while (idx < line.Length)
 			{
-				string left = remainder.LeftOf('@');
-				string right = remainder.RightOf('@');
+				if (line[idx] != '@')
+				{
+					sb.Append(line[idx]);
+					idx++;
+					continue;
+				}
 
-				// TODO: @@ translates to an inline @, so ignore.
-				if ((right.Length > 0) && (right[0] == '@'))
+				// @@ translates to a literal @
+				if ((idx + 1 < line.Length) && line[idx + 1] == '@')
 				{
-					parsedLine += left + "@";
-					remainder = right.Substring(1);		// move past second @
+					sb.Append('@');
+					idx += 2;
+					continue;
 				}
-				else
+
+				int tokenStart = idx + 1;
+
+				// If @ is not followed by an identifier, keep it literal.
+				if (tokenStart >= line.Length || !(Char.IsLetter(line[tokenStart]) || line[tokenStart] == '_'))
 				{
-					// Force close quote, inject variable name, append with + "
-					// We use _!!_ to indicate an unescaped "
-					parsedLine += left + "_!!_ + " + right.LeftOf('@').Replace("\"", "_!!_") + ".ToString() + _!!_";
-					remainder = right.RightOf('@');		// everything after the token.
+					sb.Append('@');
+					idx++;
+					continue;
 				}
+
+				int tokenEnd = tokenStart + 1;
+
+				// Support @foo, @foo.bar, and optional trailing @ delimiter.
+				while (tokenEnd < line.Length)
+				{
+					char c = line[tokenEnd];
+
+					if (Char.IsLetterOrDigit(c) || c == '_' || c == '.')
+					{
+						tokenEnd++;
+					}
+					else
+					{
+						break;
+					}
+				}
+
+				string token = line.Substring(tokenStart, tokenEnd - tokenStart);
+				sb.Append("_!!_ + " + token + ".ToString() + _!!_");
+
+				if ((tokenEnd < line.Length) && line[tokenEnd] == '@')
+				{
+					tokenEnd++;
+				}
+
+				idx = tokenEnd;
 			}
 
-			parsedLine += remainder;
-
-			return parsedLine;
+			return sb.ToString();
 		}
 	}
 }

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Password Hashing With PBKDF2 (http://crackstation.net/hashing-security.htm).
  * Copyright (c) 2013, Taylor Hornby
  * All rights reserved.
@@ -57,9 +57,8 @@ namespace Clifton.Core.Utils
         public static string CreateHash(string password)
         {
             // Generate a random salt
-            var csprng = new RNGCryptoServiceProvider();
             var salt = new byte[SALT_BYTE_SIZE];
-            csprng.GetBytes(salt);
+            RandomNumberGenerator.Fill(salt);
 
             // Hash the password and encode the parameters
             var hash = PBKDF2(password, salt, PBKDF2_ITERATIONS, HASH_BYTE_SIZE);
@@ -111,11 +110,10 @@ namespace Clifton.Core.Utils
         /// <returns>A hash of the password.</returns>
         private static byte[] PBKDF2(string password, byte[] salt, int iterations, int outputBytes)
         {
-            var pbkdf2 = new Rfc2898DeriveBytes(password, salt)
+            using (var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA1))
             {
-                IterationCount = iterations
-            };
-            return pbkdf2.GetBytes(outputBytes);
+                return pbkdf2.GetBytes(outputBytes);
+            }
         }
     }
 }

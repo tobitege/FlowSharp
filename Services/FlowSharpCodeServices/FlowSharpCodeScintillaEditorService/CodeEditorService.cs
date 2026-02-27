@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
@@ -121,7 +121,7 @@ namespace FlowSharpCodeScintillaEditorService
             ScintillaEditor editor = new T();
             editor.Margins[0].Width = 32;           // Wider than default of 16 so line numbers > 100 display.  Not sure if > 1000 will work correctly though.
             editor.Dock = DockStyle.Fill;
-            editor.Lexer = Lexer.Python;
+            editor.LexerName = "python";
             editor.ConfigureLexer();
             editor.TextChanged += OnTextChanged;
             parent.Controls.Add(editor);
@@ -190,7 +190,7 @@ namespace FlowSharpCodeScintillaEditorService
             StyleClearAll(); // i.e. Apply to all
 
             // Set the lexer
-            Lexer = Lexer.Python;
+            LexerName = "python";
             IndentWidth = 2;
             TabWidth = 2;
 

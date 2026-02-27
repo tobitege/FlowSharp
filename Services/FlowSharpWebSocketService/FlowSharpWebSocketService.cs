@@ -1,4 +1,4 @@
-﻿/*
+/*
 * Copyright (c) Marc Clifton
 * The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -9,10 +9,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Reflection;
-
-using WebSocketSharp;
-using WebSocketSharp.Server;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Clifton.Core.ModuleManagement;
 using Clifton.Core.Semantics;
@@ -32,7 +33,9 @@ namespace FlowSharpWebSocketService
 
     public class FlowSharpWebSocketService : ServiceBase, IFlowSharpWebSocketService
     {
-        protected WebSocketServer wss;
+        protected HttpListener listener;
+        protected CancellationTokenSource cancellationTokenSource;
+        protected Task acceptLoopTask;
 
         public override void FinishedInitialization()
         {
@@ -43,18 +46,56 @@ namespace FlowSharpWebSocketService
 
         public void StartServer()
         {
-            var ips = GetLocalHostIPs();
-            var address = ips[0].ToString();
+            if (listener != null)
+            {
+                return;
+            }
+
             var port = 1100;
-            var ipaddr = new IPAddress(address.Split('.').Select(a => Convert.ToByte(a)).ToArray());
-            wss = new WebSocketServer(ipaddr, port, null);
-            wss.AddWebSocketService<Server>("/flowsharp");
-            wss.Start();
+            HttpListenerException lastListenerException = null;
+            var prefixes = GetServerPrefixes(port);
+
+            foreach (var prefix in prefixes)
+            {
+                var candidateListener = new HttpListener();
+                candidateListener.Prefixes.Add(prefix);
+
+                try
+                {
+                    candidateListener.Start();
+                    listener = candidateListener;
+                    break;
+                }
+                catch (HttpListenerException ex)
+                {
+                    lastListenerException = ex;
+                    candidateListener.Close();
+                }
+            }
+
+            if (listener == null)
+            {
+                throw lastListenerException ?? new HttpListenerException();
+            }
+
+            cancellationTokenSource = new CancellationTokenSource();
+            acceptLoopTask = Task.Run(() => AcceptLoop(cancellationTokenSource.Token), cancellationTokenSource.Token);
         }
 
         public void StopServer()
         {
-            wss.Stop();
+            if (listener == null)
+            {
+                return;
+            }
+
+            cancellationTokenSource.Cancel();
+            listener.Stop();
+            listener.Close();
+            listener = null;
+            acceptLoopTask = null;
+            cancellationTokenSource.Dispose();
+            cancellationTokenSource = null;
         }
 
         protected List<IPAddress> GetLocalHostIPs()
@@ -62,20 +103,120 @@ namespace FlowSharpWebSocketService
             var host = Dns.GetHostEntry(Dns.GetHostName());
             return host?.AddressList?.Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToList();
         }
-    }
 
-    public class Server : WebSocketBehavior
-    {
-        protected override void OnMessage(MessageEventArgs e)
+        protected List<string> GetServerPrefixes(int port)
         {
-            if (e.Type != Opcode.Text) return;
-            var msg = e.Data;
-            var data = ParseMessage(msg);
-            var jsonResp = PublishSemanticMessage(data);
-            if (!string.IsNullOrEmpty(jsonResp))
+            var prefixes = new List<string>();
+            var ips = GetLocalHostIPs() ?? new List<IPAddress>();
+            prefixes.AddRange(ips.Select(ip => $"http://{ip}:{port}/flowsharp/"));
+            prefixes.Add($"http://localhost:{port}/flowsharp/");
+            prefixes.Add($"http://127.0.0.1:{port}/flowsharp/");
+
+            return prefixes
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        protected void AcceptLoop(CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
             {
-                Send(jsonResp);
+                HttpListenerContext context;
+
+                try
+                {
+                    context = listener.GetContext();
+                }
+                catch (HttpListenerException)
+                {
+                    break;
+                }
+                catch (ObjectDisposedException)
+                {
+                    break;
+                }
+
+                Task.Run(() => HandleConnection(context, cancellationToken), cancellationToken);
             }
+        }
+
+        protected void HandleConnection(HttpListenerContext context, CancellationToken cancellationToken)
+        {
+            if (!context.Request.IsWebSocketRequest)
+            {
+                context.Response.StatusCode = 400;
+                context.Response.Close();
+                return;
+            }
+
+            HttpListenerWebSocketContext webSocketContext = context.AcceptWebSocketAsync(null).GetAwaiter().GetResult();
+            WebSocket socket = webSocketContext.WebSocket;
+
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested && socket.State == WebSocketState.Open)
+                {
+                    string msg = ReceiveTextMessage(socket, cancellationToken);
+                    if (msg == null)
+                    {
+                        break;
+                    }
+
+                    var data = ParseMessage(msg);
+                    var jsonResp = PublishSemanticMessage(data);
+                    if (!string.IsNullOrEmpty(jsonResp))
+                    {
+                        SendTextMessage(socket, jsonResp, cancellationToken);
+                    }
+                }
+            }
+            finally
+            {
+                if (socket.State == WebSocketState.Open || socket.State == WebSocketState.CloseReceived)
+                {
+                    socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None).GetAwaiter().GetResult();
+                }
+
+                socket.Dispose();
+            }
+        }
+
+        protected string ReceiveTextMessage(WebSocket socket, CancellationToken cancellationToken)
+        {
+            var buffer = new byte[4096];
+            var segment = new ArraySegment<byte>(buffer);
+            var sb = new StringBuilder();
+
+            while (true)
+            {
+                var result = socket.ReceiveAsync(segment, cancellationToken).GetAwaiter().GetResult();
+
+                if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    return null;
+                }
+
+                if (result.MessageType != WebSocketMessageType.Text)
+                {
+                    return null;
+                }
+
+                sb.Append(Encoding.UTF8.GetString(buffer, 0, result.Count));
+
+                if (result.EndOfMessage)
+                {
+                    break;
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        protected void SendTextMessage(WebSocket socket, string data, CancellationToken cancellationToken)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(data);
+            var segment = new ArraySegment<byte>(bytes);
+            socket.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken).GetAwaiter().GetResult();
         }
 
         protected Dictionary<string, string> ParseMessage(string msg)
@@ -88,6 +229,7 @@ namespace FlowSharpWebSocketService
                 var varValue = dp.Split('=');
                 data[varValue[0]] = varValue[1];
             }
+
             return data;
         }
 
@@ -97,9 +239,7 @@ namespace FlowSharpWebSocketService
             var st = Type.GetType("FlowSharpServiceInterfaces." + data["cmd"] + ",FlowSharpServiceInterfaces");
             var t = Activator.CreateInstance(st) as ISemanticType;
             PopulateType(t, data);
-            // Synchronous, because however we're processing the commands in order, otherwise we lose the point of a web socket,
-            // which keeps the messages in order.
-            ServiceManager.Instance.Get<ISemanticProcessor>().ProcessInstance<FlowSharpMembrane>(t, true);
+            ServiceManager.Get<ISemanticProcessor>().ProcessInstance<FlowSharpMembrane>(t, true);
 
             if (t is IHasResponse response)
             {
@@ -119,7 +259,6 @@ namespace FlowSharpWebSocketService
                 var ptype = pi.PropertyType;
                 if (ptype.IsGenericType)
                 {
-                    // We assume it's a nullable type
                     ptype = ptype.GenericTypeArguments[0];
                 }
 

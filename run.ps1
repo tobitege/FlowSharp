@@ -1,7 +1,8 @@
 param(
   [ValidateSet("Debug", "Release")]
   [string]$Configuration = "Debug",
-  [switch]$NoBuild
+  [switch]$NoBuild,
+  [switch]$VerboseBuild
 )
 
 $ErrorActionPreference = "Stop"
@@ -27,18 +28,49 @@ function Resolve-MSBuildPath {
 
 if (-not $NoBuild) {
   $msbuildPath = Resolve-MSBuildPath
+  $logDir = Join-Path $repoRoot "artifacts\logs"
+  New-Item -Path $logDir -ItemType Directory -Force | Out-Null
+  $buildLogPath = Join-Path $logDir ("run-build-{0}.log" -f $Configuration.ToLowerInvariant())
+
   Write-Host "Building FlowSharp ($Configuration) using $msbuildPath"
-  & $msbuildPath "FlowSharp.csproj" /t:Build /p:Configuration=$Configuration /p:Platform=AnyCPU /m:1 /v:m
+  Write-Host "Build log: $buildLogPath"
+
+  $msbuildArgs = @(
+    "FlowSharp.csproj"
+    "/t:Build"
+    "/p:Configuration=$Configuration"
+    "/p:Platform=AnyCPU"
+    "/m:1"
+    "/nologo"
+    "/fl"
+    "/flp:logfile=$buildLogPath;verbosity=normal"
+  )
+
+  if ($VerboseBuild) {
+    $msbuildArgs += "/v:m"
+  }
+  else {
+    $msbuildArgs += "/v:minimal"
+    $msbuildArgs += "/clp:ErrorsOnly;Summary"
+  }
+
+  & $msbuildPath @msbuildArgs
 
   if ($LASTEXITCODE -ne 0) {
     throw "Build failed with exit code $LASTEXITCODE."
   }
 }
 
-$exePath = Join-Path $repoRoot "bin\$Configuration\FlowSharp.exe"
+$candidateExePaths = @(
+  (Join-Path $repoRoot "bin\$Configuration\net8.0-windows\FlowSharp.exe"),
+  (Join-Path $repoRoot "bin\$Configuration\FlowSharp.exe")
+)
 
-if (!(Test-Path $exePath)) {
-  throw "Executable not found at '$exePath'. Run without -NoBuild first."
+$exePath = $candidateExePaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+if ([string]::IsNullOrWhiteSpace($exePath)) {
+  $searchedPaths = $candidateExePaths -join "', '"
+  throw "Executable not found. Checked: '$searchedPaths'. Run without -NoBuild first."
 }
 
 Write-Host "Starting $exePath"

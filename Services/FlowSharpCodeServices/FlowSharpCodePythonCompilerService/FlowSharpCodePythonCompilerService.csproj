@@ -1,82 +1,16 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{526A7092-2EE6-49A6-BEEE-2C22F1E7CDCE}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>FlowSharpCodePythonCompilerService</RootNamespace>
     <AssemblyName>FlowSharpCodePythonCompilerService</AssemblyName>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
+    <RootNamespace>FlowSharpCodePythonCompilerService</RootNamespace>
+    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>..\..\..\bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>..\..\..\bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="Clifton.Core">
-      <HintPath>..\..\..\bin\Debug\Clifton.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data.Linq" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
+    <ProjectReference Include="..\..\..\FlowSharpLib\FlowSharpLib.csproj" />
+    <ProjectReference Include="..\..\FlowSharpServiceInterfaces\FlowSharpServiceInterfaces.csproj" />
+    <ProjectReference Include="..\FlowSharpCodeServiceInterfaces\FlowSharpCodeServiceInterfaces.csproj" />
+    <ProjectReference Include="..\FlowSharpCodeShapeInterfaces\FlowSharpCodeShapeInterfaces.csproj" />
+    <ProjectReference Include="..\..\..\Clifton\Clifton.Core\Clifton.Core.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="FlowSharpCodePythonCompilerService.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\FlowSharpLib\FlowSharpLib.csproj">
-      <Project>{07f65ca7-b8d3-4716-bfbf-812ef4da68be}</Project>
-      <Name>FlowSharpLib</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\FlowSharpServiceInterfaces\FlowSharpServiceInterfaces.csproj">
-      <Project>{caa4fd23-1392-4dee-907a-cb3dc7315a98}</Project>
-      <Name>FlowSharpServiceInterfaces</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\FlowSharpCodeServiceInterfaces\FlowSharpCodeServiceInterfaces.csproj">
-      <Project>{f8d75cfd-fb07-4a09-97d6-0ac3871aa35a}</Project>
-      <Name>FlowSharpCodeServiceInterfaces</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\FlowSharpCodeShapeInterfaces\FlowSharpCodeShapeInterfaces.csproj">
-      <Project>{8c7d37d1-f9d9-4633-b863-eac44b9dd999}</Project>
-      <Name>FlowSharpCodeShapeInterfaces</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

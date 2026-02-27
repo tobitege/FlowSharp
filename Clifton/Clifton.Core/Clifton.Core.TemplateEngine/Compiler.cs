@@ -1,4 +1,4 @@
-﻿/* The MIT License (MIT)
+/* The MIT License (MIT)
 * 
 * Copyright (c) 2015 Marc Clifton
 * 
@@ -23,10 +23,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 
-using System.CodeDom.Compiler;
-using Microsoft.CSharp;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Emit;
 
 using Clifton.Core.ExtensionMethods;
 
@@ -38,44 +41,98 @@ namespace Clifton.Core.TemplateEngine
 
 		public static Assembly Compile(string code, out List<string> errors, List<string> references = null)
 		{
-			Assembly assy = null;
 			errors = null;
-			CodeDomProvider provider = null;
-			provider = CodeDomProvider.CreateProvider("CSharp");
-			CompilerParameters cp = new CompilerParameters();
+			var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.CSharp7_3);
+			var syntaxTree = CSharpSyntaxTree.ParseText(code, parseOptions);
+			var metadataReferences = ResolveMetadataReferences(references);
+			var compilation = CSharpCompilation.Create(
+				"RuntimeCompiled_" + Guid.NewGuid().ToString("N"),
+				new[] { syntaxTree },
+				metadataReferences,
+				new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, optimizationLevel: OptimizationLevel.Debug));
 
-			// Generate a class library in memory.
-			cp.GenerateExecutable = false;
-			cp.GenerateInMemory = true;
-			cp.TreatWarningsAsErrors = false;
-			cp.ReferencedAssemblies.Add("System.dll");
-			//cp.ReferencedAssemblies.Add(@"c:\websites\projourn\bin\Clifton.Core.TemplateEngine.dll");
-			cp.ReferencedAssemblies.Add(TemplateEnginePath ?? "Clifton.Core.TemplateEngine.dll");
-
-			// to support the "dynamic" keyword, add references for:
-			// "Microsoft.CSharp.dll"
-			// typeof(System.Runtime.CompilerServices.DynamicAttribute).Assembly.Location
-
-			references.IfNotNull(refs => refs.ForEach(r => cp.ReferencedAssemblies.Add(r)));
-
-			// Invoke compilation of the source file.
-			CompilerResults cr = provider.CompileAssemblyFromSource(cp, code);
-
-			if (cr.Errors.Count > 0)
+			using (var peStream = new MemoryStream())
+			using (var pdbStream = new MemoryStream())
 			{
-				errors = new List<string>();
+				EmitResult emitResult = compilation.Emit(peStream, pdbStream);
 
-				foreach (var err in cr.Errors)
+				if (!emitResult.Success)
 				{
-					errors.Add(err.ToString());
+					errors = emitResult.Diagnostics
+						.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+						.Select(diagnostic => diagnostic.ToString())
+						.ToList();
+					return null;
 				}
+
+				peStream.Position = 0;
+				pdbStream.Position = 0;
+				return Assembly.Load(peStream.ToArray(), pdbStream.ToArray());
 			}
-			else
+		}
+
+		private static List<MetadataReference> ResolveMetadataReferences(List<string> references)
+		{
+			var metadataReferences = new List<MetadataReference>();
+			var trustedPlatformAssemblies = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES"))
+				.Split(Path.PathSeparator)
+				.ToList();
+
+			trustedPlatformAssemblies
+				.ForEach(path => metadataReferences.Add(MetadataReference.CreateFromFile(path)));
+
+			var templateEngineAssembly = TemplateEnginePath ?? typeof(TemplateEngine).Assembly.Location;
+			if (File.Exists(templateEngineAssembly))
 			{
-				assy = cr.CompiledAssembly;
+				metadataReferences.Add(MetadataReference.CreateFromFile(templateEngineAssembly));
 			}
 
-			return assy;
+			references.IfNotNull(refs =>
+			{
+				refs.ForEach(reference =>
+				{
+					if (string.IsNullOrWhiteSpace(reference))
+					{
+						return;
+					}
+
+					string resolvedPath = null;
+
+					if (File.Exists(reference))
+					{
+						resolvedPath = Path.GetFullPath(reference);
+					}
+					else
+					{
+						var candidatePath = Path.Combine(AppContext.BaseDirectory, reference);
+						if (File.Exists(candidatePath))
+						{
+							resolvedPath = candidatePath;
+						}
+						else
+						{
+							resolvedPath = trustedPlatformAssemblies.FirstOrDefault(path =>
+								Path.GetFileName(path).Equals(reference, StringComparison.OrdinalIgnoreCase) ||
+								path.EndsWith(reference, StringComparison.OrdinalIgnoreCase));
+						}
+					}
+
+					if (string.IsNullOrEmpty(resolvedPath))
+					{
+						return;
+					}
+
+					if (metadataReferences.Any(existingReference =>
+							string.Equals(existingReference.Display, resolvedPath, StringComparison.OrdinalIgnoreCase)))
+					{
+						return;
+					}
+
+					metadataReferences.Add(MetadataReference.CreateFromFile(resolvedPath));
+				});
+			});
+
+			return metadataReferences;
 		}
 	}
 }

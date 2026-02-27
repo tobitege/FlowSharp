@@ -1,4 +1,4 @@
-﻿#define USE_THREAD_POOL
+#define USE_THREAD_POOL
 
 /* The MIT License (MIT)
 *
@@ -977,23 +977,11 @@ namespace Clifton.Core.Services.SemanticProcessorService
         // jtrem's answer, but of course, with a "Don't Do This!!!" hahaha.
         protected async void CancellableCall(ProcessCall rc, int msTimeout)
         {
-            var cts = new CancellationTokenSource();
-            var task = Task.Factory.StartNew(() =>
+            var task = Task.Run(() =>
             {
                 try
                 {
-                    using (cts.Token.Register(Thread.CurrentThread.Abort))
-                    {
-                        rc.MakeCall();
-                    }
-                }
-                catch (ThreadAbortException ex)
-                {
-                    try
-                    {
-                        ProcessInstance(Logger, new ST_Exception(ex), true);
-                    }
-                    catch { }
+                    rc.MakeCall();
                 }
                 catch (Exception ex)
                 {
@@ -1003,11 +991,15 @@ namespace Clifton.Core.Services.SemanticProcessorService
                     }
                     catch { }
                 }
-            }, cts.Token);
+            });
 
             if (!(await Task.WhenAny(task, Task.Delay(msTimeout)) == task))
             {
-                cts.Cancel();
+                try
+                {
+                    ProcessInstance(Logger, new ST_Exception(new TimeoutException("Process call timed out.")), true);
+                }
+                catch { }
             }
         }
 

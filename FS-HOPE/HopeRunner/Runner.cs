@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Reflection;
 
@@ -48,6 +48,12 @@ namespace HopeRunner
         public void Publish(ISemanticType st)
         {
             sp.ProcessInstance<HopeMembrane>(st);
+            Processing?.Invoke(this, new HopeRunnerAppDomainInterface.ProcessEventArgs(
+                typeof(HopeMembrane).FullName,
+                null,
+                typeof(HopeMembrane).FullName,
+                null,
+                st?.GetType()?.FullName));
         }
     }
 }

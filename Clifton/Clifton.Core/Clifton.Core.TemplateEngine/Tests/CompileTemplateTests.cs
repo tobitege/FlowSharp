@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -34,7 +34,7 @@ public class RuntimeCompiled : IRuntimeAssembly
 			Assembly assy = CreateAssembly(assyCode);
 			IRuntimeAssembly t = (IRuntimeAssembly)assy.CreateInstance("RuntimeCompiled");
 			string ret = t.GetTemplate();
-			Assert.AreEqual("  Literal\r\nA line with \" + str.ToString() + \" and \" + i.ToString() + \" with @ignore me\r\n", ret);
+			Assert.AreEqual("  Literal\r\nA line with Hello World and 10 with @ignore me\r\n", ret);
 		}
 
 		/// <summary>
@@ -50,8 +50,8 @@ public class RuntimeCompiled : IRuntimeAssembly
 }
 A line with @str and @i with @@ignore me
 ";
-			string parsed = Parser.Parse(template);
-			Assert.AreEqual("StringBuilder sb = new StringBuilder();\r\n  string str = \"Hello World\";\r\n  int i = 10;\r\nsb.Append(\"  Literal\\r\\n\");\r\nsb.Append(\"A line with \\\" + str.ToString() + \\\" and \\\" + i.ToString() + \\\" with @ignore me\\r\\n\");\r\n", parsed);
+			string parsed = new Parser().Parse(template);
+			Assert.AreEqual("StringBuilder sb = new StringBuilder();\r\n  string str = \"Hello World\";\r\n  int i = 10;\r\nsb.Append(\"  Literal\\r\\n\");\r\nsb.Append(\"A line with \" + str.ToString() + \" and \" + i.ToString() + \" with @ignore me\\r\\n\");\r\n", parsed);
 
 			return parsed;
 		}
@@ -70,7 +70,7 @@ A line with @str and @i with @@ignore me
 
 			TemplateEngine eng = new TemplateEngine();
 			string ret = eng.Parse(template);
-			Assert.AreEqual("  Literal\r\nA line with \" + str.ToString() + \" and \" + i.ToString() + \" with @ignore me\r\n", ret);
+			Assert.AreEqual("  Literal\r\nA line with Hello World and 10 with @ignore me\r\n", ret);
 		}
 
 		[TestMethod]
@@ -85,7 +85,7 @@ A line with @str and @i with @@ignore me
 				new ParamTypeInfo() {ParamName="i", ParamType="int", ParamValue = 10},
 			});
 
-			Assert.AreEqual("A line with \" + str.ToString() + \" and \" + i.ToString() + \" with @ignore me\r\n", ret);
+			Assert.AreEqual("A line with Hello World and 10 with @ignore me\r\n", ret);
 		}
 
 		public class Model : ModelInterface.IModel
@@ -108,7 +108,7 @@ A line with @str and @i with @@ignore me
 				new ParamTypeInfo() {ParamName="model", ParamType="IModel", ParamValue = model},
 			});
 
-			Assert.AreEqual("A line with \" + model.Str.ToString() + \" and \" + model.I.ToString() + \" with @ignore me\r\n", ret);
+			Assert.AreEqual("A line with Howdy and 15 with @ignore me\r\n", ret);
 		}
 
 		[TestMethod]
@@ -130,7 +130,7 @@ A line with @str and @i with @@ignore me
 				new ParamTypeInfo() {ParamName="model", ParamType="dynamic", ParamValue = model},
 			});
 
-			Assert.AreEqual("A line with \" + model.Str.ToString() + \" and \" + model.I.ToString() + \" with @ignore me\r\n", ret);
+			Assert.AreEqual("A line with Howdy and 15 with @ignore me\r\n", ret);
 		}
 
 		[TestMethod]
@@ -180,7 +180,8 @@ A line with @str and @i with @@ignore me
 			string ret = eng.Parse(template, model, model2);
 
 			Assert.AreEqual("A line with I'm Dynamic! and 20 with @ignore me\r\n", ret);
-			Assert.IsTrue(eng.IsCached(template));
+			IRuntimeAssembly cached;
+			Assert.IsTrue(eng.IsCached(template, out cached));
 
 			model.Str = "Cached!";
 			model2.I = 25;
@@ -200,7 +201,7 @@ A line with @str and @i with @@ignore me
 			TemplateEngine eng = new TemplateEngine();
 			eng.UsesDynamic();
 			string ret = eng.Parse(template, model);
-			Assert.AreEqual("alert(\"\" + model.Str.ToString() + \"\r\n", ret);
+			Assert.AreEqual("alert(\"Welcome!\")\r\n", ret);
 		}
 
 		/// <summary>
