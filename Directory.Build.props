@@ -11,6 +11,7 @@
     <!-- Build settings -->
     <Deterministic>true</Deterministic>
     <LangVersion>12.0</LangVersion>
+    <Version>1.1.0</Version>
     
     <!-- Disable implicit usings and nullable by default for parity-first migration -->
     <ImplicitUsings>disable</ImplicitUsings>

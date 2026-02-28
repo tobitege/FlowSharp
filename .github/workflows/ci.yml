@@ -4,6 +4,7 @@ name: CI Build
 # and publishes the Windows app via the shared reusable workflow.
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main

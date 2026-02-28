@@ -344,8 +344,8 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 language-server-log.txt
-**/bin
-**/obj
+bin
+obj
 libs
 *-layout.xml
 layout.xml
