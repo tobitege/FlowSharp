@@ -36,10 +36,10 @@ jobs:
       version: ${{ steps.validate.outputs.version }}
       tag: ${{ steps.validate.outputs.tag }}
     steps:
-      - name: Ensure branch is main
-        if: github.ref != 'refs/heads/main'
+      - name: Ensure branch is master
+        if: github.ref != 'refs/heads/master'
         run: |
-          echo "::error::Releases can only be created from the main branch."
+          echo "::error::Releases can only be created from the master branch."
           exit 1
 
       - uses: actions/checkout@v4
