@@ -77,6 +77,49 @@ namespace FlowSharp.Main.Tests
             }
         }
 
+        [TestMethod]
+        public void ResolvePluginAssemblyPath_WithCwdPluginListAndMissingRelativeAssembly_FallsBackToAppBase()
+        {
+            string originalCurrentDirectory = Directory.GetCurrentDirectory();
+            string isolatedCurrentDirectory = Path.Combine(Path.GetTempPath(), "flowsharp-plugin-fallback-cwd-" + Guid.NewGuid().ToString("N"));
+            string pluginAssemblyName = "PluginExample.dll";
+            string pluginListFile = "plugins.txt";
+            string appBasePluginPath = Path.Combine(AppContext.BaseDirectory, pluginAssemblyName);
+            bool createdAppBasePlugin = false;
+
+            try
+            {
+                Directory.CreateDirectory(isolatedCurrentDirectory);
+                Directory.SetCurrentDirectory(isolatedCurrentDirectory);
+                File.WriteAllText(Path.Combine(isolatedCurrentDirectory, pluginListFile), pluginAssemblyName);
+
+                if (!File.Exists(appBasePluginPath))
+                {
+                    File.WriteAllText(appBasePluginPath, String.Empty);
+                    createdAppBasePlugin = true;
+                }
+
+                string pluginListPath = new TestPluginManager().ResolvePluginListPath();
+                string resolved = new TestPluginManager().ResolvePluginPath(pluginListPath, pluginAssemblyName);
+
+                Assert.AreEqual(appBasePluginPath, resolved);
+            }
+            finally
+            {
+                Directory.SetCurrentDirectory(originalCurrentDirectory);
+
+                if (createdAppBasePlugin && File.Exists(appBasePluginPath))
+                {
+                    File.Delete(appBasePluginPath);
+                }
+
+                if (Directory.Exists(isolatedCurrentDirectory))
+                {
+                    Directory.Delete(isolatedCurrentDirectory, true);
+                }
+            }
+        }
+
         private class TestPluginManager : PluginManager
         {
             public string ResolvePluginListPath()

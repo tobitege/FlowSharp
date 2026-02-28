@@ -23,7 +23,8 @@ namespace Clifton.DockingFormService
 
     public class DockingFormService : ServiceBase, IDockingFormService
     {
-        private const int LeftDockSplitterWidth = 6;
+        private const int LeftDockSplitterWidth = 12;
+        private const int MinLeftDockPixelMargin = 80;
         private const int MinSplitterDragPixelDelta = 2;
         private const double MinDockLeftPortion = 0.10;
         private const double MaxDockLeftPortion = 0.80;
@@ -39,6 +40,7 @@ namespace Clifton.DockingFormService
         protected Panel leftDockSplitter;
         protected bool draggingLeftDockSplitter;
         protected int lastLeftDockSplitterX = -1;
+        protected int lastKnownLeftDockBoundaryX = -1;
         //protected VS2015LightTheme theme = new VS2015LightTheme();
 
         public Form CreateMainForm<T>() where T : Form, new()
@@ -164,10 +166,12 @@ namespace Clifton.DockingFormService
                 BorderStyle = BorderStyle.FixedSingle
             };
 
+            DockWindow leftDockWindow = dockPanel.DockWindows[WeifenLuo.WinFormsUI.Docking.DockState.DockLeft];
             leftDockSplitter.MouseDown += OnLeftDockSplitterMouseDown;
             leftDockSplitter.MouseMove += OnLeftDockSplitterMouseMove;
             leftDockSplitter.MouseUp += OnLeftDockSplitterMouseUp;
-            dockPanel.DockWindows[WeifenLuo.WinFormsUI.Docking.DockState.DockLeft].Resize += (sndr, args) => UpdateLeftDockSplitter();
+            leftDockWindow.Resize += (sndr, args) => UpdateLeftDockSplitter();
+            leftDockWindow.VisibleChanged += (sndr, args) => UpdateLeftDockSplitter();
             dockPanel.Resize += (sndr, args) => UpdateLeftDockSplitter();
             dockPanel.Controls.Add(leftDockSplitter);
             UpdateLeftDockSplitter();
@@ -190,7 +194,7 @@ namespace Clifton.DockingFormService
             }
 
             int mouseXInDockPanel = dockPanel.PointToClient(Cursor.Position).X;
-            int clampedX = Math.Max(80, Math.Min(dockPanel.Width - 80, mouseXInDockPanel));
+            int clampedX = ClampSplitterX(dockPanel.Width, mouseXInDockPanel);
 
             if (lastLeftDockSplitterX >= 0 && Math.Abs(clampedX - lastLeftDockSplitterX) < MinSplitterDragPixelDelta)
             {
@@ -198,6 +202,7 @@ namespace Clifton.DockingFormService
             }
 
             lastLeftDockSplitterX = clampedX;
+            lastKnownLeftDockBoundaryX = clampedX;
             double dockLeftPortion = (double)clampedX / Math.Max(1, dockPanel.Width);
             dockPanel.DockLeftPortion = Math.Max(MinDockLeftPortion, Math.Min(MaxDockLeftPortion, dockLeftPortion));
             UpdateLeftDockSplitter();
@@ -219,21 +224,18 @@ namespace Clifton.DockingFormService
                 return;
             }
 
-            int leftWidth = GetCurrentLeftDockBoundaryX();
+            EnsureLeftDockSplitterAttached();
+            int x = CalculateLeftDockSplitterX(dockPanel.Width, GetCurrentLeftDockBoundaryX(), dockPanel.DockLeftPortion, lastKnownLeftDockBoundaryX);
+            lastKnownLeftDockBoundaryX = x;
+            int splitterWidth = Math.Min(LeftDockSplitterWidth, dockPanel.Width);
+            int splitterLeft = Math.Max(0, Math.Min(dockPanel.Width - splitterWidth, x - (splitterWidth / 2)));
 
-            if (leftWidth <= 0)
-            {
-                leftWidth = dockPanel.DockLeftPortion > 1
-                ? (int)Math.Round(dockPanel.DockLeftPortion)
-                : (int)Math.Round(dockPanel.Width * dockPanel.DockLeftPortion);
-            }
-
-            int x = Math.Max(80, Math.Min(dockPanel.Width - 80, leftWidth));
             leftDockSplitter.Bounds = new System.Drawing.Rectangle(
-                x - (LeftDockSplitterWidth / 2),
+                splitterLeft,
                 0,
-                LeftDockSplitterWidth,
+                splitterWidth,
                 dockPanel.Height);
+            leftDockSplitter.Visible = true;
             leftDockSplitter.BringToFront();
         }
 
@@ -247,6 +249,87 @@ namespace Clifton.DockingFormService
             }
 
             return leftDockWindow.Right;
+        }
+
+        protected virtual int CalculateLeftDockSplitterX(int panelWidth, int currentBoundaryX, double dockLeftPortion, int previousBoundaryX)
+        {
+            int preferredX = currentBoundaryX;
+
+            if (!IsValidLeftDockBoundaryX(panelWidth, preferredX))
+            {
+                preferredX = GetLeftBoundaryXFromDockPortion(panelWidth, dockLeftPortion);
+            }
+
+            if (!IsValidLeftDockBoundaryX(panelWidth, preferredX))
+            {
+                preferredX = previousBoundaryX;
+            }
+
+            if (!IsValidLeftDockBoundaryX(panelWidth, preferredX))
+            {
+                preferredX = (int)Math.Round(panelWidth * MinDockLeftPortion);
+            }
+
+            return ClampSplitterX(panelWidth, preferredX);
+        }
+
+        protected virtual int GetLeftBoundaryXFromDockPortion(int panelWidth, double dockLeftPortion)
+        {
+            if (panelWidth <= 0 || dockLeftPortion <= 0 || double.IsNaN(dockLeftPortion) || double.IsInfinity(dockLeftPortion))
+            {
+                return 0;
+            }
+
+            double computedBoundary = dockLeftPortion > 1
+                ? dockLeftPortion
+                : panelWidth * dockLeftPortion;
+
+            if (double.IsNaN(computedBoundary) || double.IsInfinity(computedBoundary) || computedBoundary <= 0)
+            {
+                return 0;
+            }
+
+            return (int)Math.Round(computedBoundary);
+        }
+
+        protected virtual int ClampSplitterX(int panelWidth, int candidateX)
+        {
+            if (panelWidth <= 0)
+            {
+                return 0;
+            }
+
+            int minX;
+            int maxX;
+
+            if (panelWidth > (MinLeftDockPixelMargin * 2))
+            {
+                minX = MinLeftDockPixelMargin;
+                maxX = panelWidth - MinLeftDockPixelMargin;
+            }
+            else
+            {
+                minX = Math.Max(1, panelWidth / 6);
+                maxX = Math.Max(minX, panelWidth - minX);
+            }
+
+            return Math.Max(minX, Math.Min(maxX, candidateX));
+        }
+
+        protected virtual bool IsValidLeftDockBoundaryX(int panelWidth, int boundaryX)
+        {
+            return panelWidth > 1 && boundaryX > 0 && boundaryX < panelWidth;
+        }
+
+        protected virtual void EnsureLeftDockSplitterAttached()
+        {
+            if (leftDockSplitter == null || dockPanel == null || leftDockSplitter.Parent == dockPanel)
+            {
+                return;
+            }
+
+            leftDockSplitter.Parent?.Controls.Remove(leftDockSplitter);
+            dockPanel.Controls.Add(leftDockSplitter);
         }
 
         protected IDockContent GetContentFromPersistString(string persistString)

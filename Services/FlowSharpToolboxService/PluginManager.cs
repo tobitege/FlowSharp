@@ -91,7 +91,7 @@ namespace FlowSharpToolboxService
         {
             if (File.Exists(Constants.PLUGIN_FILE_LIST))
             {
-                return Constants.PLUGIN_FILE_LIST;
+                return Path.GetFullPath(Constants.PLUGIN_FILE_LIST);
             }
 
             string appBasePath = AppContext.BaseDirectory;
@@ -107,11 +107,25 @@ namespace FlowSharpToolboxService
 
             if (File.Exists(pluginAssemblyPath))
             {
-                return pluginAssemblyPath;
+                return Path.GetFullPath(pluginAssemblyPath);
             }
 
-            string pluginListDirectory = Path.GetDirectoryName(pluginFileListPath) ?? AppContext.BaseDirectory;
-            return Path.Combine(pluginListDirectory, pluginAssemblyPath);
+            string pluginListDirectory = Path.GetDirectoryName(pluginFileListPath);
+
+            if (String.IsNullOrWhiteSpace(pluginListDirectory))
+            {
+                pluginListDirectory = AppContext.BaseDirectory;
+            }
+
+            string pluginPathFromListDirectory = Path.Combine(pluginListDirectory, pluginAssemblyPath);
+
+            if (File.Exists(pluginPathFromListDirectory))
+            {
+                return pluginPathFromListDirectory;
+            }
+
+            string appBasePluginPath = Path.Combine(AppContext.BaseDirectory, pluginAssemblyPath);
+            return appBasePluginPath;
         }
 
         protected Assembly AssemblyResolver(AssemblyName assyName)
