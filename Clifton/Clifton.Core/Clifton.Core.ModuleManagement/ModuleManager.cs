@@ -1,4 +1,4 @@
-﻿/* The MIT License (MIT)
+/* The MIT License (MIT)
 *
 * Copyright (c) 2015 Marc Clifton
 *
@@ -195,23 +195,11 @@ namespace Clifton.Core.ModuleManagement
         /// </summary>
         protected virtual FullPath GetFullPath(AssemblyFileName assemblyName, OptionalPath optionalPath)
         {
-            string appLocation;
-            var assyLocation = Assembly.GetExecutingAssembly().Location;
+            var appLocation = AppContext.BaseDirectory;
 
-            // An assembly that is loaded as a resource will have its assembly location as "".
-            if (assyLocation == "")
+            if (optionalPath != null)
             {
-                Assert.Not(optionalPath == null, "Assemblies embedded as resources require that the optionalPath parameter specify the path to resolve assemblies.");
-                appLocation = optionalPath?.Value ?? "";       // Must be specified!  Here the optional path is the full path?  This gives two different meanings to how optional path is used!
-            }
-            else
-            {
-                appLocation = Path.GetDirectoryName(assyLocation);
-
-                if (optionalPath != null)
-                {
-                    appLocation = Path.Combine(appLocation ?? "", optionalPath.Value);
-                }
+                appLocation = Path.Combine(appLocation, optionalPath.Value);
             }
 
             var fullPath = Path.Combine(appLocation ?? "", assemblyName.Value);

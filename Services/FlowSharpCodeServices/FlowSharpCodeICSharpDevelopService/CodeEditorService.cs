@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.IO;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Forms.Integration;
@@ -105,7 +106,8 @@ namespace FlowSharpCodeICSharpDevelopService
 
         public void AddAssembly(Type t)
         {
-            completion.AddAssembly(t.Assembly.Location);
+            var assemblyLocation = Path.Combine(AppContext.BaseDirectory, t.Assembly.GetName().Name + ".dll");
+            completion.AddAssembly(assemblyLocation);
         }
 
         public void SetText(string language, string text)
