@@ -1,0 +1,52 @@
+name: Build FlowSharp (Reusable)
+
+# Internal reusable workflow - called by CI and release workflows.
+# Not meant to be triggered directly.
+
+on:
+  workflow_call:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            artifact_name: FlowSharp-Windows-x64
+
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish FlowSharp
+        shell: pwsh
+        run: >
+          dotnet publish FlowSharp.csproj
+          -c Release
+          -r ${{ matrix.rid }}
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -o ./publish/FlowSharp-${{ matrix.rid }}
+
+      - name: Zip FlowSharp artifact
+        if: matrix.os == 'windows-latest'
+        run: Compress-Archive -Path ./publish/FlowSharp-${{ matrix.rid }}/* -DestinationPath ./${{ matrix.artifact_name }}.zip
+        shell: pwsh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            ./${{ matrix.artifact_name }}.zip
+          if-no-files-found: ignore

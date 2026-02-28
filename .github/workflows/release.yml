@@ -1,0 +1,183 @@
+name: Release
+
+# Creates a release with FlowSharp desktop app ZIP artifact.
+# Supports manual dispatch and workflow_call (used by release_ui.yml).
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.1.0) - without "v" prefix'
+        required: true
+        type: string
+      skip_tag:
+        description: 'Skip tag creation (assumes you already pushed the tag manually)'
+        required: false
+        type: boolean
+        default: true
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.1.0) - without "v" prefix'
+        required: true
+        type: string
+      skip_tag:
+        description: 'Skip tag creation (assumes you already pushed the tag manually)'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.validate.outputs.version }}
+      tag: ${{ steps.validate.outputs.tag }}
+    steps:
+      - name: Ensure branch is main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Releases can only be created from the main branch."
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      - name: Validate version format and project version
+        id: validate
+        run: |
+          VERSION="${{ inputs.version }}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid version format. Use semantic versioning (e.g., 0.1.0)."
+            exit 1
+          fi
+
+          PROJECT_VERSION=$(grep -oP '(?<=<Version>)[^<]+' Directory.Build.props | head -1)
+          if [ -z "$PROJECT_VERSION" ]; then
+            echo "::error::Could not find <Version> in Directory.Build.props."
+            exit 1
+          fi
+
+          if [ "$PROJECT_VERSION" != "$VERSION" ]; then
+            echo "::error::Version mismatch! Directory.Build.props has $PROJECT_VERSION but you specified $VERSION."
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Validated version: $VERSION"
+
+  build:
+    needs: validate
+    uses: ./.github/workflows/_build_ui.yml
+    permissions:
+      contents: read
+
+  publish:
+    needs: [validate, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./release-artifacts
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p ./final
+          find ./release-artifacts -name "*.zip" -exec cp {} ./final/ \;
+          echo "=== Release artifacts ==="
+          ls -la ./final/
+
+      - name: Extract changelog
+        id: changelog
+        run: |
+          VERSION="${{ needs.validate.outputs.version }}"
+
+          if [ ! -f CHANGELOG.md ]; then
+            echo "⚠️ CHANGELOG.md not found"
+            echo "No changelog entry for this version." > changelog_section.md
+            exit 0
+          fi
+
+          CHANGELOG=$(awk -v ver="$VERSION" '
+            $0 ~ "^## \\[" ver "\\]" { found=1; next }
+            found && /^## \\[/ { exit }
+            found { print }
+          ' CHANGELOG.md)
+
+          if [ -z "$CHANGELOG" ]; then
+            echo "⚠️ No changelog entry found for version $VERSION"
+            CHANGELOG="No changelog entry for this version."
+          fi
+
+          echo "$CHANGELOG" > changelog_section.md
+          echo "Extracted changelog for v$VERSION"
+
+      - name: Create and push tag
+        if: ${{ inputs.skip_tag != true }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag ${{ needs.validate.outputs.tag }}
+          git push origin ${{ needs.validate.outputs.tag }}
+          echo "Created tag: ${{ needs.validate.outputs.tag }}"
+
+      - name: Skip tag creation
+        if: ${{ inputs.skip_tag == true }}
+        run: echo "Skipping tag creation (tag already exists)"
+
+      - name: Build release notes
+        run: |
+          cat > release_notes.md << 'HEADER'
+          ## What's Changed
+          HEADER
+          cat changelog_section.md >> release_notes.md
+          cat >> release_notes.md << 'FOOTER'
+
+          ---
+
+          ## Downloads
+
+          | Asset | Description |
+          |-------|-------------|
+          FOOTER
+
+          echo "| \`FlowSharp-Windows-x64.zip\` | Self-contained FlowSharp desktop app for Windows x64 |" >> release_notes.md
+
+          echo "=== Release Notes ==="
+          cat release_notes.md
+
+      - name: Load custom release notes
+        id: release_body
+        run: |
+          {
+            echo 'body<<EOF'
+            cat release_notes.md
+            echo ''
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.validate.outputs.tag }}
+          name: "v${{ needs.validate.outputs.version }}"
+          files: ./final/*
+          generate_release_notes: true
+          body: ${{ steps.release_body.outputs.body }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## Release Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ needs.validate.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag:** ${{ needs.validate.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release:** ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ needs.validate.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
