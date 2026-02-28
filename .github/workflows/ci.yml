@@ -7,11 +7,11 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - master
       - alpha
   pull_request:
     branches:
-      - main
+      - master
       - alpha
 
 jobs:
