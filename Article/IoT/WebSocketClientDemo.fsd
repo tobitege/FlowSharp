@@ -1084,7 +1084,7 @@
     <TextFontStrikeout>false</TextFontStrikeout>
     <TextFontItalic>false</TextFontItalic>
     <TextFontBold>false</TextFontBold>
-    <Json>{"Code":"using System.Threading;\r\n\r\nusing WebSocketSharp;\r\n\r\nnamespace App\r\n{\r\n\tpublic static partial class WebSocketHelpers\r\n\t{\r\n\t\tprivate static WebSocket ws;\r\n\t\tprivate static EventWaitHandle waitHandle = new AutoResetEvent(false);\r\n\t\tprivate static string response;\r\n\t}\r\n}","TextChanged":"True"}</Json>
+    <Json>{"Code":"using System.Net.WebSockets;\r\nusing System.Threading;\r\n\r\nnamespace App\r\n{\r\n\tpublic static partial class WebSocketHelpers\r\n\t{\r\n\t\tprivate static ClientWebSocket ws;\r\n\t\tprivate static EventWaitHandle waitHandle = new AutoResetEvent(false);\r\n\t\tprivate static string response;\r\n\t}\r\n}","TextChanged":"True"}</Json>
     <Connections />
     <Children />
     <TextAlign>MiddleCenter</TextAlign>
@@ -1129,7 +1129,7 @@
     <TextFontStrikeout>false</TextFontStrikeout>
     <TextFontItalic>false</TextFontItalic>
     <TextFontBold>false</TextFontBold>
-    <Json>{"Code":"using System.Net;\r\nusing System.IO;\r\nusing System.Threading;\r\n\r\nusing WebSocketSharp;\r\n\r\nnamespace App\r\n{\r\n\tpublic class MyListener {}\r\n\t\r\n\tpublic static partial class WebSocketHelpers\r\n\t{\r\n\t\tpublic static void Connect()\r\n\t\t{\r\n\t\t\tif (ws == null || !ws.IsAlive)\r\n\t\t\t{\r\n\t\t\t\tws = new WebSocket(\"ws://192.168.0.4:1100/flowsharp\", new MyListener());\t\r\n\t\t\t\t\r\n\t\t\t\tws.OnMessage += (sender, e) =&gt; \r\n\t\t\t\t{\r\n\t\t\t\t\tresponse = e.Data;\r\n\t\t\t\t\twaitHandle.Set();\r\n\t\t\t\t};\r\n\t\t\t\t\r\n\t\t\t\tws.Connect();\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n}","TextChanged":"True"}</Json>
+    <Json>{"Code":"using System;\r\nusing System.Net.WebSockets;\r\nusing System.Text;\r\nusing System.Threading;\r\n\r\nnamespace App\r\n{\r\n\tpublic static partial class WebSocketHelpers\r\n\t{\r\n\t\tpublic static void Connect()\r\n\t\t{\r\n\t\t\tif (ws != null &amp;&amp; ws.State == WebSocketState.Open)\r\n\t\t\t{\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n\t\t\tws?.Dispose();\r\n\t\t\tws = new ClientWebSocket();\r\n\t\t\tws.ConnectAsync(new Uri(\"ws://192.168.0.4:1100/flowsharp\"), CancellationToken.None).GetAwaiter().GetResult();\r\n\t\t\tThreadPool.QueueUserWorkItem(_ =&gt; ListenForResponses());\r\n\t\t}\r\n\r\n\t\tprivate static void ListenForResponses()\r\n\t\t{\r\n\t\t\tvar buffer = new byte[4096];\r\n\t\t\twhile (ws != null &amp;&amp; ws.State == WebSocketState.Open)\r\n\t\t\t{\r\n\t\t\t\tvar result = ws.ReceiveAsync(new ArraySegment&lt;byte&gt;(buffer), CancellationToken.None).GetAwaiter().GetResult();\r\n\t\t\t\tif (result.MessageType == WebSocketMessageType.Close)\r\n\t\t\t\t{\r\n\t\t\t\t\tbreak;\r\n\t\t\t\t}\r\n\r\n\t\t\t\tresponse = Encoding.UTF8.GetString(buffer, 0, result.Count);\r\n\t\t\t\twaitHandle.Set();\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n}","TextChanged":"True"}</Json>
     <Connections />
     <Children />
     <TextAlign>MiddleCenter</TextAlign>
@@ -1542,7 +1542,7 @@
     <TextFontStrikeout>false</TextFontStrikeout>
     <TextFontItalic>false</TextFontItalic>
     <TextFontBold>false</TextFontBold>
-    <Json>{"Code":"using System;\r\n\r\nusing WebSocketSharp;\r\nusing WebSocketSharp.Server;\r\n\r\nnamespace App\r\n{\r\n    public partial class WSServer : WebSocketBehavior\r\n    {\r\n        protected override void OnMessage(MessageEventArgs e)\r\n        {\r\n        \t// Console.WriteLine(e.Type + \" : \" + e.Data);\r\n        \tnew SftpPythonFiles().RunWorkflow();\r\n        }\r\n    }\r\n}","TextChanged":"True"}</Json>
+    <Json>{"Code":"using System;\r\nusing System.Net.WebSockets;\r\n\r\nnamespace App\r\n{\r\n    public partial class WSServer\r\n    {\r\n        public void OnMessage(string data, WebSocketMessageType messageType)\r\n        {\r\n        \t// Console.WriteLine(messageType + \" : \" + data);\r\n        \tnew SftpPythonFiles().RunWorkflow();\r\n        }\r\n    }\r\n}","TextChanged":"True"}</Json>
     <Connections>
       <ConnectionPropertyBag>
         <ToElementId>ca2435f4-58ca-4adc-81d7-7060d94ebf95</ToElementId>
@@ -1622,7 +1622,7 @@
     <TextFontStrikeout>false</TextFontStrikeout>
     <TextFontItalic>false</TextFontItalic>
     <TextFontBold>false</TextFontBold>
-    <Json>{"Code":"using System;\r\nusing System.Linq;\r\nusing System.Net;\r\n\r\nusing WebSocketSharp.Server;\r\n\r\nnamespace App\r\n{\r\n\tpublic class SocketServer\r\n    {\r\n        private WebSocketServer wss;\r\n\r\n        public void StartServer()\r\n        {\r\n        \tConsole.WriteLine(\"Starting websocket server at 127.0.0.1:1101\");\r\n            string address = \"127.0.0.1\";\r\n            int port = 1101;\r\n            IPAddress ipaddr = new IPAddress(address.Split('.').Select(a =&gt; Convert.ToByte(a)).ToArray());\r\n            wss = new WebSocketServer(ipaddr, port, null);\r\n            wss.AddWebSocketService&lt;WSServer&gt;(\"/flowsharpapp\");\r\n            wss.Start();\r\n        }\r\n\r\n        public void StopServer()\r\n        {\r\n            wss.Stop();\r\n        }\r\n    }\r\n}","TextChanged":"True"}</Json>
+    <Json>{"Code":"using System;\r\nusing System.Net;\r\nusing System.Net.WebSockets;\r\nusing System.Text;\r\nusing System.Threading;\r\nusing System.Threading.Tasks;\r\n\r\nnamespace App\r\n{\r\n\tpublic class SocketServer\r\n    {\r\n        private HttpListener listener;\r\n\r\n        public void StartServer()\r\n        {\r\n        \tConsole.WriteLine(\"Starting websocket server at 127.0.0.1:1101\");\r\n            listener = new HttpListener();\r\n            listener.Prefixes.Add(\"http://127.0.0.1:1101/flowsharpapp/\");\r\n            listener.Start();\r\n            Task.Run(() =&gt; Listen());\r\n        }\r\n\r\n        public void StopServer()\r\n        {\r\n            listener?.Stop();\r\n            listener?.Close();\r\n            listener = null;\r\n        }\r\n\r\n        private void Listen()\r\n        {\r\n            while (listener != null &amp;&amp; listener.IsListening)\r\n            {\r\n                HttpListenerContext context;\r\n\r\n                try\r\n                {\r\n                    context = listener.GetContext();\r\n                }\r\n                catch (HttpListenerException)\r\n                {\r\n                    break;\r\n                }\r\n\r\n                if (!context.Request.IsWebSocketRequest)\r\n                {\r\n                    context.Response.StatusCode = 400;\r\n                    context.Response.Close();\r\n                    continue;\r\n                }\r\n\r\n                HttpListenerWebSocketContext webSocketContext = context.AcceptWebSocketAsync(null).GetAwaiter().GetResult();\r\n                using (WebSocket socket = webSocketContext.WebSocket)\r\n                {\r\n                    string message = ReceiveTextMessage(socket);\r\n                    if (message != null)\r\n                    {\r\n                        new WSServer().OnMessage(message, WebSocketMessageType.Text);\r\n                    }\r\n                }\r\n            }\r\n        }\r\n\r\n        private static string ReceiveTextMessage(WebSocket socket)\r\n        {\r\n            var buffer = new byte[4096];\r\n            var segment = new ArraySegment&lt;byte&gt;(buffer);\r\n            var sb = new StringBuilder();\r\n\r\n            while (true)\r\n            {\r\n                var result = socket.ReceiveAsync(segment, CancellationToken.None).GetAwaiter().GetResult();\r\n                if (result.MessageType == WebSocketMessageType.Close)\r\n                {\r\n                    return null;\r\n                }\r\n\r\n                sb.Append(Encoding.UTF8.GetString(buffer, 0, result.Count));\r\n                if (result.EndOfMessage)\r\n                {\r\n                    break;\r\n                }\r\n            }\r\n\r\n            return sb.ToString();\r\n        }\r\n    }\r\n}","TextChanged":"True"}</Json>
     <Connections>
       <ConnectionPropertyBag>
         <ToElementId>ca2435f4-58ca-4adc-81d7-7060d94ebf95</ToElementId>
@@ -1830,7 +1830,7 @@
     <TextFontStrikeout>false</TextFontStrikeout>
     <TextFontItalic>false</TextFontItalic>
     <TextFontBold>false</TextFontBold>
-    <Json>{"AssyRef":"websocket-sharp.dll"}</Json>
+    <Json>{"AssyRef":"System.Net.WebSockets.Client.dll"}</Json>
     <Connections />
     <Children />
     <TextAlign>TopCenter</TextAlign>

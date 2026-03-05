@@ -33,7 +33,7 @@
     <TextFontUnderline>false</TextFontUnderline>
     <TextFontStrikeout>false</TextFontStrikeout>
     <TextFontItalic>false</TextFontItalic>
-    <Json>{"Code":"using System;\r\nusing WebSocketSharp;\r\n\r\nnamespace App\r\n{\r\n\tpublic class MyListener { }\t\r\n\r\n\tpublic static class Program\r\n\t{\r\n\t\tpublic static void Main()\r\n\t\t{\r\n\t\t\tWebSocket ws = new WebSocket(\"ws://127.0.0.1:1100/flowsharp\", new MyListener());\t\r\n\t\t\tws.Connect();\r\n\t\t\tws.Send(\"cmd=CmdUpdateProperty&amp;Name=box&amp;PropertyName=Text&amp;Value=Hello World\");\r\n\t\t\tConsole.WriteLine(\"Press a key to exit.\");\r\n\t\t\tConsole.ReadLine();\r\n\t\t}\r\n\t}\r\n}"}</Json>
+    <Json>{"Code":"using System;\r\nusing System.Net.WebSockets;\r\nusing System.Text;\r\nusing System.Threading;\r\n\r\nnamespace App\r\n{\r\n\tpublic static class Program\r\n\t{\r\n\t\tpublic static void Main()\r\n\t\t{\r\n\t\t\tusing (var ws = new ClientWebSocket())\r\n\t\t\t{\r\n\t\t\t\tws.ConnectAsync(new Uri(\"ws://127.0.0.1:1100/flowsharp\"), CancellationToken.None).GetAwaiter().GetResult();\r\n\t\t\t\tbyte[] bytes = Encoding.UTF8.GetBytes(\"cmd=CmdUpdateProperty&amp;Name=box&amp;PropertyName=Text&amp;Value=Hello World\");\r\n\t\t\t\tvar segment = new ArraySegment&lt;byte&gt;(bytes);\r\n\t\t\t\tws.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None).GetAwaiter().GetResult();\r\n\t\t\t\tConsole.WriteLine(\"Press a key to exit.\");\r\n\t\t\t\tConsole.ReadLine();\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n}"}</Json>
     <Connections />
     <Children />
     <TextAlign>MiddleCenter</TextAlign>

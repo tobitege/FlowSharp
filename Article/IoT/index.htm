@@ -719,11 +719,11 @@ the button click event either over HTTP or using WebSockets.&nbsp; In our case,
 we'll use WebSockets, since it's a slightly easier implementation.</p>
 <h4>Writing the Websocket Server</h4>
 <p>First we'll drag and drop the &quot;AssyRef&quot; shape onto the canvas so we can 
-reference the websocket-client dll:</p>
+reference the .NET WebSockets client assembly:</p>
 <p><img border="0" src="wss1.png" width="565" height="315"></p>
 <p>Next, we'll create the program's Main method as code-behind:</p>
 <p><img border="0" src="wss2.png" width="460" height="339"></p>
-<p>This initializes a wrapper for the websocket-sharp server and waits for 
+<p>This initializes a small <code>HttpListener</code>-based server wrapper that upgrades requests to WebSockets and waits for 
 messages.&nbsp; We'll implement this as a couple code-behind shapes wrapped in a 
 groupbox:</p>
 <p><img border="0" src="wss3.png" width="804" height="661"></p>
@@ -821,33 +821,40 @@ WebSockets (forgive the hardcoded values for now):</p>
 The <code>WebSocketSend</code> message is processed with a receiver method 
 (again, forgive the hardcoded IP address, but this explains where port 1101 
 comes from in the code above):</p>
-<pre>using WebSocketSharp;
+<pre>using System;
+using System.Net.WebSockets;
+using System.Text;
+using System.Threading;
 using Clifton.Core.Semantics;
 using FlowSharpServiceInterfaces;
 
 namespace FlowSharpWebSocketService
 {
-  public class MyListener { }
-
   public class WebSocketSender : IReceptor
   {
-    public static WebSocket ws = null;
+    public static ClientWebSocket ws = null;
 
     public void Process(ISemanticProcessor proc, IMembrane membrane, WebSocketSend cmd)
     {
       EstablishConnection();
-      ws.Send(cmd.Data);
+      Send(cmd.Data);
     }
 
     protected void EstablishConnection()
     {
-      // TODO: Right now, we're assuming one web socket client.
-      if (ws == null || !ws.IsAlive)
+      if (ws == null || ws.State != WebSocketState.Open)
       {
-        // TODO: Fix hardcoded IP
-        ws = new WebSocket(&quot;ws://127.0.0.1:1101/flowsharpapp&quot;, new MyListener());
-        ws.Connect();
+        ws?.Dispose();
+        ws = new ClientWebSocket();
+        ws.ConnectAsync(new Uri(&quot;ws://127.0.0.1:1101/flowsharpapp&quot;), CancellationToken.None).GetAwaiter().GetResult();
       }
+    }
+
+    protected void Send(string data)
+    {
+      byte[] bytes = Encoding.UTF8.GetBytes(data ?? string.Empty);
+      var segment = new ArraySegment&lt;byte&gt;(bytes);
+      ws.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None).GetAwaiter().GetResult();
     }
   }
 }</pre>

@@ -1,22 +1,43 @@
-tobitege, 2022-08-31
-- Fixed crash when loading an xml file with hard-coded path that
-  doesn't exist and it will try to load the layout file from the same folder
-- Fixed crash when changing Font and Rectangle properties in the property inspector
-- included Clifton.Core packages to get stuff compiled
-- Removed outdated docking theme assembly
-- Enabled NuGet packages for Json and docking libraries
-- Compile roughly in order: Clifton.Core, Clifton.xxx, Services, FlowSharpxxx, FS-HOPE projects.
-- Compiled successfully on VS 2019 (x86).
-- Some code changes based on IntelliSense.
-
 # FlowSharp
 
 ![FlowSharp](https://github.com/cliftonm/FlowSharp/blob/master/Article/flowsharp2.png)
-# Documentation
+
+FlowSharp is a WinForms-based diagramming environment. The main solution now targets `.NET 8` on Windows.
+
+## Current Status
+
+- `FlowSharp.sln` builds in Debug and Release on `.NET 8`.
+- Automated tests live under `Tests/`.
+- Migration-specific smoke checks live in `FS-HOPE/CodeTester`.
+- [`MIGRATION_SUMMARY.md`](MIGRATION_SUMMARY.md) is the current migration status reference.
+
+## Documentation
+
 [Article describing object model, code, and example usage.](https://cdn.rawgit.com/cliftonm/FlowSharp/master/Article/index2.htm)
-# Requirements to build code
-* Visual Studio 2015 or better
-* .NET 4.6.1 or higher
+
+## Requirements To Build
+
+- Windows
+- `.NET 8` SDK
+- Visual Studio 2022 or the `dotnet` CLI
+
+## Build
+
+```powershell
+dotnet restore FlowSharp.sln
+dotnet build FlowSharp.sln -c Debug
+dotnet test Tests\FlowSharp.Main.Tests\FlowSharp.Main.Tests.csproj -c Debug
+dotnet test Tests\FlowSharp.Http.IntegrationTests\FlowSharp.Http.IntegrationTests.csproj -c Debug
+```
+
+## Optional Smoke Checks
+
+```powershell
+dotnet run --project FS-HOPE\CodeTester\CodeTester.csproj -- --websocket-smoke
+dotnet run --project FS-HOPE\CodeTester\CodeTester.csproj -- --plugin-smoke 3
+dotnet run --project FS-HOPE\CodeTester\CodeTester.csproj -- --dynamic-compile-smoke 3
+dotnet run --project FS-HOPE\CodeTester\CodeTester.csproj -- --hope-cross-context-smoke 3
+```
 
 # Features
 A short list of some of the features.
@@ -62,4 +83,3 @@ Please contribute to working on this list!
 
 # License
 [The Code Project Open License (CPOL) 1.02](http://htmlpreview.github.io/?http://www.codeproject.com/info/cpol10.aspx)
-
