@@ -20,6 +20,7 @@ namespace FlowSharpCodeScintillaEditorService
         public void InitializeServices(IServiceManager serviceManager)
         {
             serviceManager.RegisterSingleton<IFlowSharpScintillaEditorService, ScintillaCodeEditorService>();
+            serviceManager.RegisterSingleton<IFlowSharpCodeEditorService, CSharpScintillaCodeEditorService>();
         }
     }
 
@@ -31,6 +32,7 @@ namespace FlowSharpCodeScintillaEditorService
     {
         public string Language { get; set; }
         public Control ContainerParent { get; set; }
+        public int LastCaretPosition { get; set; }
 
         public abstract void ConfigureLexer();
     }
@@ -38,6 +40,7 @@ namespace FlowSharpCodeScintillaEditorService
     public class ScintillaCodeEditorService : ServiceBase, IFlowSharpScintillaEditorService
     {
         public event EventHandler<TextChangedEventArgs> TextChanged;
+        public event EventHandler<TextChangedEventArgs> CSharpTextChanged;
 
         // Only one editor per language is allowed.
         // TODO: How would we handle multiple editors of the same language, associated with two or more shapes?
@@ -57,10 +60,15 @@ namespace FlowSharpCodeScintillaEditorService
 
         public void CreateEditor(Control parent, string language)
         {
+            string normalizedLanguage = NormalizeLanguage(language);
             ScintillaEditor editor;
 
-            switch (language.ToLower())
+            switch (normalizedLanguage)
             {
+                case "c#":
+                    editor = CreateEditor<CSharpEditor>(parent);
+                    break;
+
                 case "python":
                     editor = CreateEditor<PythonEditor>(parent);
                     break;
@@ -81,7 +89,7 @@ namespace FlowSharpCodeScintillaEditorService
                     return;
             }
 
-            editor.Language = language.ToLower();
+            editor.Language = normalizedLanguage;
             editors[editor.Language] = editor;
         }
 
@@ -90,10 +98,34 @@ namespace FlowSharpCodeScintillaEditorService
             // TODO: Set the focus to the appropriate editor.
             // If the editor doesn't exist, create it.
 
-            if (editors.TryGetValue(language.ToLower(), out var editor))
+            if (editors.TryGetValue(NormalizeLanguage(language), out var editor))
             {
                 editor.Text = text;
             }
+        }
+
+        public int GetPosition(string language)
+        {
+            if (!editors.TryGetValue(NormalizeLanguage(language), out var editor))
+            {
+                return 0;
+            }
+
+            editor.LastCaretPosition = editor.CurrentPosition;
+
+            return editor.LastCaretPosition;
+        }
+
+        public void SetPosition(string language, int pos)
+        {
+            if (!editors.TryGetValue(NormalizeLanguage(language), out var editor))
+            {
+                return;
+            }
+
+            int boundedPosition = Math.Max(0, Math.Min(pos, editor.TextLength));
+            editor.LastCaretPosition = boundedPosition;
+            editor.GotoPosition(boundedPosition);
         }
 
         // Great resource: https://github.com/jacobslusser/ScintillaNET/wiki/Displaying-Line-Numbers
@@ -121,35 +153,56 @@ namespace FlowSharpCodeScintillaEditorService
             ScintillaEditor editor = new T();
             editor.Margins[0].Width = 32;           // Wider than default of 16 so line numbers > 100 display.  Not sure if > 1000 will work correctly though.
             editor.Dock = DockStyle.Fill;
-            editor.LexerName = "python";
             editor.ConfigureLexer();
             editor.TextChanged += OnTextChanged;
+            editor.LostFocus += OnLostFocus;
             parent.Controls.Add(editor);
             editor.ContainerParent = parent;
 
             return editor;
         }
 
+        protected void OnLostFocus(object sender, EventArgs e)
+        {
+            if (sender is ScintillaEditor editor)
+            {
+                editor.LastCaretPosition = editor.CurrentPosition;
+            }
+        }
+
         protected void OnTextChanged(object sender, EventArgs e)
         {
             ScintillaEditor editor = (ScintillaEditor)sender;
-            TextChanged.Fire(this, new TextChangedEventArgs() { Language = editor.Language, Text = editor.Text });
+            var eventArgs = new TextChangedEventArgs() { Language = editor.Language, Text = editor.Text };
+
+            if (editor.Language == "c#")
+            {
+                eventArgs.Language = "C#";
+                CSharpTextChanged.Fire(this, eventArgs);
+            }
+            else
+            {
+                TextChanged.Fire(this, eventArgs);
+            }
         }
 
         protected void Closed(string language)
         {
-            if (!editors.TryGetValue(language.ToLower(), out var editor)) return;
+            string normalizedLanguage = NormalizeLanguage(language);
+            if (!editors.TryGetValue(normalizedLanguage, out var editor)) return;
             editor.ContainerParent.Controls.Remove(editor);
-            editors.Remove(language.ToLower());
-            ServiceManager.Get<IFlowSharpCodeService>().EditorWindowClosed(language);
+            editors.Remove(normalizedLanguage);
+            ServiceManager.Get<IFlowSharpCodeService>().EditorWindowClosed(normalizedLanguage == "c#" ? "C#" : normalizedLanguage);
         }
 
         protected void OnDocumentClosing(object document)
         {
             if (!(document is Control ctrl)) return;
 
+            string metadata = ((IDockDocument)document).Metadata.LeftOf(",");
+
             if (ctrl.Controls.Count != 1 ||
-                (((IDockDocument)document).Metadata.LeftOf(",") != Constants.META_SCINTILLA_EDITOR))
+                (metadata != Constants.META_SCINTILLA_EDITOR && metadata != Constants.META_CSHARP_EDITOR))
                 return;
             if (ctrl.Controls[0].Controls.Count > 0 &&
                 ctrl.Controls[0].Controls[0] is ScintillaEditor edi)
@@ -157,11 +210,98 @@ namespace FlowSharpCodeScintillaEditorService
                 Closed(edi.Language);
             }
         }
+
+        protected string NormalizeLanguage(string language)
+        {
+            switch ((language ?? string.Empty).Trim().ToLowerInvariant())
+            {
+                case "csharp":
+                case "c#":
+                    return "c#";
+
+                default:
+                    return (language ?? string.Empty).Trim().ToLowerInvariant();
+            }
+        }
     }
+
+    public class CSharpScintillaCodeEditorService : ServiceBase, IFlowSharpCodeEditorService
+    {
+        public event EventHandler<TextChangedEventArgs> TextChanged;
+
+        public string Filename { get; set; }
+
+        protected ScintillaCodeEditorService ScintillaService => ServiceManager.Get<IFlowSharpScintillaEditorService>() as ScintillaCodeEditorService;
+
+        public override void FinishedInitialization()
+        {
+            base.FinishedInitialization();
+            var scintillaService = ScintillaService;
+
+            if (scintillaService != null)
+            {
+                scintillaService.CSharpTextChanged += OnCSharpTextChanged;
+            }
+        }
+
+        public void CreateEditor(Control parent)
+        {
+            ScintillaService?.CreateEditor(parent, "C#");
+        }
+
+        public void AddAssembly(string filename)
+        {
+        }
+
+        public void AddAssembly(Type t)
+        {
+        }
+
+        public int GetPosition()
+        {
+            return ScintillaService?.GetPosition("C#") ?? 0;
+        }
+
+        public void SetPosition(int pos)
+        {
+            ScintillaService?.SetPosition("C#", pos);
+        }
+
+        public void SetText(string language, string text)
+        {
+            ScintillaService?.SetText("C#", text);
+        }
+
+        protected void OnCSharpTextChanged(object sender, TextChangedEventArgs e)
+        {
+            TextChanged.Fire(this, e);
+        }
+    }
+
+    public class CSharpEditor : ScintillaEditor
+    {
+        public override void ConfigureLexer()
+        {
+            StyleResetDefault();
+            Styles[Style.Default].Font = "Consolas";
+            Styles[Style.Default].Size = 10;
+            StyleClearAll();
+
+            LexerName = "cpp";
+            IndentWidth = 4;
+            TabWidth = 4;
+            SetKeywords(0,
+                "abstract as base bool break byte case catch char checked class const continue decimal default delegate do double else enum event explicit extern false finally fixed float for foreach get goto if implicit in int interface internal is lock long namespace new null object operator out override params private protected public readonly ref return sbyte sealed set short sizeof stackalloc static string struct switch this throw true try typeof uint ulong unchecked unsafe ushort using virtual void volatile while");
+            SetKeywords(1,
+                "add alias ascending async await by descending dynamic equals from global group into join let nameof on orderby partial remove select unmanaged value var where yield");
+        }
+    }
+
     public class JavascriptEditor : ScintillaEditor
     {
         public override void ConfigureLexer()
         {
+            LexerName = "cpp";
         }
     }
 
@@ -169,6 +309,7 @@ namespace FlowSharpCodeScintillaEditorService
     {
         public override void ConfigureLexer()
         {
+            LexerName = "html";
         }
     }
 
@@ -176,6 +317,7 @@ namespace FlowSharpCodeScintillaEditorService
     {
         public override void ConfigureLexer()
         {
+            LexerName = "css";
         }
     }
 

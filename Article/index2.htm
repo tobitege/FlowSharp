@@ -1864,8 +1864,7 @@ now implemented as services (see above diagram):</p>
 	<li>FlowSharpCodeService - Handles the association of code with shapes.</li>
 	<li>FlowSharpCodeCompilerService - Provides compiler services for shape 
 	code-behind and code generation.</li>
-	<li>FlowSharpCodeICSharpDevelopService - The code editor uses the Avalon WPF 
-	editor used by ICSharpCode</li>
+	<li>FlowSharpCodeScintillaEditorService - The code editor uses the Scintilla-based editor service</li>
 </ul>
 <p>To &quot;activate&quot; the FlowSharpCode features, the module FlowSharpCodeModules.xml 
 is specified as a parameter to FlowSharp.exe.&nbsp; This file pulls in the 
@@ -1886,7 +1885,7 @@ additional services:</p>
   &lt;!-- Exclude these if you don't want the FlowSharpCode services --&gt;
   &lt;Module AssemblyName='FlowSharpCodeService.dll'/&gt;
   &lt;Module AssemblyName='FlowSharpCodeCompilerService.dll'/&gt;
-  &lt;Module AssemblyName='FlowSharpCodeICSharpDevelopService.dll'/&gt;
+  &lt;Module AssemblyName='FlowSharpCodeScintillaEditorService.dll'/&gt;
 &lt;/Modules&gt;</pre>
 <p>When using this file, the application includes an editor panel and adds a 
 &quot;Build&quot; menu:</p>

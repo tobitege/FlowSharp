@@ -37,7 +37,7 @@ The earlier planning draft was removed after the migration moved past it and it 
 - Moved package-managed dependencies to `PackageReference`.
 - Migrated DockPanel usage to package restore through `DockPanelSuite`.
 - Migrated Scintilla usage to the `Scintilla.NET` package.
-- Reduced ICSharpDevelop local dependency surface to the remaining editor-specific DLLs.
+- Removed the active ICSharpDevelop editor dependency by routing the C# editor through the Scintilla-based editor service.
 - Brought `Clifton.Core.TemplateEngine.sln` onto `.NET 8`.
 
 ## Validation Commands
@@ -60,9 +60,8 @@ dotnet run --project FS-HOPE\CodeTester\CodeTester.csproj -- --hope-cross-contex
 
 These are the migration items that still matter technically:
 
-1. `FlowSharpCodeICSharpDevelopService` still depends on local `Libs/ICSharpCode/ICSharpCode.AvalonEdit.dll` and `Libs/ICSharpCode/ICSharpCode.CodeCompletion.dll`.
-2. WinForms designer behavior still deserves manual UI verification in the main app.
-3. LINQ-to-SQL-specific code excluded from `Clifton.Core` remains a redesign task if that functionality is needed again on `.NET 8`.
+1. WinForms designer behavior still deserves manual UI verification in the main app.
+2. LINQ-to-SQL-specific code excluded from `Clifton.Core` remains a redesign task if that functionality is needed again on `.NET 8`.
 
 ## Notes
 

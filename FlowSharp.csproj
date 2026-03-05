@@ -73,7 +73,6 @@
     <ProjectReference Include="Services\FlowSharpCanvasService\FlowSharpCanvasService.csproj" />
     <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeCompilerService\FlowSharpCodeCompilerService.csproj" />
     <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeDrakonShapes\FlowSharpCodeDrakonShapes.csproj" />
-    <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeICSharpDevelopService\FlowSharpCodeICSharpDevelopService.csproj" />
     <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeOutputWindowService\FlowSharpCodeOutputWindowService.csproj" />
     <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodePythonCompilerService\FlowSharpCodePythonCompilerService.csproj" />
     <ProjectReference Include="Services\FlowSharpCodeServices\FlowSharpCodeScintillaEditorService\FlowSharpCodeScintillaEditorService.csproj" />
