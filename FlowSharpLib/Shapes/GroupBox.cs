@@ -80,6 +80,7 @@ namespace FlowSharpLib
         public override void Move(Point delta)
         {
             base.Move(delta);
+            var externalConnections = new List<Connection>();
 
             GroupChildren.ForEach(g =>
             {
@@ -91,7 +92,12 @@ namespace FlowSharpLib
                 {
                     //g.Connections.Where(c => c.ToElement.Parent == null).ForEach(c => c.ToElement.MoveAnchor(c.ToConnectionPoint.Type, delta));
                     // Issue #56
-                    g.Connections.Where(c => c.ToElement.Parent == null).ForEach(c => canvas.Controller.MoveLineOrAnchor(c, delta));
+                    g.Connections.Where(c => c.ToElement.Parent == null &&
+                        !externalConnections.Any(ec => ec.ToElement == c.ToElement && ec.ToConnectionPoint.Type == c.ToConnectionPoint.Type)).ForEach(c =>
+                    {
+                        externalConnections.Add(c);
+                        canvas.Controller.MoveLineOrAnchor(c, delta);
+                    });
                 }
             });
         }

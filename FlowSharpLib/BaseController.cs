@@ -231,6 +231,43 @@ namespace FlowSharpLib
             return elements.Where(e => e.Parent == null && e.Visible && e.UpdateRectangle.IntersectsWith(selectionRectangle)).ToList();
         }
 
+        public GroupBox GetContainingGroupBox(GraphicElement el)
+        {
+            return elements.OfType<GroupBox>()
+                .Where(g => g != el && g.Visible && g.DisplayRectangle.Contains(el.DisplayRectangle))
+                .OrderBy(g => g.DisplayRectangle.Width * g.DisplayRectangle.Height)
+                .FirstOrDefault();
+        }
+
+        public void AddShapeToGroup(GroupBox groupBox, GraphicElement el)
+        {
+            if (groupBox == null || el == null || groupBox == el || el.Parent == groupBox)
+            {
+                return;
+            }
+
+            if (el.Parent is GroupBox currentGroup)
+            {
+                currentGroup.GroupChildren.Remove(el);
+            }
+
+            el.Parent = groupBox;
+            groupBox.GroupChildren.AddIfUnique(el);
+            canvas.Invalidate();
+        }
+
+        public void RemoveShapeFromGroup(GroupBox groupBox, GraphicElement el)
+        {
+            if (groupBox == null || el == null || el.Parent != groupBox)
+            {
+                return;
+            }
+
+            groupBox.GroupChildren.Remove(el);
+            el.Parent = null;
+            canvas.Invalidate();
+        }
+
         public void SelectElements(List<GraphicElement> els)
         {
             els.ForEach(el => SelectElement(el));

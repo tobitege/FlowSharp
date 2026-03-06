@@ -75,8 +75,16 @@ namespace FlowSharpToolboxService
             {
                 // TODO: Similar to MouseController EndShapeDrag/EndAnchorDrag
                 canvasController.SnapController.DoUndoSnapActions(canvasController.UndoStack);
+                GraphicElement droppedElement = canvasController.SelectedElements.Count == 1 ? canvasController.SelectedElements[0] : null;
+                FlowSharpLib.GroupBox targetGroup = droppedElement == null || droppedElement.IsConnector ? null : canvasController.GetContainingGroupBox(droppedElement);
 
-                if (canvasController.SnapController.RunningDelta != Point.Empty)
+                if (targetGroup != null)
+                {
+                    canvasController.AddShapeToGroup(targetGroup, droppedElement);
+                    serviceManager.Get<IFlowSharpDebugWindowService>().UpdateDebugWindow();
+                }
+
+                if (canvasController.SnapController.RunningDelta != Point.Empty || targetGroup != null)
                 {
                     var delta = canvasController.SnapController.RunningDelta;     // for closure
 
@@ -84,12 +92,30 @@ namespace FlowSharpToolboxService
                         () => { },      // Our "do" action is actually nothing, since all the "doing" has been done.
                         () =>           // Undo
                         {
+                            if (targetGroup != null)
+                            {
+                                canvasController.RemoveShapeFromGroup(targetGroup, droppedElement);
+                                serviceManager.Get<IFlowSharpDebugWindowService>().UpdateDebugWindow();
+                            }
+
+                            if (delta != Point.Empty)
+                            {
                                 canvasController.DragSelectedElements(delta.ReverseDirection());
+                            }
                         },
                         true,           // We finish the move.
                         () =>           // Redo
                         {
+                            if (delta != Point.Empty)
+                            {
                                 canvasController.DragSelectedElements(delta);
+                            }
+
+                            if (targetGroup != null)
+                            {
+                                canvasController.AddShapeToGroup(targetGroup, droppedElement);
+                                serviceManager.Get<IFlowSharpDebugWindowService>().UpdateDebugWindow();
+                            }
                         });
                 }
             }
