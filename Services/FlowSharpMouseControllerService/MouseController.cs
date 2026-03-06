@@ -859,13 +859,8 @@ namespace FlowSharpMouseControllerService
         {
             BaseController controller = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
             controller.DeleteElement(SelectionBox);
-            List<GraphicElement> selectedElements = new List<GraphicElement>();
             List<GraphicElement> previouslySelectedElements = controller.SelectedElements.ToList();
-
-            controller.Elements.Where(e => !selectedElements.Contains(e) && e.Parent == null && SelectionBox.DisplayRectangle.Contains(e.UpdateRectangle)).ForEach((e) =>
-            {
-                selectedElements.Add(e);
-            });
+            List<GraphicElement> selectedElements = controller.GetShapesInSelectionRegion(SelectionBox.DisplayRectangle);
 
             controller.UndoStack.UndoRedo("Group Select",
                 () =>
