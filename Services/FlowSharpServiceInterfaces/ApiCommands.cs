@@ -4,6 +4,7 @@
 * http://www.codeproject.com/info/cpol10.aspx
 */
 
+using System;
 using System.Collections.Generic;
 
 using Newtonsoft.Json;
@@ -69,6 +70,7 @@ namespace FlowSharpServiceInterfaces
         public string FillColor { get; set; }
         public string BorderColor { get; set; }
         public string TextColor { get; set; }
+        public bool AutoGroup { get; set; } = true;
     }
 
     public class CmdDropConnector : ISemanticType
@@ -80,5 +82,237 @@ namespace FlowSharpServiceInterfaces
         public int X2 { get; set; }
         public int Y2 { get; set; }
         public string BorderColor { get; set; }
+    }
+
+    public class CmdLoadDiagram : ISemanticType
+    {
+        public string Filename { get; set; }
+    }
+
+    public class CmdNewCanvas : ISemanticType
+    {
+        public string Name { get; set; }
+    }
+
+    public class CmdListCanvases : ISemanticType, IHasResponse
+    {
+        public string CanvasesJson { get; set; }
+
+        public string SerializeResponse()
+        {
+            return CanvasesJson ?? "[]";
+        }
+    }
+
+    public class CmdUseCanvas : ISemanticType
+    {
+        public int? Index { get; set; }
+        public string Name { get; set; }
+        public string Filename { get; set; }
+    }
+
+    public class CmdSaveWorkspace : ISemanticType
+    {
+        public string Filename { get; set; }
+        public bool SelectionOnly { get; set; }
+        public bool RebaseFilenames { get; set; }
+    }
+
+    public class CmdExportPng : ISemanticType
+    {
+        public string Filename { get; set; }
+        public bool SelectionOnly { get; set; }
+    }
+
+    public class CmdDeleteShape : ISemanticType
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Text { get; set; }
+        public bool All { get; set; }
+    }
+
+    public class CmdMoveShape : ISemanticType
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Text { get; set; }
+        public int? X { get; set; }
+        public int? Y { get; set; }
+        public int? Dx { get; set; }
+        public int? Dy { get; set; }
+        public int? Width { get; set; }
+        public int? Height { get; set; }
+        public bool Relative { get; set; } = true;
+    }
+
+    public class CmdConnectShapes : ISemanticType
+    {
+        public string ConnectorName { get; set; }
+        public string Name { get; set; }
+        public string Source { get; set; }
+        public string SourceId { get; set; }
+        public string SourceName { get; set; }
+        public string SourceText { get; set; }
+        public string Target { get; set; }
+        public string TargetId { get; set; }
+        public string TargetName { get; set; }
+        public string TargetText { get; set; }
+        public string SourceGrip { get; set; }
+        public string TargetGrip { get; set; }
+        public string StartCap { get; set; }
+        public string EndCap { get; set; }
+    }
+
+    public class CmdListShapes : ISemanticType, IHasResponse
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Text { get; set; }
+        public string Type { get; set; }
+        public bool IncludeConnectors { get; set; } = true;
+        public bool IncludeChildren { get; set; } = true;
+        public bool SelectedOnly { get; set; }
+        public string ShapesJson { get; set; }
+
+        public string SerializeResponse()
+        {
+            return ShapesJson ?? "[]";
+        }
+    }
+
+    public class CmdSelectShapes : ISemanticType
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Text { get; set; }
+        public string Type { get; set; }
+        public bool All { get; set; }
+        public bool IncludeConnectors { get; set; } = true;
+        public bool IncludeChildren { get; set; }
+        public string Mode { get; set; } = "replace";
+    }
+
+    public class CmdSelectRegion : ISemanticType
+    {
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
+        public string Mode { get; set; } = "replace";
+    }
+
+    public class CmdGetSelection : ISemanticType, IHasResponse
+    {
+        public string SelectionJson { get; set; }
+
+        public string SerializeResponse()
+        {
+            return SelectionJson ?? "[]";
+        }
+    }
+
+    public class CmdMoveSelection : ISemanticType
+    {
+        public int Dx { get; set; }
+        public int Dy { get; set; }
+    }
+
+    public class CmdCopySelection : ISemanticType { }
+
+    public class CmdPasteClipboard : ISemanticType { }
+
+    public class CmdDeleteSelection : ISemanticType { }
+
+    public class CmdGroupSelection : ISemanticType { }
+
+    public class CmdUngroupSelection : ISemanticType { }
+
+    public class CmdUndo : ISemanticType { }
+
+    public class CmdRedo : ISemanticType { }
+
+    public class CmdInspectShape : ISemanticType, IHasResponse
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Text { get; set; }
+        public string Type { get; set; }
+        public bool All { get; set; }
+        public bool IncludeConnectors { get; set; } = true;
+        public bool IncludeChildren { get; set; } = true;
+        public bool IncludeConnections { get; set; } = true;
+        public string Properties { get; set; }
+        public string ShapesJson { get; set; }
+
+        public string SerializeResponse()
+        {
+            return ShapesJson ?? "[]";
+        }
+    }
+
+    public class CmdRunMacro : ISemanticType, IHasResponse
+    {
+        public string Script { get; set; }
+        public string Filename { get; set; }
+        public bool ContinueOnError { get; set; }
+        public string ResultJson { get; set; }
+
+        public string SerializeResponse()
+        {
+            return ResultJson ?? "[]";
+        }
+    }
+
+    public class ShapeSummary
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string Text { get; set; }
+        public string Type { get; set; }
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
+        public bool IsConnector { get; set; }
+        public bool Selected { get; set; }
+        public bool Visible { get; set; }
+        public Guid? ParentId { get; set; }
+        public string ParentName { get; set; }
+        public string ParentType { get; set; }
+        public int GroupChildCount { get; set; }
+        public int ConnectionCount { get; set; }
+        public int DistinctConnectionCount { get; set; }
+    }
+
+    public class CanvasSummary
+    {
+        public int Index { get; set; }
+        public string Name { get; set; }
+        public string Filename { get; set; }
+        public bool IsActive { get; set; }
+        public int ShapeCount { get; set; }
+        public int RootShapeCount { get; set; }
+        public int ConnectorCount { get; set; }
+        public int SelectedCount { get; set; }
+    }
+
+    public class ShapeConnectionSummary
+    {
+        public Guid ConnectorId { get; set; }
+        public string ConnectorName { get; set; }
+        public string ConnectorType { get; set; }
+        public string ConnectorGrip { get; set; }
+        public string ShapeGrip { get; set; }
+        public Guid? ConnectedShapeId { get; set; }
+        public string ConnectedShapeName { get; set; }
+        public string ConnectedShapeType { get; set; }
+    }
+
+    public class ShapeDetail : ShapeSummary
+    {
+        public Dictionary<string, string> Properties { get; set; }
+        public List<ShapeConnectionSummary> Connections { get; set; }
+        public List<ShapeSummary> Children { get; set; }
     }
 }

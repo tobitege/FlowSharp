@@ -9,8 +9,9 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
-using System.Reflection;
 using System.Text;
+
+using Newtonsoft.Json;
 
 using Clifton.Core.ExtensionMethods;
 using Clifton.Core.Semantics;
@@ -54,44 +55,41 @@ namespace FlowSharpRestService
 
         protected void PublishSemanticMessage(HttpListenerContext context, string data)
         {
-            var resp = OK;
             var nvc = context.Request.QueryString;
             var stname = nvc["cmd"];
-            var st = Type.GetType("FlowSharpServiceInterfaces." + stname + ",FlowSharpServiceInterfaces");
-            var t = Activator.CreateInstance(st) as ISemanticType;
-            PopulateType(t, nvc);
-            // Synchronous, because however we're processing the command doesn't know (or need to know) that it's
-            // coming from an HTTP GET, but we don't want to issue the response until the action has been performed.
-            serviceManager.Get<ISemanticProcessor>().ProcessInstance<FlowSharpMembrane>(t, true);
-            if (t is IHasResponse hr)
+            var t = SemanticTypeParser.NewCommand(stname);
+            if (t == null)
             {
-                resp = hr.SerializeResponse();
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                Response(context, JsonConvert.SerializeObject(new { error = "Unknown command.", command = stname }), "application/json");
+                return;
             }
-            Response(context, resp, resp == OK ? "text/plain" : "application/json");
+
+            try
+            {
+                PopulateType(t, nvc);
+                // Synchronous, because however we're processing the command doesn't know (or need to know) that it's
+                // coming from an HTTP GET, but we don't want to issue the response until the action has been performed.
+                serviceManager.Get<ISemanticProcessor>().ProcessInstance<FlowSharpMembrane>(t, true);
+                var resp = t is IHasResponse hr ? hr.SerializeResponse() : OK;
+                Response(context, resp, resp == OK ? "text/plain" : "application/json");
+            }
+            catch (Exception ex)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                Response(context, JsonConvert.SerializeObject(new { error = ex.GetBaseException().Message, command = t.GetType().Name }), "application/json");
+            }
         }
 
         protected void PopulateType(ISemanticType packet, NameValueCollection nvc)
         {
-            foreach (var key in nvc.AllKeys)
-            {
-                var pi = packet.GetType().GetProperty(key, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-                if (pi == null) continue;
-                object valOfType = null;
-                var ptype = pi.PropertyType;
-
-                if (ptype.IsGenericType)
-                {
-                    // We assume it's a nullable type
-                    ptype = ptype.GenericTypeArguments[0];
-                }
-
-                valOfType = Convert.ChangeType(Uri.UnescapeDataString(nvc[key].Replace('+', ' ')), ptype);
-                pi.SetValue(packet, valOfType);
-            }
+            var values = SemanticTypeParser.ToDictionary(nvc);
+            SemanticTypeParser.PopulateType(packet, values);
         }
 
         public void Response(HttpListenerContext context, string resp, string contentType)
         {
+            resp ??= string.Empty;
             var utf8data = Encoding.UTF8.GetBytes(resp);
             context.Response.ContentType = contentType;
             context.Response.ContentEncoding = Encoding.UTF8;

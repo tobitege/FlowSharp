@@ -15,6 +15,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Newtonsoft.Json;
+
 using Clifton.Core.ModuleManagement;
 using Clifton.Core.Semantics;
 using Clifton.Core.ServiceManagement;
@@ -226,8 +228,20 @@ namespace FlowSharpWebSocketService
 
             foreach (var dp in dataPackets)
             {
-                var varValue = dp.Split('=');
-                data[varValue[0]] = varValue[1];
+                if (string.IsNullOrWhiteSpace(dp))
+                {
+                    continue;
+                }
+
+                var varValue = dp.Split('=', 2);
+                if (varValue.Length == 0)
+                {
+                    continue;
+                }
+
+                var key = Uri.UnescapeDataString(varValue[0]);
+                var value = varValue.Length == 2 ? varValue[1] : string.Empty;
+                data[key] = value;
             }
 
             return data;
@@ -235,36 +249,33 @@ namespace FlowSharpWebSocketService
 
         protected string PublishSemanticMessage(Dictionary<string, string> data)
         {
-            string ret = null;
-            var st = Type.GetType("FlowSharpServiceInterfaces." + data["cmd"] + ",FlowSharpServiceInterfaces");
-            var t = Activator.CreateInstance(st) as ISemanticType;
-            PopulateType(t, data);
-            ServiceManager.Get<ISemanticProcessor>().ProcessInstance<FlowSharpMembrane>(t, true);
-
-            if (t is IHasResponse response)
+            if (!data.TryGetValue("cmd", out var cmdName))
             {
-                ret = response.SerializeResponse();
+                return JsonConvert.SerializeObject(new { error = "Missing command." });
             }
 
-            return ret;
+            var t = SemanticTypeParser.NewCommand(cmdName);
+            if (t == null)
+            {
+                return JsonConvert.SerializeObject(new { error = "Unknown command.", command = cmdName });
+            }
+
+            try
+            {
+                PopulateType(t, data);
+                ServiceManager.Get<ISemanticProcessor>().ProcessInstance<FlowSharpMembrane>(t, true);
+                return t is IHasResponse response ? response.SerializeResponse() ?? string.Empty : string.Empty;
+            }
+            catch (Exception ex)
+            {
+                return JsonConvert.SerializeObject(new { error = ex.GetBaseException().Message, command = t.GetType().Name });
+            }
         }
 
         protected void PopulateType(ISemanticType packet, Dictionary<string, string> data)
         {
-            foreach (string key in data.Keys)
-            {
-                var pi = packet.GetType().GetProperty(key, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-                if (pi == null) continue;
-
-                var ptype = pi.PropertyType;
-                if (ptype.IsGenericType)
-                {
-                    ptype = ptype.GenericTypeArguments[0];
-                }
-
-                var valOfType = Convert.ChangeType(Uri.UnescapeDataString(data[key].Replace('+', ' ')), ptype);
-                pi.SetValue(packet, valOfType);
-            }
+            var values = SemanticTypeParser.ToDictionary(data);
+            SemanticTypeParser.PopulateType(packet, values);
         }
     }
 }

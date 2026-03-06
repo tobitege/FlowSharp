@@ -831,7 +831,7 @@ namespace FlowSharpMenuService
                 if (!selectionOnly)
                 {
                     var canvasService = serviceManager.Get<IFlowSharpCanvasService>();
-                    canvasService.GetType().GetMethod("RebaseFilenamesOnNextSave")?.Invoke(canvasService, null);
+                    canvasService.RebaseFilenamesOnNextSave();
                 }
 
                 // Let canvas controller assign filenames.

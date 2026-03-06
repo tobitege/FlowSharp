@@ -48,6 +48,7 @@ namespace FlowSharpServiceInterfaces
         void RequestNewCanvas();
         void LoadDiagrams(string filename);
         void SaveDiagramsAndLayout(string filename, bool selectionOnly = false);
+        void RebaseFilenamesOnNextSave();
         void ClearControllers();
     }
 
