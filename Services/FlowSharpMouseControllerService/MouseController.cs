@@ -274,7 +274,7 @@ namespace FlowSharpMouseControllerService
                 Condition = () => serviceManager.Get<IFlowSharpCanvasService>().ActiveController.IsRootShapeSelectable(CurrentMousePosition) &&
                     CurrentButtons == MouseButtons.Left &&
                     serviceManager.Get<IFlowSharpCanvasService>().ActiveController.GetRootShapeAt(CurrentMousePosition).GetAnchors().FirstOrDefault(a => a.Near(CurrentMousePosition)) == null &&
-                    !serviceManager.Get<IFlowSharpCanvasService>().ActiveController.IsChildShapeSelectable(CurrentMousePosition),       // can't drag a grouped shape
+                    serviceManager.Get<IFlowSharpCanvasService>().ActiveController.GetSelectableShapeAt(CurrentMousePosition)?.Parent == null,
                 Action = (_) =>
                 {
                     BaseController controller = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
@@ -477,22 +477,10 @@ namespace FlowSharpMouseControllerService
             {
                 RouteName = RouteName.SelectSingleShapeMouseDown,
                 MouseEvent = MouseEvent.MouseDown,
-                Condition = () => serviceManager.Get<IFlowSharpCanvasService>().ActiveController.IsRootShapeSelectable(CurrentMousePosition) &&
-                    !serviceManager.Get<IFlowSharpCanvasService>().ActiveController.IsChildShapeSelectable(CurrentMousePosition) &&
+                Condition = () => serviceManager.Get<IFlowSharpCanvasService>().ActiveController.GetSelectableShapeAt(CurrentMousePosition)?.Parent == null &&
                     !serviceManager.Get<IFlowSharpCanvasService>().ActiveController.IsMultiSelect() &&
                     !serviceManager.Get<IFlowSharpCanvasService>().ActiveController.SelectedElements.Contains(serviceManager.Get<IFlowSharpCanvasService>().ActiveController.GetRootShapeAt(CurrentMousePosition)),
                 Action = (_) => SelectSingleRootShape()
-            });
-
-            // Select a single grouped shape:
-            router.Add(new MouseRouter()
-            {
-                RouteName = RouteName.SelectSingleGroupedShape,
-                MouseEvent = MouseEvent.MouseDown,
-                Condition = () => serviceManager.Get<IFlowSharpCanvasService>().ActiveController.IsChildShapeSelectable(CurrentMousePosition) &&
-                    !serviceManager.Get<IFlowSharpCanvasService>().ActiveController.IsMultiSelect() &&
-                    !serviceManager.Get<IFlowSharpCanvasService>().ActiveController.SelectedElements.Contains(serviceManager.Get<IFlowSharpCanvasService>().ActiveController.GetChildShapeAt(CurrentMousePosition)),
-                Action = (_) => SelectSingleChildShape()
             });
 
             // Select a single shape
@@ -500,8 +488,7 @@ namespace FlowSharpMouseControllerService
             {
                 RouteName = RouteName.SelectSingleShapeMouseUp,
                 MouseEvent = MouseEvent.MouseUp,
-                Condition = () => serviceManager.Get<IFlowSharpCanvasService>().ActiveController.IsRootShapeSelectable(CurrentMousePosition) &&
-                    !serviceManager.Get<IFlowSharpCanvasService>().ActiveController.IsChildShapeSelectable(CurrentMousePosition) &&     // Don't deselect grouped shape on mouse up (as in, don't select groupbox)
+                Condition = () => serviceManager.Get<IFlowSharpCanvasService>().ActiveController.GetSelectableShapeAt(CurrentMousePosition)?.Parent == null &&
                     !serviceManager.Get<IFlowSharpCanvasService>().ActiveController.IsMultiSelect() &&
                     !DraggingOccurred && !DraggingSelectionBox,
                 Action = (_) => SelectSingleRootShape()

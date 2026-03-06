@@ -226,6 +226,11 @@ namespace FlowSharpLib
             return elements.FirstOrDefault(e => e.IsSelectable(p) && e.Parent != null && e.Visible);
         }
 
+        public GraphicElement GetSelectableShapeAt(Point p)
+        {
+            return GetRootShapeAt(p) ?? GetChildShapeAt(p);
+        }
+
         public List<GraphicElement> GetShapesInSelectionRegion(Rectangle selectionRectangle)
         {
             return elements.Where(e => e.Parent == null && e.Visible && e.UpdateRectangle.IntersectsWith(selectionRectangle)).ToList();

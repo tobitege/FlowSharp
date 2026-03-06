@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 
 using Clifton.Core.ExtensionMethods;
@@ -72,8 +73,19 @@ namespace FlowSharpLib
 
             if (Json.TryGetValue("ExpandedSize", out var size))
             {
-                var tc = TypeDescriptor.GetConverter(typeof(Size));
-                ExpandedSize = (Size)tc.ConvertFromString(size);
+                string[] parts = size.Split(',');
+
+                if (parts.Length == 2 &&
+                    int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out int width) &&
+                    int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int height))
+                {
+                    ExpandedSize = new Size(width, height);
+                }
+                else
+                {
+                    var tc = TypeDescriptor.GetConverter(typeof(Size));
+                    ExpandedSize = (Size)tc.ConvertFromInvariantString(size);
+                }
             }
         }
 
