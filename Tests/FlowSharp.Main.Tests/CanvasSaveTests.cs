@@ -81,6 +81,43 @@ namespace FlowSharp.Main.Tests
             }
         }
 
+        [TestMethod]
+        public void SaveDiagrams_WhenRebasingMultipleCanvases_UsesActiveControllerAsBaseFile()
+        {
+            string tempDir = Path.Combine(Path.GetTempPath(), "flowsharp-rebase-save-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDir);
+
+            try
+            {
+                string saveFilename = Path.Combine(tempDir, "diagram.fsd");
+                BaseController first = CreateControllerWithBox("first");
+                BaseController second = CreateControllerWithBox("second");
+                var service = new TestFlowSharpCanvasService();
+
+                service.AddController(new Panel(), first);
+                service.AddController(new Panel(), second);
+                service.SetActiveControllerForTest(second);
+                service.RebaseFilenamesOnNextSave();
+
+                service.SaveAll(saveFilename);
+
+                string baseFileContents = File.ReadAllText(saveFilename);
+                string siblingFileContents = File.ReadAllText(Path.Combine(tempDir, "diagram-1.fsd"));
+
+                StringAssert.Contains(baseFileContents, "second");
+                StringAssert.Contains(siblingFileContents, "first");
+                Assert.AreEqual(saveFilename, second.Filename);
+                Assert.AreEqual(Path.Combine(tempDir, "diagram-1.fsd"), first.Filename);
+            }
+            finally
+            {
+                if (Directory.Exists(tempDir))
+                {
+                    Directory.Delete(tempDir, true);
+                }
+            }
+        }
+
         private static BaseController CreateController()
         {
             var canvas = new Canvas();
@@ -88,11 +125,28 @@ namespace FlowSharp.Main.Tests
             return new CanvasController(canvas);
         }
 
+        private static BaseController CreateControllerWithBox(string text)
+        {
+            BaseController controller = CreateController();
+            controller.AddElement(new Box(controller.Canvas)
+            {
+                Text = text,
+                DisplayRectangle = new System.Drawing.Rectangle(10, 10, 60, 40)
+            });
+
+            return controller;
+        }
+
         private sealed class TestFlowSharpCanvasService : FlowSharpCanvasService.FlowSharpCanvasService
         {
             public void AddController(Control key, BaseController controller)
             {
                 documents[key] = controller;
+            }
+
+            public void SetActiveControllerForTest(BaseController controller)
+            {
+                activeCanvasController = controller;
             }
 
             public void SaveAll(string filename)

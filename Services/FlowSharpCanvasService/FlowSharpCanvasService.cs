@@ -39,6 +39,7 @@ namespace FlowSharpCanvasService
 
         protected Dictionary<Control, BaseController> documents;
         protected BaseController activeCanvasController;
+        protected bool rebaseFilenamesOnNextSave;
 
         public FlowSharpCanvasService()
         {
@@ -115,11 +116,22 @@ namespace FlowSharpCanvasService
             }
         }
 
+        public void RebaseFilenamesOnNextSave()
+        {
+            rebaseFilenamesOnNextSave = true;
+        }
+
         protected void SaveDiagrams(string filename)
         {
             var n = 0;
+            List<BaseController> controllersToSave = GetControllersInSaveOrder();
 
-            foreach (BaseController controller in Controllers)
+            if (rebaseFilenamesOnNextSave)
+            {
+                controllersToSave.ForEach(c => c.Filename = string.Empty);
+            }
+
+            foreach (BaseController controller in controllersToSave)
             {
                 var data = Persist.Serialize(controller.Elements);
 
@@ -136,6 +148,8 @@ namespace FlowSharpCanvasService
 
                 File.WriteAllText(controller.Filename, data);
             }
+
+            rebaseFilenamesOnNextSave = false;
         }
 
         protected virtual string GetSaveFilename(string filename, int controllerIndex)
@@ -149,6 +163,18 @@ namespace FlowSharpCanvasService
             string siblingFilename = Path.GetFileNameWithoutExtension(filename) + "-" + controllerIndex + Path.GetExtension(filename);
 
             return string.IsNullOrEmpty(directory) ? siblingFilename : Path.Combine(directory, siblingFilename);
+        }
+
+        protected virtual List<BaseController> GetControllersInSaveOrder()
+        {
+            List<BaseController> controllers = Controllers;
+
+            if (activeCanvasController == null || !controllers.Contains(activeCanvasController))
+            {
+                return controllers;
+            }
+
+            return new[] { activeCanvasController }.Concat(controllers.Where(c => c != activeCanvasController)).ToList();
         }
 
         protected void SaveSelection(string filename)
