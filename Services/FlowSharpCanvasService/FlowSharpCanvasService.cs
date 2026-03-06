@@ -127,7 +127,7 @@ namespace FlowSharpCanvasService
                 // subsequent unnamed canvases get auto-named "-1", "-2", etc.
                 if (string.IsNullOrEmpty(controller.Filename))
                 {
-                    controller.Filename = n == 0 ? filename : Path.Combine(Path.GetDirectoryName(filename), Path.GetFileNameWithoutExtension(filename) + "-" + n.ToString() + Path.GetExtension(filename));
+                    controller.Filename = GetSaveFilename(filename, n);
                 }
 
                 // Always increment the controller counter, so if we encounter an unnamed controller
@@ -136,6 +136,19 @@ namespace FlowSharpCanvasService
 
                 File.WriteAllText(controller.Filename, data);
             }
+        }
+
+        protected virtual string GetSaveFilename(string filename, int controllerIndex)
+        {
+            if (controllerIndex == 0)
+            {
+                return filename;
+            }
+
+            string directory = Path.GetDirectoryName(filename);
+            string siblingFilename = Path.GetFileNameWithoutExtension(filename) + "-" + controllerIndex + Path.GetExtension(filename);
+
+            return string.IsNullOrEmpty(directory) ? siblingFilename : Path.Combine(directory, siblingFilename);
         }
 
         protected void SaveSelection(string filename)
