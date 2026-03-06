@@ -252,7 +252,11 @@ namespace FlowSharpLib
         {
             // Insert them into the list in ascending order, so each insertion goes in the right place.
             zorder.OrderBy(zo => zo.Index).ForEach(zo => elements.Insert(zo.Index, zo.Element));
-            zorder.ForEach(zo => zo.Element.Connections = new List<Connection>(zo.Connections));
+            zorder.ForEach(zo =>
+            {
+                zo.Element.Connections = new List<Connection>();
+                zo.Connections.ForEach(conn => zo.Element.AddConnection(conn));
+            });
 
             zorder.ForEach(zo =>
             {

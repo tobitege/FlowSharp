@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 using Newtonsoft.Json;
@@ -404,6 +405,21 @@ namespace FlowSharpLib
         public virtual void FinalFixup(List<GraphicElement> elements, ElementPropertyBag epb, Dictionary<Guid, Guid> oldNewGuidMap)
         {
             elements.ForEach(el => el.UpdateProperties());
+        }
+
+        public bool HasConnection(Connection connection)
+        {
+            return Connections.Any(c => c.ToElement == connection.ToElement &&
+                c.ToConnectionPoint?.Type == connection.ToConnectionPoint?.Type &&
+                c.ElementConnectionPoint?.Type == connection.ElementConnectionPoint?.Type);
+        }
+
+        public void AddConnection(Connection connection)
+        {
+            if (!HasConnection(connection))
+            {
+                Connections.Add(connection);
+            }
         }
 
         public void ToggleBookmark()

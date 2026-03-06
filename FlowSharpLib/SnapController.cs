@@ -60,7 +60,7 @@ namespace FlowSharpLib
             // action = new SnapAction(selectedElement, type, si.NearElement, si.LineConnectionPoint, nearConnectionPoint);
             //si.NearElement.Connections.Add(new Connection() { ToElement = selectedElement, ToConnectionPoint = si.LineConnectionPoint, ElementConnectionPoint = nearConnectionPoint });
             //selectedElement.SetConnection(si.LineConnectionPoint.Type, si.NearElement);
-            targetShape.Connections.Add(new Connection() { ToElement = connector, ToConnectionPoint = lineConnectionPoint, ElementConnectionPoint = shapeConnectionPoint });
+            targetShape.AddConnection(new Connection() { ToElement = connector, ToConnectionPoint = lineConnectionPoint, ElementConnectionPoint = shapeConnectionPoint });
             connector.SetConnection(lineConnectionPoint.Type, targetShape);
         }
 

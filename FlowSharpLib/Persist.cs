@@ -229,7 +229,7 @@ namespace FlowSharpLib
                 {
                     var conn = new Connection();
                     conn.Deserialize(collections.Item1, c, oldNewGuidMap);
-                    epb.Element.Connections.Add(conn);
+                    epb.Element.AddConnection(conn);
                 });
             }
         }

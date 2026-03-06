@@ -415,13 +415,13 @@ namespace FlowSharpEditService
                     if (connector.StartConnectedShape != null)
                     {
                         connector.StartConnectedShape.SetConnection(GripType.Start, connector);
-                        connector.StartConnectedShape.Connections.Add(zom.StartConnection);
+                        connector.StartConnectedShape.AddConnection(zom.StartConnection);
                     }
 
                     if (connector.EndConnectedShape != null)
                     {
                         connector.EndConnectedShape.SetConnection(GripType.End, connector);
-                        connector.EndConnectedShape.Connections.Add(zom.EndConnection);
+                        connector.EndConnectedShape.AddConnection(zom.EndConnection);
                     }
                 }
             }
