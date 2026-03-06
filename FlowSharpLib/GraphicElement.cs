@@ -769,8 +769,6 @@ namespace FlowSharpLib
 
         protected virtual void DrawText(Graphics gr, string text, Font textFont, Color textColor, ContentAlignment textAlign)
         {
-            var size = gr.MeasureString(text, textFont);
-            var brush = new SolidBrush(textColor);
             var font = textFont;
             var disposeFont = false;
 
@@ -782,116 +780,70 @@ namespace FlowSharpLib
                 disposeFont = true;
             }
 
-            // TextRenderer is terrible when font is bolded.  Not sure why.
-            // Would be great to use this, but the rendering is so bad, I won't.
-
-            // Some info here:
-            // http://stackoverflow.com/questions/9038125/asp-net-textrenderer-drawtext-awful-text-images
-            //gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-            //gr.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit; // <-- important!
-            //gr.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-            //gr.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-            //gr.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-            //gr.TextContrast = 0;
-            //TextFormatFlags flags = TextFormatFlags.Right | TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak;
-            //TextRenderer.DrawText(gr, Text, TextFont, DisplayRectangle, TextColor, flags);
-
-            Point textpos;
-            switch (textAlign)
+            using (var brush = new SolidBrush(textColor))
+            using (var format = CreateTextFormat(textAlign))
             {
-                case ContentAlignment.TopLeft:
-                    textpos = ZoomRectangle.TopLeftCorner().Move(5, 5);
-                    break;
-
-                case ContentAlignment.TopCenter:
-                    textpos = ZoomRectangle.TopMiddle().Move((int)(-size.Width / 2), 5);
-                    break;
-
-                case ContentAlignment.TopRight:
-                    textpos = ZoomRectangle.TopRightCorner().Move((int)(-(size.Width+5)), 5);
-                    break;
-
-                case ContentAlignment.MiddleLeft:
-                    textpos = ZoomRectangle.LeftMiddle().Move(5, (int)(-size.Height / 2));
-                    break;
-
-                case ContentAlignment.MiddleCenter:
-                    textpos = ZoomRectangle.Center().Move((int)(-size.Width / 2), (int)(-size.Height / 2));
-                    break;
-
-                case ContentAlignment.MiddleRight:
-                    textpos = ZoomRectangle.RightMiddle().Move((int)(-(size.Width + 5)), (int)(-size.Height / 2));
-                    break;
-
-                case ContentAlignment.BottomLeft:
-                    textpos = ZoomRectangle.BottomLeftCorner().Move(5, (int)-(size.Height+5));
-                    break;
-
-                case ContentAlignment.BottomCenter:
-                    textpos = ZoomRectangle.BottomMiddle().Move((int)(-size.Width / 2), (int)-(size.Height + 5));
-                    break;
-
-                case ContentAlignment.BottomRight:
-                    textpos = ZoomRectangle.BottomRightCorner().Move((int)(-(size.Width + 5)), (int)-(size.Height + 5));
-                    break;
-
-                default:        // middle center
-                    textpos = ZoomRectangle.Center().Move((int)(-size.Width / 2), (int)(-size.Height / 2));
-                    break;
+                gr.DrawString(text, font, brush, ZoomRectangle.Grow(-3), format);
             }
-
-            var tff = TextFormatFlags.Default;
-
-            switch (textAlign)
-            {
-                case ContentAlignment.TopLeft:
-                    tff |= TextFormatFlags.Left;
-                    break;
-
-                case ContentAlignment.TopCenter:
-                    tff |= TextFormatFlags.Top | TextFormatFlags.HorizontalCenter;
-                    break;
-
-                case ContentAlignment.TopRight:
-                    tff |= TextFormatFlags.Top | TextFormatFlags.Right;
-                    break;
-
-                case ContentAlignment.MiddleLeft:
-                    tff |= TextFormatFlags.VerticalCenter | TextFormatFlags.Left;
-                    break;
-
-                case ContentAlignment.MiddleCenter:
-                    tff |= TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter;
-                    break;
-
-                case ContentAlignment.MiddleRight:
-                    tff |= TextFormatFlags.VerticalCenter | TextFormatFlags.Right;
-                    break;
-
-                case ContentAlignment.BottomLeft:
-                    tff |= TextFormatFlags.Bottom | TextFormatFlags.Left;
-                    break;
-
-                case ContentAlignment.BottomCenter:
-                    tff |= TextFormatFlags.Bottom | TextFormatFlags.HorizontalCenter;
-                    break;
-
-                case ContentAlignment.BottomRight:
-                    tff |= TextFormatFlags.Bottom | TextFormatFlags.Right;
-                    break;
-
-                default:        // middle center
-                    tff |= TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter;
-                    break;
-            }
-
-            TextRenderer.DrawText(gr, text, font, ZoomRectangle.Grow(-3), textColor, FillColor, tff);
-            // gr.DrawString(text, textFont, brush, textpos);
-            brush.Dispose();
 
             if (disposeFont)
             {
                 font.Dispose();
+            }
+        }
+
+        private StringFormat CreateTextFormat(ContentAlignment textAlign)
+        {
+            var format = new StringFormat
+            {
+                Alignment = GetHorizontalAlignment(textAlign),
+                LineAlignment = GetVerticalAlignment(textAlign),
+                Trimming = StringTrimming.None
+            };
+
+            if (!Multiline)
+            {
+                format.FormatFlags |= StringFormatFlags.NoWrap;
+            }
+
+            return format;
+        }
+
+        private static StringAlignment GetHorizontalAlignment(ContentAlignment textAlign)
+        {
+            switch (textAlign)
+            {
+                case ContentAlignment.TopLeft:
+                case ContentAlignment.MiddleLeft:
+                case ContentAlignment.BottomLeft:
+                    return StringAlignment.Near;
+
+                case ContentAlignment.TopRight:
+                case ContentAlignment.MiddleRight:
+                case ContentAlignment.BottomRight:
+                    return StringAlignment.Far;
+
+                default:
+                    return StringAlignment.Center;
+            }
+        }
+
+        private static StringAlignment GetVerticalAlignment(ContentAlignment textAlign)
+        {
+            switch (textAlign)
+            {
+                case ContentAlignment.TopLeft:
+                case ContentAlignment.TopCenter:
+                case ContentAlignment.TopRight:
+                    return StringAlignment.Near;
+
+                case ContentAlignment.BottomLeft:
+                case ContentAlignment.BottomCenter:
+                case ContentAlignment.BottomRight:
+                    return StringAlignment.Far;
+
+                default:
+                    return StringAlignment.Center;
             }
         }
     }
