@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="DockPanelSuite" />
+    <PackageReference Include="DockPanelSuite.ThemeVS2005" />
   </ItemGroup>
 
   <ItemGroup>

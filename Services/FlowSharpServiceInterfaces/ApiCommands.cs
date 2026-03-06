@@ -232,6 +232,30 @@ namespace FlowSharpServiceInterfaces
 
     public class CmdRedo : ISemanticType { }
 
+    public class CmdGetCanvasView : ISemanticType, IHasResponse
+    {
+        public string ViewJson { get; set; }
+
+        public string SerializeResponse()
+        {
+            return ViewJson ?? "{}";
+        }
+    }
+
+    public class CmdSetZoom : ISemanticType
+    {
+        public int Zoom { get; set; }
+    }
+
+    public class CmdSetCanvasOffset : ISemanticType
+    {
+        public int? X { get; set; }
+        public int? Y { get; set; }
+        public int? Dx { get; set; }
+        public int? Dy { get; set; }
+        public bool Relative { get; set; }
+    }
+
     public class CmdInspectShape : ISemanticType, IHasResponse
     {
         public string Id { get; set; }
@@ -295,6 +319,13 @@ namespace FlowSharpServiceInterfaces
         public int RootShapeCount { get; set; }
         public int ConnectorCount { get; set; }
         public int SelectedCount { get; set; }
+    }
+
+    public class CanvasViewSummary
+    {
+        public int Zoom { get; set; }
+        public int OffsetX { get; set; }
+        public int OffsetY { get; set; }
     }
 
     public class ShapeConnectionSummary

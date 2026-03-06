@@ -1,0 +1,7 @@
+# Bug review 2: Save unnamed second canvas
+clearcanvas
+dropshape ShapeName=Box Name=FirstCanvasMarker X=80 Y=80 Width=90 Height=50 Text="First"
+newcanvas
+dropshape ShapeName=Ellipse Name=SecondCanvasMarker X=180 Y=140 Width=90 Height=60 Text="Second"
+saveworkspace Filename=%TEMP%\flowsharp-bug02-unnamed-second.fsd RebaseFilenames=true
+listcanvases

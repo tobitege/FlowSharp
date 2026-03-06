@@ -1,0 +1,8 @@
+# Bug review 3: Save multiple canvases and reload all content
+clearcanvas
+dropshape ShapeName=Box Name=CanvasOneMarker X=80 Y=80 Width=100 Height=50 Text="FirstCanvas"
+newcanvas Name="Second Canvas"
+dropshape ShapeName=Ellipse Name=CanvasTwoMarker X=180 Y=140 Width=100 Height=60 Text="SecondCanvas"
+saveworkspace Filename=%TEMP%\flowsharp-bug03-multicanvas.fsd RebaseFilenames=true
+loaddiagram Filename=%TEMP%\flowsharp-bug03-multicanvas.fsd
+listcanvases

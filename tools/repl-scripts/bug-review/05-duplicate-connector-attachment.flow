@@ -1,0 +1,9 @@
+# Bug review 5: Connector attachment should not duplicate on grouped shapes
+clearcanvas
+dropshape ShapeName=GroupBox Name=DockPanelSuiteServices X=220 Y=80 Width=220 Height=180 Text="DockPanelSuiteServices"
+dropshape ShapeName=Box Name=ServiceNode X=260 Y=120 Width=80 Height=50 Text="Service"
+dropshape ShapeName=Box Name=ModuleManagement X=60 Y=130 Width=120 Height=60 Text="ModuleManagement"
+connectshapes Source=ModuleManagement Target=ServiceNode SourceGrip=RightMiddle TargetGrip=LeftMiddle ConnectorName=DiagonalConnector Name=ModuleWire
+moveshape Name=ServiceNode Dx=20 Dy=0
+moveshape Name=DockPanelSuiteServices Dx=30 Dy=0
+inspectshape Name=ServiceNode

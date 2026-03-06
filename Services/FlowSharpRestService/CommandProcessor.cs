@@ -10,6 +10,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 
 using Newtonsoft.Json;
@@ -358,6 +359,7 @@ namespace FlowSharpRestService
 
         public void Process(ISemanticProcessor proc, IMembrane membrane, CmdRunMacro cmd)
         {
+            int macroStepDelayMilliseconds = RuntimeControlConfiguration.GetMacroStepDelayMilliseconds();
             string script = null;
             if (!string.IsNullOrWhiteSpace(cmd.Filename))
             {
@@ -395,6 +397,7 @@ namespace FlowSharpRestService
             var results = new List<MacroResult>();
             var lines = script.Replace("\r\n", "\n").Split('\n');
             int step = 0;
+            bool hasExecutedCommand = false;
 
             foreach (var rawLine in lines)
             {
@@ -412,6 +415,11 @@ namespace FlowSharpRestService
                     results.Add(result);
                     if (!cmd.ContinueOnError) break;
                     continue;
+                }
+
+                if (hasExecutedCommand && macroStepDelayMilliseconds > 0)
+                {
+                    Thread.Sleep(macroStepDelayMilliseconds);
                 }
 
                 try
@@ -439,6 +447,7 @@ namespace FlowSharpRestService
                 }
 
                 results.Add(result);
+                hasExecutedCommand = true;
                 if (!result.Success && !cmd.ContinueOnError)
                 {
                     break;
@@ -695,6 +704,19 @@ namespace FlowSharpRestService
                 {
                     Process(proc, membrane, redo);
                 }
+                else if (command is CmdGetCanvasView getCanvasView)
+                {
+                    Process(proc, membrane, getCanvasView);
+                    result.Response = getCanvasView.SerializeResponse();
+                }
+                else if (command is CmdSetZoom setZoom)
+                {
+                    Process(proc, membrane, setZoom);
+                }
+                else if (command is CmdSetCanvasOffset setCanvasOffset)
+                {
+                    Process(proc, membrane, setCanvasOffset);
+                }
                 else if (command is CmdInspectShape inspectShape)
                 {
                     Process(proc, membrane, inspectShape);
@@ -851,7 +873,8 @@ namespace FlowSharpRestService
 
         private static string ResolvePath(string path)
         {
-            return Path.IsPathRooted(path) ? path : Path.GetFullPath(path);
+            string expanded = Environment.ExpandEnvironmentVariables(path ?? string.Empty);
+            return Path.IsPathRooted(expanded) ? expanded : Path.GetFullPath(expanded);
         }
 
         private static void RunOnUiThread(IServiceManager serviceManager, Action action)

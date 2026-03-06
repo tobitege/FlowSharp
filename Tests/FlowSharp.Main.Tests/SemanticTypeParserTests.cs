@@ -61,6 +61,17 @@ namespace FlowSharp.Main.Tests
             Assert.IsInstanceOfType(SemanticTypeParser.NewCommand("copy"), typeof(CmdCopySelection));
             Assert.IsInstanceOfType(SemanticTypeParser.NewCommand("paste"), typeof(CmdPasteClipboard));
             Assert.IsInstanceOfType(SemanticTypeParser.NewCommand("export-png"), typeof(CmdExportPng));
+            Assert.IsInstanceOfType(SemanticTypeParser.NewCommand("getviewport"), typeof(CmdGetCanvasView));
+            Assert.IsInstanceOfType(SemanticTypeParser.NewCommand("setzoom"), typeof(CmdSetZoom));
+            Assert.IsInstanceOfType(SemanticTypeParser.NewCommand("setviewport"), typeof(CmdSetCanvasOffset));
+        }
+
+        [TestMethod]
+        public void NormalizeCommandName_ResolvesKnownCommandTypesWithoutExplicitAlias()
+        {
+            Assert.AreEqual("CmdUpdateProperty", SemanticTypeParser.NormalizeCommandName("updateproperty"));
+            Assert.IsInstanceOfType(SemanticTypeParser.NewCommand("updateproperty"), typeof(CmdUpdateProperty));
+            Assert.IsInstanceOfType(SemanticTypeParser.NewCommand("CmdUpdateproperty"), typeof(CmdUpdateProperty));
         }
 
         [TestMethod]

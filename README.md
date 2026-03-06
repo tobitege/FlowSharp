@@ -49,6 +49,10 @@ The runtime command set is organized around the verification work in `todo.txt`,
 listcanvases
 newcanvas Name="Second Canvas"
 usecanvas Index=1
+getcanvasview
+setzoom Zoom=80
+setcanvasoffset X=15 Y=5
+setcanvasoffset Relative=true Dx=40 Dy=0
 saveworkspace Filename=C:\temp\verify\diagram.fsd RebaseFilenames=true
 exportpng Filename=C:\temp\verify\canvas.png
 loaddiagram Filename=C:\temp\verify\diagram.fsd
@@ -68,6 +72,9 @@ updateproperty Name=Start PropertyName=TextAlign Value=TopLeft
 ```
 
 `dropshape` now auto-groups by default when the dropped shape lands fully inside a group box, matching the toolbox behavior.
+Shape placement is coordinate-based: `dropshape` uses `X`/`Y` plus optional `Width`/`Height`, and `dropconnector` uses `X1`/`Y1`/`X2`/`Y2`.
+`getcanvasview` returns the active canvas zoom and tracked canvas offset.
+`setcanvasoffset` translates the current root content under FlowSharp's existing canvas-drag model; it is not a separate camera transform.
 
 3. Selection and movement
 
@@ -105,6 +112,8 @@ inspectshape Name=DockPanelSuiteServices
 
 `cmd=runmacro` accepts either inline `Script` or a `Filename` containing one command per line.
 Commands execute synchronously and each step returns success/error metadata.
+Macro playback is throttled by default with a `500ms` pause between commands so the app remains observable while it runs.
+Set `FLOWSHARP_MACRO_STEP_DELAY_MS=0` to disable the delay, or set it to another non-negative millisecond value before launching FlowSharp.
 
 ```text
 dropshape ShapeName=Box Name=Start X=100 Y=120 Text="line 1\nline 2"
@@ -158,6 +167,18 @@ inspectshape Name=DockPanelSuiteServices Properties=TextAlign,DisplayRectangle
 
 The REPL is a thin WebSocket client over the same runtime interface. It is meant for remote control and debugging while the WinForms app is open.
 
+The repo also includes reusable macro files for the seven `Verify completed bug fixes:` flows:
+
+```text
+tools\repl-scripts\bug-review\01-text-alignment.flow
+tools\repl-scripts\bug-review\02-save-unnamed-second-canvas.flow
+tools\repl-scripts\bug-review\03-save-multiple-canvases.flow
+tools\repl-scripts\bug-review\04-multi-select.flow
+tools\repl-scripts\bug-review\05-duplicate-connector-attachment.flow
+tools\repl-scripts\bug-review\06-group-move-and-autogroup.flow
+tools\repl-scripts\bug-review\07-grouped-copy-paste.flow
+```
+
 ### Mapping To `Verify completed bug fixes:`
 
 - Text alignment: `dropshape` or `selectshapes` + `updateproperty` + `saveworkspace` + `loaddiagram` + `inspectshape`
@@ -168,6 +189,8 @@ The REPL is a thin WebSocket client over the same runtime interface. It is meant
 - Duplicate connector attachment: `moveshape` + `inspectshape` on the grouped shape to compare `ConnectionCount` and `DistinctConnectionCount`
 - Group move and auto-group on drop: `dropshape AutoGroup=true` into a group box + `inspectshape` on the dropped shape and group box
 - Grouped copy/paste with undo/redo: `groupselection` + `copyselection` + `pasteclipboard` + `moveselection` + `undo` + `redo`
+
+Current caveat: the text-alignment script/test is still a proxy check. It verifies `TextAlign`, persistence after reload, and that top/bottom PNG exports differ, but it does not yet perform pixel-level validation that the text is visually near the top versus near the bottom.
 
 ## Optional Smoke Checks
 

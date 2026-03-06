@@ -53,7 +53,7 @@ namespace FlowSharpWebSocketService
                 return;
             }
 
-            var port = 1100;
+            var port = RuntimeControlConfiguration.GetWebSocketPort();
             HttpListenerException lastListenerException = null;
             var prefixes = GetServerPrefixes(port);
 

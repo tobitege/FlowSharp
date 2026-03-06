@@ -9,6 +9,9 @@ namespace FlowSharpServiceInterfaces
 {
     public static class SemanticTypeParser
     {
+        private static readonly Lazy<Dictionary<string, string>> KnownCommandTypes =
+            new Lazy<Dictionary<string, string>>(BuildKnownCommandTypes);
+
         private static readonly Dictionary<string, string> CommandAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { CanonicalizeCommandKey("dropshape"), "CmdDropShape" },
@@ -47,6 +50,12 @@ namespace FlowSharpServiceInterfaces
             { CanonicalizeCommandKey("inspectshape"), "CmdInspectShape" },
             { CanonicalizeCommandKey("undo"), "CmdUndo" },
             { CanonicalizeCommandKey("redo"), "CmdRedo" },
+            { CanonicalizeCommandKey("getcanvasview"), "CmdGetCanvasView" },
+            { CanonicalizeCommandKey("getviewport"), "CmdGetCanvasView" },
+            { CanonicalizeCommandKey("setzoom"), "CmdSetZoom" },
+            { CanonicalizeCommandKey("setcanvaszoom"), "CmdSetZoom" },
+            { CanonicalizeCommandKey("setcanvasoffset"), "CmdSetCanvasOffset" },
+            { CanonicalizeCommandKey("setviewport"), "CmdSetCanvasOffset" },
             { CanonicalizeCommandKey("runmacro"), "CmdRunMacro" },
         };
 
@@ -67,6 +76,15 @@ namespace FlowSharpServiceInterfaces
             if (CommandAliases.TryGetValue(CanonicalizeCommandKey(ret), out var alias))
             {
                 return alias;
+            }
+
+            string knownCommandKey = ret.StartsWith("Cmd", StringComparison.OrdinalIgnoreCase) && ret.Length > 3
+                ? CanonicalizeCommandKey(ret.Substring(3))
+                : CanonicalizeCommandKey(ret);
+
+            if (KnownCommandTypes.Value.TryGetValue(knownCommandKey, out var knownCommand))
+            {
+                return knownCommand;
             }
 
             ret = RemoveSeparators(ret);
@@ -232,6 +250,21 @@ namespace FlowSharpServiceInterfaces
         private static string CanonicalizeCommandKey(string value)
         {
             return RemoveSeparators(value).ToLowerInvariant();
+        }
+
+        private static Dictionary<string, string> BuildKnownCommandTypes()
+        {
+            return typeof(SemanticTypeParser)
+                .Assembly
+                .GetTypes()
+                .Where(t =>
+                    t.IsClass &&
+                    !t.IsAbstract &&
+                    typeof(ISemanticType).IsAssignableFrom(t) &&
+                    t.Name.StartsWith("Cmd", StringComparison.Ordinal) &&
+                    t.Name.Length > 3)
+                .GroupBy(t => CanonicalizeCommandKey(t.Name.Substring(3)))
+                .ToDictionary(g => g.Key, g => g.First().Name, StringComparer.OrdinalIgnoreCase);
         }
 
         private static string RemoveSeparators(string value)

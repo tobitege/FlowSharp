@@ -1,0 +1,13 @@
+# Bug review 7: Grouped copy/paste, undo/redo, reselect, and move
+clearcanvas
+dropshape ShapeName=GroupBox Name=GroupRoot X=40 Y=40 Width=180 Height=140 Text="Group"
+dropshape ShapeName=Box Name=GroupedChild X=90 Y=90 Width=70 Height=40 Text="Child"
+selectshapes Name=GroupRoot
+copyselection
+pasteclipboard
+moveselection Dx=220 Dy=0
+undo
+redo
+selectregion X=260 Y=20 Width=200 Height=200
+getselection
+moveselection Dx=20 Dy=0

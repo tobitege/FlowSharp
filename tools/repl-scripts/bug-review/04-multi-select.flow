@@ -1,0 +1,11 @@
+# Bug review 4: Additive multi-select, selection region, and grouped move
+clearcanvas
+dropshape ShapeName=Box Name=RootA X=80 Y=80 Width=70 Height=50 Text="A"
+dropshape ShapeName=Box Name=RootB X=180 Y=90 Width=70 Height=50 Text="B"
+dropshape ShapeName=Box Name=RootC X=320 Y=90 Width=70 Height=50 Text="C"
+selectshapes Name=RootA
+selectshapes Name=RootB Mode=add
+getselection
+selectregion X=70 Y=70 Width=200 Height=100
+getselection
+moveselection Dx=40 Dy=0

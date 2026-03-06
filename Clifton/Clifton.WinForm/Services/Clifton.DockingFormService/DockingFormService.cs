@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows.Forms;
 
 using WeifenLuo.WinFormsUI.Docking;
+using WeifenLuo.WinFormsUI.ThemeVS2005;
 
 using Clifton.Core.ExtensionMethods;
 using Clifton.Core.ModuleManagement;
@@ -41,7 +42,7 @@ namespace Clifton.DockingFormService
         protected bool draggingLeftDockSplitter;
         protected int lastLeftDockSplitterX = -1;
         protected int lastKnownLeftDockBoundaryX = -1;
-        //protected VS2015LightTheme theme = new VS2015LightTheme();
+        protected readonly ThemeBase theme = new VS2005Theme();
 
         public Form CreateMainForm<T>() where T : Form, new()
         {
@@ -50,7 +51,7 @@ namespace Clifton.DockingFormService
             {
                 Dock = DockStyle.Fill
             };
-            //dockPanel.Theme = theme;
+            dockPanel.Theme = theme;
             form.Controls.Add(dockPanel);
             InitializeLeftDockSplitter();
 

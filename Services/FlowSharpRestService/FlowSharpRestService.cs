@@ -54,7 +54,7 @@ namespace FlowSharpRestService
         protected void InitializeListener()
         {
             server = new WebServer(ServiceManager);
-            server.Start("localhost", new int[] { 8001 });      // TODO: Get IP, ports, etc., from config file.
+            server.Start("localhost", new int[] { RuntimeControlConfiguration.GetRestPort() });
         }
     }
 }

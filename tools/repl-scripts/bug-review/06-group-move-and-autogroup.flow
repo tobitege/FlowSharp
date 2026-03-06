@@ -1,0 +1,9 @@
+# Bug review 6: Auto-group on drop and group move connector update
+clearcanvas
+dropshape ShapeName=GroupBox Name=GroupRoot X=120 Y=80 Width=220 Height=180 Text="Group"
+dropshape ShapeName=Box Name=GroupedChild X=170 Y=130 Width=80 Height=50 Text="Child"
+dropshape ShapeName=Box Name=ExternalNode X=420 Y=140 Width=80 Height=50 Text="External"
+connectshapes Source=ExternalNode Target=GroupedChild SourceGrip=LeftMiddle TargetGrip=RightMiddle ConnectorName=DiagonalConnector Name=GroupedWire
+moveshape Name=GroupRoot Dx=40 Dy=0
+inspectshape Name=GroupedChild
+inspectshape Name=GroupRoot

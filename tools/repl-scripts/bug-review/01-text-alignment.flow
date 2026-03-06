@@ -1,0 +1,12 @@
+# Bug review 1: Text alignment top/bottom and persistence
+clearcanvas
+dropshape ShapeName=Box Name=TextAlignmentProbe X=80 Y=80 Width=220 Height=120 Text="Alignment Probe"
+updateproperty Name=TextAlignmentProbe PropertyName=TextAlign Value=TopCenter
+inspectshape Name=TextAlignmentProbe Properties=TextAlign
+exportpng Filename=%TEMP%\flowsharp-bug01-text-top.png
+updateproperty Name=TextAlignmentProbe PropertyName=TextAlign Value=BottomCenter
+inspectshape Name=TextAlignmentProbe Properties=TextAlign
+exportpng Filename=%TEMP%\flowsharp-bug01-text-bottom.png
+saveworkspace Filename=%TEMP%\flowsharp-bug01-text-alignment.fsd RebaseFilenames=true
+loaddiagram Filename=%TEMP%\flowsharp-bug01-text-alignment.fsd
+inspectshape Name=TextAlignmentProbe Properties=TextAlign

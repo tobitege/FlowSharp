@@ -90,6 +90,7 @@ namespace FlowSharpLib
         public SnapController SnapController { get; protected set; }
 
         public int Zoom { get; protected set; }
+        public Point CanvasOffset { get; protected set; }
 
         protected List<GraphicElement> elements;
         protected Canvas canvas;
@@ -109,6 +110,7 @@ namespace FlowSharpLib
             selectedElements = new List<GraphicElement>();
             SnapController = new SnapController(this);
             Zoom = 100;
+            CanvasOffset = Point.Empty;
         }
 
         public virtual bool IsMultiSelect()
@@ -194,6 +196,7 @@ namespace FlowSharpLib
             elements.ForEach(el => el.Dispose());
             elements.Clear();
             selectedElements.Clear();
+            CanvasOffset = Point.Empty;
         }
 
         public virtual void Undo()
@@ -625,27 +628,12 @@ namespace FlowSharpLib
         // For canvas dragging.
         public void MoveAllElements(Point delta)
         {
-            if (IsCanvasDragging)
-            {
-                Trace.WriteLine("*** MoveAllElements Collision");
-            }
+            MoveAllElementsByCanvasDelta(InverseZoomAdjust(delta));
+        }
 
-            delta = InverseZoomAdjust(delta);
-            IsCanvasDragging = true;            // Kludgy workaround for Issue #34 (groupbox update)
-            EraseTopToBottom(elements);
-
-            // Don't move grouped children, as the groupbox will do this for us when it moves.
-            elements.Where(e => e.Parent == null).ForEach(e =>
-                {
-                    e.Move(delta);
-                    e.UpdatePath();
-                });
-
-            var dx = delta.X.Abs();
-            var dy = delta.Y.Abs();
-            DrawBottomToTop(elements, dx, dy);
-            UpdateScreen(elements, dx, dy);
-            IsCanvasDragging = false;
+        public void SetCanvasOffset(Point offset)
+        {
+            MoveAllElementsByCanvasDelta(new Point(offset.X - CanvasOffset.X, offset.Y - CanvasOffset.Y));
         }
 
         public Point InverseZoomAdjust(Point p)
@@ -674,6 +662,44 @@ namespace FlowSharpLib
 
             DrawBottomToTop(elements);
             UpdateScreen(elements);
+        }
+
+        protected void MoveAllElementsByCanvasDelta(Point delta)
+        {
+            if (delta == Point.Empty)
+            {
+                return;
+            }
+
+            var rootElements = elements.Where(e => e.Parent == null).ToList();
+
+            if (!rootElements.Any())
+            {
+                return;
+            }
+
+            if (IsCanvasDragging)
+            {
+                Trace.WriteLine("*** MoveAllElements Collision");
+            }
+
+            IsCanvasDragging = true;            // Kludgy workaround for Issue #34 (groupbox update)
+            EraseTopToBottom(elements);
+
+            // Don't move grouped children, as the groupbox will do this for us when it moves.
+            rootElements.ForEach(e =>
+            {
+                e.Move(delta);
+                e.UpdatePath();
+            });
+
+            CanvasOffset = new Point(CanvasOffset.X + delta.X, CanvasOffset.Y + delta.Y);
+
+            var dx = delta.X.Abs();
+            var dy = delta.Y.Abs();
+            DrawBottomToTop(elements, dx, dy);
+            UpdateScreen(elements, dx, dy);
+            IsCanvasDragging = false;
         }
 
         public void RedrawAllElements()

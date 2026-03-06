@@ -89,6 +89,56 @@ namespace FlowSharpRestService
             });
         }
 
+        public void Process(ISemanticProcessor proc, IMembrane membrane, CmdGetCanvasView cmd)
+        {
+            var controller = GetRequiredActiveController(proc.ServiceManager);
+
+            cmd.ViewJson = RunOnUiThread(controller, () =>
+                JsonConvert.SerializeObject(BuildCanvasViewSummary(controller)));
+        }
+
+        public void Process(ISemanticProcessor proc, IMembrane membrane, CmdSetZoom cmd)
+        {
+            if (cmd.Zoom <= 0)
+            {
+                throw new InvalidOperationException("Zoom must be greater than zero.");
+            }
+
+            var controller = GetRequiredActiveController(proc.ServiceManager);
+
+            RunOnUiThread(controller, () => controller.SetZoom(cmd.Zoom));
+        }
+
+        public void Process(ISemanticProcessor proc, IMembrane membrane, CmdSetCanvasOffset cmd)
+        {
+            var controller = GetRequiredActiveController(proc.ServiceManager);
+
+            RunOnUiThread(controller, () =>
+            {
+                Point current = controller.CanvasOffset;
+                int targetX;
+                int targetY;
+
+                if (cmd.Relative)
+                {
+                    targetX = current.X + (cmd.Dx ?? cmd.X ?? 0);
+                    targetY = current.Y + (cmd.Dy ?? cmd.Y ?? 0);
+                }
+                else
+                {
+                    if (!cmd.X.HasValue && !cmd.Dx.HasValue && !cmd.Y.HasValue && !cmd.Dy.HasValue)
+                    {
+                        throw new InvalidOperationException("Specify X/Y for an absolute offset or Dx/Dy with Relative=true.");
+                    }
+
+                    targetX = cmd.X ?? cmd.Dx ?? current.X;
+                    targetY = cmd.Y ?? cmd.Dy ?? current.Y;
+                }
+
+                controller.SetCanvasOffset(new Point(targetX, targetY));
+            });
+        }
+
         public void Process(ISemanticProcessor proc, IMembrane membrane, CmdExportPng cmd)
         {
             if (string.IsNullOrWhiteSpace(cmd.Filename))
@@ -477,6 +527,16 @@ namespace FlowSharpRestService
                 RootShapeCount = controller.Elements.Count(el => el.Parent == null),
                 ConnectorCount = controller.Elements.Count(el => el.IsConnector),
                 SelectedCount = controller.SelectedElements.Count
+            };
+        }
+
+        protected CanvasViewSummary BuildCanvasViewSummary(BaseController controller)
+        {
+            return new CanvasViewSummary
+            {
+                Zoom = controller.Zoom,
+                OffsetX = controller.CanvasOffset.X,
+                OffsetY = controller.CanvasOffset.Y
             };
         }
 
