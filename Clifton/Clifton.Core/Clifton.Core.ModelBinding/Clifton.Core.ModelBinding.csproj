@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Clifton.Core.ModelBinding</AssemblyName>
+    <RootNamespace>Clifton.Core.ModelBinding</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Clifton.Core.csproj" />
+    <ProjectReference Include="..\Clifton.Core.Data.Abstractions\Clifton.Core.Data.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

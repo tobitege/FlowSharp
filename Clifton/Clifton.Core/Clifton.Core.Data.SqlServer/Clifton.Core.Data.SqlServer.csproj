@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Clifton.Core.Data.SqlServer</AssemblyName>
+    <RootNamespace>Clifton.Core.Data.SqlServer</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Clifton.Core.Data.Abstractions\Clifton.Core.Data.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

@@ -400,7 +400,6 @@ namespace FlowSharpHopeService
                 "System.dll",
                 "System.Core.dll",
                 "System.Data.dll",
-                "System.Data.Linq.dll",
                 "System.Design.dll",
                 "System.Drawing.dll",
                 "System.Net.dll",

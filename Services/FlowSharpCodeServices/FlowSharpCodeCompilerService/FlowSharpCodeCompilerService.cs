@@ -600,7 +600,6 @@ namespace FlowSharpCodeCompilerService
                 "System.dll",
                 "System.Core.dll",
                 "System.Data.dll",
-                "System.Data.Linq.dll",
                 "System.Drawing.dll",
                 "System.Net.dll",
                 "System.Net.Http.dll",

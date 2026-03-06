@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Clifton.Core.ModelBinding.Tests</AssemblyName>
+    <RootNamespace>Clifton.Core.ModelBinding.Tests</RootNamespace>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="MSTest.TestAdapter" />
+    <PackageReference Include="MSTest.TestFramework" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Clifton.Core.Data.Abstractions\Clifton.Core.Data.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Clifton.Core.ModelBinding\Clifton.Core.ModelBinding.csproj" />
+  </ItemGroup>
+</Project>

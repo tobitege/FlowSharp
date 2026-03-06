@@ -19,17 +19,29 @@
     - WebInterfaces: separate project
   -->
   <ItemGroup>
+    <Compile Remove="Clifton.Core.Data.Abstractions\**" />
+    <Compile Remove="Clifton.Core.ModelBinding\**" />
+    <Compile Remove="Clifton.Core.Data.SqlServer\**" />
     <Compile Remove="Clifton.Core.TemplateEngine\**" />
     <Compile Remove="Clifton.Core.ModelTableManagement\**" />
     <Compile Remove="Services\**" />
+    <Compile Remove="Tests\**" />
     <Compile Remove="Clifton.WebInterfaces\**" />
+    <EmbeddedResource Remove="Clifton.Core.Data.Abstractions\**" />
+    <EmbeddedResource Remove="Clifton.Core.ModelBinding\**" />
+    <EmbeddedResource Remove="Clifton.Core.Data.SqlServer\**" />
     <EmbeddedResource Remove="Clifton.Core.TemplateEngine\**" />
     <EmbeddedResource Remove="Clifton.Core.ModelTableManagement\**" />
     <EmbeddedResource Remove="Services\**" />
+    <EmbeddedResource Remove="Tests\**" />
     <EmbeddedResource Remove="Clifton.WebInterfaces\**" />
+    <None Remove="Clifton.Core.Data.Abstractions\**" />
+    <None Remove="Clifton.Core.ModelBinding\**" />
+    <None Remove="Clifton.Core.Data.SqlServer\**" />
     <None Remove="Clifton.Core.TemplateEngine\**" />
     <None Remove="Clifton.Core.ModelTableManagement\**" />
     <None Remove="Services\**" />
+    <None Remove="Tests\**" />
     <None Remove="Clifton.WebInterfaces\**" />
   </ItemGroup>
 

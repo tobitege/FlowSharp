@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Clifton.Core.Data.Abstractions</AssemblyName>
+    <RootNamespace>Clifton.Core.Data.Abstractions</RootNamespace>
+  </PropertyGroup>
+</Project>

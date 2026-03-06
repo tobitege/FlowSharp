@@ -61,7 +61,11 @@ dotnet run --project FS-HOPE\CodeTester\CodeTester.csproj -- --hope-cross-contex
 These are the migration items that still matter technically:
 
 1. WinForms designer behavior still deserves manual UI verification in the main app.
-2. LINQ-to-SQL-specific code excluded from `Clifton.Core` remains a redesign task if that functionality is needed again on `.NET 8`.
+2. The former LINQ-to-SQL layer has been superseded by optional `.NET 8` data modules in `clifton/Clifton.Core`:
+   - `Clifton.Core.Data.Abstractions`
+   - `Clifton.Core.ModelBinding`
+   - `Clifton.Core.Data.SqlServer`
+   The legacy LINQ-to-SQL source remains archived and unreferenced, and `FlowSharp.sln` still does not depend on the optional replacement modules.
 
 ## Notes
 
