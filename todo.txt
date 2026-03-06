@@ -1,14 +1,59 @@
 Bugs:
 
-1. Connector added to shapes within a group box double-moves when the entire groupbox is moved.
+[DONE] 1. Connector added to shapes within a group box double-moves when the entire groupbox is moved.
 	Also, anything dropped into a groupbox should probably be automatically grouped.
-2. For text shape, text align bottom/top seems to be reversed
-3. Ability to select several shapes worked, then stopped working.  Not sure why
-4. In a multiple canvas drawing, saving when 2nd canvas doesn't have a filename threw an exception.
-5. Saving multiple canvases lost my work in one of the canvases, perhaps related to #4
-6. Copy of a grouped shape and paste results in a shape that can't be moved/selected.
-7. Notice connector from ModuleManagement to DockPanelSuiteServices double moves when moving the 
+[DONE] 2. For text shape, text align bottom/top seems to be reversed
+[DONE] 3. Ability to select several shapes worked, then stopped working.  Not sure why
+[DONE] 4. In a multiple canvas drawing, saving when 2nd canvas doesn't have a filename threw an exception.
+[DONE] 5. Saving multiple canvases lost my work in one of the canvases, perhaps related to #4
+[DONE] 6. Copy of a grouped shape and paste results in a shape that can't be moved/selected.
+[DONE] 7. Notice connector from ModuleManagement to DockPanelSuiteServices double moves when moving the 
 DockPanelSuiteServices GroupBox, because it appears to have been wired up at least twice.
+
+Human UI Testing:
+
+Setup:
+
+1. From the repo root, run `dotnet build FlowSharp.sln -c Debug`
+2. Launch the app with `dotnet run --project FlowSharp.csproj -c Debug`
+3. Keep the PropertyGrid visible so alignment and parent/group state can be inspected while testing
+
+Verify completed bug fixes:
+
+1. Text alignment:
+	Create a text-capable shape, enter obvious multi-line text, set `TextAlign` to a top-aligned value, then to a bottom-aligned value
+	Confirm the text renders near the top when top-aligned and near the bottom when bottom-aligned
+	Save, reopen the drawing, and confirm the alignment persists correctly
+2. Save unnamed second canvas:
+	Open or create two canvases
+	Leave the second canvas unnamed
+	Run Save or Save As from the active canvas and confirm no exception is thrown
+	Confirm both diagram files are created on disk
+3. Save multiple canvases without losing content:
+	Put different obvious content on each open canvas
+	Run Save As from the active canvas to a new base filename
+	Close and reopen the saved layout/files
+	Confirm every canvas reloads the correct content and no canvas is missing its changes
+4. Multi-select:
+	Create several root shapes
+	Ctrl-click or Shift-click multiple shapes and confirm selection is additive
+	Right-drag a selection region that partially overlaps shapes and confirm intersecting root shapes are selected
+	Move the selected set and confirm the shapes move together
+5. Duplicate connector attachment:
+	Open the `ModuleManagement` / `DockPanelSuiteServices` example if available, or recreate a similar connector-to-grouped-shape setup
+	Move the connected shape and then move the group box
+	Confirm the connector endpoint updates once per move and does not jump or double-move
+	If the debug window is available, confirm only one logical connection is shown for the attachment
+6. Group move and auto-group on drop:
+	Drop a shape into a group box from the toolbox
+	Confirm the dropped shape becomes part of the group automatically
+	Move the group box and confirm grouped children move with it
+	Confirm connectors attached to grouped children update once when the group moves
+7. Grouped copy/paste:
+	Create a group with at least one child shape
+	Copy and paste the group
+	Confirm the pasted result can be selected as a group root and moved normally
+	Undo and redo the paste/move flow and confirm selection and movement still work
 
 TODO:
 
