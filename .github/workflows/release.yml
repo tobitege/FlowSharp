@@ -42,7 +42,7 @@ jobs:
           echo "::error::Releases can only be created from the master branch."
           exit 1
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - name: Validate version format and project version
         id: validate
@@ -80,10 +80,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8.0.1
         with:
           path: ./release-artifacts
 
@@ -164,7 +164,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3.0.0
         with:
           tag_name: ${{ needs.validate.outputs.tag }}
           name: "v${{ needs.validate.outputs.version }}"
