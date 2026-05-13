@@ -32,16 +32,20 @@ dotnet test Tests\FlowSharp.Http.IntegrationTests\FlowSharp.Http.IntegrationTest
 
 ## Runtime Control Interface
 
-FlowSharp exposes a remote command API while running:
+FlowSharp can be controlled from outside the UI while it is running. In plain terms, this lets a script do the same kinds of things a user would normally do by hand: create canvases, drop shapes, connect them, move selections, group items, inspect diagram state, save workspaces, and export images.
+
+This is useful for repeatable bug verification, smoke testing, demos, and remote debugging. Instead of manually clicking through a scenario every time, you can send commands over HTTP, WebSocket, the included PowerShell REPL, or a saved macro file and get predictable results back from the live application.
+
+The runtime control API is available through:
 
 - HTTP: `http://localhost:8001/flowsharp`
 - WebSocket: `ws://localhost:1100/flowsharp/`
 
-Commands are sent as query string style data with `cmd=<command>`.
+Commands are sent as query string style data with `cmd=<command>`. For example, `cmd=listcanvases` asks the running app which canvases are open, while commands like `dropshape`, `connectshapes`, and `inspectshape` drive and observe the diagram.
 
 ### Command Groups
 
-The runtime command set is organized around the verification work in `todo.txt`, from least-needed plumbing up to full interaction replay.
+The runtime command set is organized from basic canvas control up to full interaction replay.
 
 1. Canvas orchestration
 
@@ -84,6 +88,7 @@ selectshapes Name=End Mode=add
 selectregion X=80 Y=80 Width=260 Height=140
 getselection
 moveselection Dx=40 Dy=0
+deleteselection
 ```
 
 4. Clipboard, grouping, and history
@@ -104,9 +109,19 @@ listshapes IncludeConnectors=true
 listshapes SelectedOnly=true
 inspectshape Name=Start Properties=TextAlign,DisplayRectangle
 inspectshape Name=DockPanelSuiteServices
+showshape Name=Start
+getshapefiles
+outputmessage Text="Verification complete"
 ```
 
 `inspectshape` returns JSON with common properties, parent/group info, child summaries, and connector attachment details. This is the command to use when verifying persisted `TextAlign`, auto-group state, or duplicate connector attachments.
+
+6. Macro execution
+
+```text
+runmacro Filename=C:\temp\verify.flow
+runmacro ContinueOnError=true Script="dropshape ShapeName=Box Name=Start X=100 Y=120"
+```
 
 ### Macro Language
 
@@ -204,6 +219,14 @@ dotnet run --project FS-HOPE\CodeTester\CodeTester.csproj -- --hope-cross-contex
 # Features
 A short list of some of the features.
 
+## Runtime control and automation
+
+FlowSharp can be controlled while running through HTTP and WebSocket commands. The command surface supports canvas orchestration, shape creation and wiring, selection, grouping, clipboard/history operations, inspection, PNG export, and workspace save/load flows.
+
+## REPL, macros, and verification scripts
+
+The repository includes `tools\FlowSharpRepl.ps1`, a PowerShell REPL client for the runtime control API. Commands can also be replayed as macros from inline script text or `.flow` files, and reusable bug-review scripts live under `tools\repl-scripts\bug-review\`.
+
 ## Virtual Surface
 ![Virtual Surface](https://github.com/cliftonm/FlowSharp/blob/master/Article/img1.png)
 
@@ -214,10 +237,17 @@ A short list of some of the features.
 ![Z-order](https://github.com/cliftonm/FlowSharp/blob/master/Article/img3.png)
 
 ## Text for shapes
+
+Shape text supports top, middle, and bottom vertical alignment combined with left, center, and right horizontal alignment. Text alignment is persisted with diagrams.
+
 ![Text](https://github.com/cliftonm/FlowSharp/blob/master/Article/img4.png)
 
 ## Export diagram to PNG
 ![PNG](https://github.com/cliftonm/FlowSharp/blob/master/Article/img5.png)
+
+## Multi-canvas workspace saves
+
+Workspaces can save multiple canvases. Unnamed secondary canvases are assigned sibling filenames such as `diagram-1.fsd`, including when the base filename is relative.
 
 ## Connection points and grips
 ![Virtual Surface](https://github.com/cliftonm/FlowSharp/blob/master/Article/img8.png)
@@ -234,9 +264,8 @@ A short list of some of the features.
 # What's not implemented:
 Please contribute to working on this list!
 * Shape text:
-  * Currently only centered in the shape.
   * Boundaries can be easily exceeded.
-  * No justification.
+  * No full paragraph justification.
   * Single line only - no auto-wrap.
 * Scrollbars for canvas - currently you drag the canvas to move it.
 * Zoom.
