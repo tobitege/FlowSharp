@@ -1,87 +1,33 @@
-# Progress Log
+# Open Work Progress
 
-## Session: 2026-03-18
+Last reviewed: 2026-05-13
 
-### Phase 1: Requirements, Tracking, And Discovery
+This file tracks progress only for currently open issues. Historical completed work was removed to keep the file resume-friendly.
 
-- **Status:** complete
-- **Started:** 2026-03-18
-- Actions taken:
-  - Read `open-features.md`
-  - Read the `planning-with-files` skill instructions
-  - Ran the session catch-up script
-  - Confirmed the repo has no existing `task_plan.md`, `findings.md`, or `progress.md`
-  - Identified the current test projects under `Tests/`
-  - Created repo-root planning files for tracking and execution
-  - Mapped Milestone 1 work to `FlowSharpEditService`, `MenuController`, `FlowSharpCanvasService`, and `FlowSharpService`
-  - Reviewed the existing save tests in `CanvasSaveTests.cs`
-- Files created/modified:
-  - `task_plan.md` (created)
-  - `findings.md` (created)
-  - `progress.md` (created)
+## Active Area
 
-### Phase 2: Milestone 1 - Shell And Document Safety
+Viewport foundation is the next open dependency group.
 
-- **Status:** in_progress
+| Issue | Current progress | Next step |
+|-------|------------------|-----------|
+| Scrollbars for canvas | Open. Canvas offset support exists, but there is no full scrollbar UI/model integration recorded here. | Define viewport origin, virtual extents, and scrollbar synchronization. |
+| Zoom | Open. Basic zoom state/runtime commands exist, but full rendering, hit testing, grips, and scrollbar integration remain open. | Design world-to-screen/screen-to-world transforms around the viewport model. |
+| True drag-from-toolbox-onto-surface | Open. Depends on scrolled/zoomed coordinate conversion. | Revisit after viewport and zoom behavior are stable. |
 
-- Actions taken
-  - Added `MenuControllerSaveWorkflowTests` to lock down active-canvas filename resolution and MRU refresh on normal save
-  - Fixed `MenuController` to resolve filenames from the active canvas, refresh MRU on save, and rebuild the recent-files menu
-  - Added `EditServiceDirtyStateTests` to verify per-canvas dirty checks ignore unrelated canvases and preserve prompt decisions
-  - Added a cancelable docking document-closing event and used it in `FlowSharpService` so closing a canvas tab can prompt and cancel cleanly
-  - Restored a default C# editor panel at startup when no editor document exists yet
+## Remaining Open Progress
 
-- Files created/modified
-  - `Clifton/Clifton.WinForm/Clifton.WinForm.ServiceInterfaces/Interfaces.cs`
-  - `Clifton/Clifton.WinForm/Services/Clifton.DockingFormService/DockingFormService.cs`
-  - `Services/FlowSharpCodeServices/FlowSharpCodeService/FlowSharpCodeService.cs`
-  - `Services/FlowSharpEditService/FlowSharpEditService.cs`
-  - `Services/FlowSharpMenuService/MenuController.cs`
-  - `Services/FlowSharpService/FlowSharpService.cs`
-  - `Services/FlowSharpServiceInterfaces/Interfaces.cs`
-  - `Tests/FlowSharp.Main.Tests/EditServiceDirtyStateTests.cs`
-  - `Tests/FlowSharp.Main.Tests/MenuControllerSaveWorkflowTests.cs`
+| Area | Current progress | Next step |
+|------|------------------|-----------|
+| Page and printing | Open. Ruler margins, page boundaries, and printing are not tracked as implemented. | Start after viewport and zoom behavior are stable. |
+| Shape and connector text | Open. Shape `TextAlign` persistence exists, but text bounds, paragraph justification, auto-wrap, and connector labels remain open. | Define text layout behavior and add focused rendering/persistence tests. |
+| Connector caps and redraw | Open. Additional line caps and targeted property-change invalidation remain open. | Extend connector cap model, then verify redraw scope. |
+| Anchors and routing | Open. Custom anchors, resize-aware anchors, auto-anchor, V/H routing, middle-line dragging, and dynamic connectors remain open. | Start with a custom anchor data model and persistence tests. |
+| Geometry and layout | Open. Rotation, snapping, alignment commands, and regroup remain open. | Defer until viewport, selection, and grouping semantics are stable. |
+| Property UX and history | Open. Better property UX and broad undo/redo command coverage remain open. | Defer until the underlying edit features are settled. |
 
-## Test Results
+## Open Verification Queue
 
-| Test | Input | Expected | Actual | Status |
-|------|-------|----------|--------|--------|
-| Planning workflow bootstrap | Read backlog and create planning files | Repo has file-backed tracking for features and progress | `task_plan.md`, `findings.md`, and `progress.md` created in repo root | Passed |
-| Save workflow tests | `dotnet test Tests/FlowSharp.Main.Tests/FlowSharp.Main.Tests.csproj --filter "MenuControllerSaveWorkflowTests|EditServiceDirtyStateTests"` | New save and dirty-state tests pass | 4 tests passed | Passed |
-| Main test suite | `dotnet test Tests/FlowSharp.Main.Tests/FlowSharp.Main.Tests.csproj` | Existing and new main tests pass together | 39 tests passed | Passed |
-| Selection hit-testing tests | `dotnet test Tests/FlowSharp.Main.Tests/FlowSharp.Main.Tests.csproj --filter SelectionHitTestingTests` | New selection cycling and depth-limit tests pass | 2 tests passed | Passed |
-| Main test suite after Milestone 2 slice | `dotnet test Tests/FlowSharp.Main.Tests/FlowSharp.Main.Tests.csproj` | Existing and new main tests pass together | 41 tests passed | Passed |
-
-### Phase 3: Milestone 2 - Selection And Viewport Foundation
-
-- **Status:** in_progress
-
-- Actions taken
-  - Added `SelectionHitTestingTests` for overlapping root-shape cycling and one-level nested hit-testing
-  - Added hit-testing helpers in `BaseController` for enumerating selectable shapes and cycling root candidates
-  - Updated `MouseController.SelectSingleRootShape()` to cycle overlapping root shapes on repeated single clicks
-  - Limited child hit-testing to one nested level for normal selection helpers
-
-- Files created/modified
-  - `FlowSharpLib/BaseController.cs`
-  - `Services/FlowSharpMouseControllerService/MouseController.cs`
-  - `Tests/FlowSharp.Main.Tests/SelectionHitTestingTests.cs`
-
-## Error Log
-
-| Timestamp | Error | Attempt | Resolution |
-|-----------|-------|---------|------------|
-| 2026-03-18 | Skill docs referenced missing `templates/` path | 1 | Located working templates under `assets/templates/` and continued |
-
-## 5-Question Reboot Check
-
-| Question | Answer |
-|----------|--------|
-| Where am I? | Phase 3 |
-| Where am I going? | Finish Milestone 2 viewport items, then continue through the remaining milestones |
-| What's the goal? | Implement the dependency-ordered backlog from `open-features.md` with tracked checkboxes and test-first non-UI work |
-| What have I learned? | Shared-point selection can be handled by cycling root candidates, and nested hit-testing can be constrained safely at the controller helper level |
-| What have I done? | Set up planning files, implemented Milestone 1, and completed Milestone 2 items 4 and 5 with tests |
-
----
-*Update after completing each phase or encountering errors*
+- [ ] Add/update tests before non-UI implementation where practical.
+- [ ] Run `dotnet test Tests\FlowSharp.Main.Tests\FlowSharp.Main.Tests.csproj` after main-library changes.
+- [ ] Run `dotnet test Tests\FlowSharp.Http.IntegrationTests\FlowSharp.Http.IntegrationTests.csproj` after runtime-control changes.
+- [ ] Update `task_plan.md` and this file whenever an open item moves forward.

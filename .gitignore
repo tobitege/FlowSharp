@@ -352,3 +352,4 @@ obj
 libs
 *-layout.xml
 layout.xml
+*.mru
