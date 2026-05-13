@@ -169,9 +169,23 @@ namespace FlowSharp.Main.Tests
 
         private sealed class TestCanvasService : ServiceBase, IFlowSharpCanvasService
         {
-            public event EventHandler<EventArgs> AddCanvas;
-            public event EventHandler<FileEventArgs> LoadLayout;
-            public event EventHandler<FileEventArgs> SaveLayout;
+            event EventHandler<EventArgs> IFlowSharpCanvasService.AddCanvas
+            {
+                add { }
+                remove { }
+            }
+
+            event EventHandler<FileEventArgs> IFlowSharpCanvasService.LoadLayout
+            {
+                add { }
+                remove { }
+            }
+
+            event EventHandler<FileEventArgs> IFlowSharpCanvasService.SaveLayout
+            {
+                add { }
+                remove { }
+            }
 
             public BaseController ActiveController { get; }
             public List<BaseController> Controllers { get; }
