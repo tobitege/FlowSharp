@@ -34,6 +34,13 @@
 - If the user's request is ambiguous about whether to commit all changes or only the current task's changes, ask before committing.
 - Do not silently commit a subset of a dirty worktree.
 - After each commit, report the commit hash and commit message.
+- This workspace uses PowerShell on Windows. Use PowerShell-native command syntax for commits and scripts.
+- Do not force Bash heredocs through PowerShell. For multi-line commit messages, use a PowerShell here-string:
+  - `$message = @'`
+  - `Commit message`
+  - `'@`
+  - `git commit -m $message`
+- Be careful with Windows paths when invoking Bash from PowerShell; Git signing and SSH key paths can break if path syntax is translated incorrectly.
 
 ## Execution Rules
 
