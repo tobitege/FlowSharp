@@ -31,7 +31,7 @@ namespace Clifton.DockingFormService
 
         public event EventHandler<ContentLoadedEventArgs> ContentLoaded;
         public event EventHandler<EventArgs> ActiveDocumentChanged;
-        public event EventHandler<EventArgs> DocumentClosing;
+        public event EventHandler<DockDocumentClosingEventArgs> DocumentClosing;
 
         public Panel DockPanel => dockPanel;
         public List<IDockDocument> Documents => dockPanel.DocumentsToArray().Cast<IDockDocument>().ToList();
@@ -70,7 +70,7 @@ namespace Clifton.DockingFormService
                 TabText = tabText
             };
             dockContent.Show(dockPanel, (WeifenLuo.WinFormsUI.Docking.DockState)dockState);
-            dockContent.FormClosing += (sndr, args) => DocumentClosing.Fire(dockContent, EventArgs.Empty);
+            dockContent.FormClosing += (sndr, args) => OnDocumentFormClosing(dockContent, args);
 
             return dockContent;
         }
@@ -92,7 +92,7 @@ namespace Clifton.DockingFormService
                 TabText = tabText
             };
             dockContent.Show(dockPnl, (WeifenLuo.WinFormsUI.Docking.DockState)dockState);
-            dockContent.FormClosing += (sndr, args) => DocumentClosing.Fire(dockContent, EventArgs.Empty);
+            dockContent.FormClosing += (sndr, args) => OnDocumentFormClosing(dockContent, args);
 
             return dockContent;
         }
@@ -108,7 +108,7 @@ namespace Clifton.DockingFormService
                 TabText = tabText
             };
             dockContent.Show(((DockContent)pane).Pane, (WeifenLuo.WinFormsUI.Docking.DockAlignment)dockAlignment, portion);
-            dockContent.FormClosing += (sndr, args) => DocumentClosing.Fire(dockContent, EventArgs.Empty);
+            dockContent.FormClosing += (sndr, args) => OnDocumentFormClosing(dockContent, args);
 
             return dockContent;
         }
@@ -332,6 +332,19 @@ namespace Clifton.DockingFormService
             dockPanel.Controls.Add(leftDockSplitter);
         }
 
+        protected virtual void OnDocumentFormClosing(DockContent dockContent, FormClosingEventArgs args)
+        {
+            var closingArgs = new DockDocumentClosingEventArgs()
+            {
+                DockContent = dockContent,
+                CloseReason = args.CloseReason,
+                Cancel = args.Cancel
+            };
+
+            DocumentClosing.Fire(dockContent, closingArgs);
+            args.Cancel = closingArgs.Cancel;
+        }
+
         protected IDockContent GetContentFromPersistString(string persistString)
         {
             return new GenericDockContent
@@ -346,7 +359,7 @@ namespace Clifton.DockingFormService
             foreach (DockContent document in dockPanel.Contents.ToList())
             {
                 // For content loaded from a layout, we need to rewire FormClosing, since we didn't actually create the DockContent instance.
-                document.FormClosing += (sndr, args) => DocumentClosing.Fire(document, EventArgs.Empty);
+                document.FormClosing += (sndr, args) => OnDocumentFormClosing(document, args);
                 ContentLoaded.Fire(this, new ContentLoadedEventArgs()
                 {
                     DockContent = document,

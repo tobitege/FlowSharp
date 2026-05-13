@@ -488,7 +488,6 @@ namespace FlowSharpLib
             {
                 if (canvas.OnScreen(UpdateRectangle))
                 {
-                    Trace.WriteLine("Shape:Draw " + ToString());
                     Draw(gr);
                 }
 
@@ -674,7 +673,6 @@ namespace FlowSharpLib
         protected void InternalErase()
         {
             if (!canvas.OnScreen(backgroundRectangle)) return;
-            Trace.WriteLine("Shape:Erase " + ToString());
             background?.Erase(canvas, backgroundRectangle);
             // canvas.Graphics.DrawRectangle(selectionPen, backgroundRectangle);
             background?.Dispose();

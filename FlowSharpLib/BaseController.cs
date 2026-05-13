@@ -208,27 +208,65 @@ namespace FlowSharpLib
 
         public bool IsRootShapeSelectable(Point p)
         {
-            return elements.Any(e => e.IsSelectable(p) && e.Parent == null && e.Visible);
+            return GetRootShapesAt(p).Any();
         }
 
         public bool IsChildShapeSelectable(Point p)
         {
-            return elements.Any(e => e.IsSelectable(p) && e.Parent != null && e.Visible);
+            return GetChildShapesAt(p).Any();
         }
 
         public GraphicElement GetRootShapeAt(Point p)
         {
-            return elements.FirstOrDefault(e => e.IsSelectable(p) && e.Parent == null && e.Visible);
+            return GetRootShapesAt(p).FirstOrDefault();
         }
 
         public GraphicElement GetChildShapeAt(Point p)
         {
-            return elements.FirstOrDefault(e => e.IsSelectable(p) && e.Parent != null && e.Visible);
+            return GetChildShapesAt(p).FirstOrDefault();
         }
 
         public GraphicElement GetSelectableShapeAt(Point p)
         {
-            return GetRootShapeAt(p) ?? GetChildShapeAt(p);
+            return GetSelectableShapesAt(p).FirstOrDefault();
+        }
+
+        public IEnumerable<GraphicElement> GetRootShapesAt(Point p)
+        {
+            return elements.Where(e => IsSelectableAtDepth(e, p, 0));
+        }
+
+        public IEnumerable<GraphicElement> GetChildShapesAt(Point p, int maxDepth = 1)
+        {
+            return elements.Where(e =>
+            {
+                int depth = GetSelectionDepth(e);
+                return depth >= 1 && depth <= maxDepth && IsSelectableAtDepth(e, p, depth);
+            });
+        }
+
+        public IEnumerable<GraphicElement> GetSelectableShapesAt(Point p, int maxDepth = 1)
+        {
+            return GetRootShapesAt(p).Concat(GetChildShapesAt(p, maxDepth));
+        }
+
+        public GraphicElement GetNextRootShapeAt(Point p, GraphicElement currentSelection = null)
+        {
+            var candidates = GetRootShapesAt(p).ToList();
+
+            if (candidates.Count == 0)
+            {
+                return null;
+            }
+
+            if (currentSelection == null)
+            {
+                return candidates[0];
+            }
+
+            int idx = candidates.IndexOf(currentSelection);
+
+            return idx < 0 ? candidates[0] : candidates[(idx + 1) % candidates.Count];
         }
 
         public List<GraphicElement> GetShapesInSelectionRegion(Rectangle selectionRectangle)
@@ -399,7 +437,6 @@ namespace FlowSharpLib
 
         public void Redraw(GraphicElement el, int dx=0, int dy=0)
         {
-            Trace.WriteLine("*** Redraw1 " + el.GetType().Name);
             var els = EraseOurselvesAndIntersectionsTopToBottom(el, dx, dy);
             DrawBottomToTop(els, dx, dy);
             UpdateScreen(els, dx, dy);
@@ -407,7 +444,6 @@ namespace FlowSharpLib
 
         public void Redraw(GraphicElement el, Action<GraphicElement> afterErase)
         {
-            Trace.WriteLine("*** Redraw2 " + el.GetType().Name);
             var els = EraseOurselvesAndIntersectionsTopToBottom(el);
             UpdateScreen(els);
             afterErase(el);
@@ -436,7 +472,6 @@ namespace FlowSharpLib
         /// </summary>
         public void UpdateDisplayRectangle(GraphicElement el, Rectangle newRect, Point delta)
         {
-            Trace.WriteLine("*** UpdateDisplayRectangle " + el.GetType().Name);
             var dx = delta.X.Abs();
             var dy = delta.Y.Abs();
             var els = EraseOurselvesAndIntersectionsTopToBottom(el, dx, dy);
@@ -580,7 +615,6 @@ namespace FlowSharpLib
         {
             if (el.OnScreen())
             {
-                Trace.WriteLine("*** MoveElement " + el.GetType().Name);
                 var dx = delta.X.Abs();
                 var dy = delta.Y.Abs();
                 var els = EraseOurselvesAndIntersectionsTopToBottom(el, dx, dy);
@@ -604,7 +638,6 @@ namespace FlowSharpLib
 
             if (el.OnScreen())
             {
-                Trace.WriteLine("*** MoveElement " + el.GetType().Name);
                 var dx = delta.X.Abs();
                 var dy = delta.Y.Abs();
                 var els = EraseOurselvesAndIntersectionsTopToBottom(el, dx, dy);
@@ -625,11 +658,6 @@ namespace FlowSharpLib
         // For canvas dragging.
         public void MoveAllElements(Point delta)
         {
-            if (IsCanvasDragging)
-            {
-                Trace.WriteLine("*** MoveAllElements Collision");
-            }
-
             delta = InverseZoomAdjust(delta);
             IsCanvasDragging = true;            // Kludgy workaround for Issue #34 (groupbox update)
             EraseTopToBottom(elements);
@@ -737,10 +765,8 @@ namespace FlowSharpLib
         {
             if (++eraseCount > 1)
             {
-                Trace.WriteLine("*** TOO MANY ERASE " + eraseCount + " ***");
             }
 
-            Trace.WriteLine("Shape:EraseTopToBottom " + eraseCount);
             els.Where(e => e.OnScreen()).ForEach(e => e.Erase());
         }
 
@@ -748,10 +774,8 @@ namespace FlowSharpLib
         {
             if (--eraseCount < 0)
             {
-                Trace.WriteLine("*** TOO MANY DRAW " + eraseCount + " ***");
             }
 
-            Trace.WriteLine("Shape:DrawBottomToTop " + eraseCount);
             els.AsEnumerable().Reverse().Where(e => e.OnScreen(dx, dy)).ForEach(e =>
             {
                 e.GetBackground();
@@ -796,6 +820,25 @@ namespace FlowSharpLib
             {
                 el.Dispose();
             }
+        }
+
+        protected bool IsSelectableAtDepth(GraphicElement element, Point p, int depth)
+        {
+            return element.Visible && GetSelectionDepth(element) == depth && element.IsSelectable(p);
+        }
+
+        protected int GetSelectionDepth(GraphicElement element)
+        {
+            int depth = 0;
+            GraphicElement parent = element.Parent;
+
+            while (parent != null)
+            {
+                depth++;
+                parent = parent.Parent;
+            }
+
+            return depth;
         }
 
         protected void DeleteElementHierarchy(GraphicElement el, bool dispose)
@@ -891,8 +934,21 @@ namespace FlowSharpLib
 
         protected void RecursiveGetAllGroupedShapes(List<GraphicElement> children, List<GraphicElement> acc)
         {
-            acc.AddRange(children);
-            children.ForEach(child => RecursiveGetAllGroupedShapes(child.GroupChildren, acc));
+            var pending = new Stack<GraphicElement>(children);
+            var seen = new HashSet<GraphicElement>(acc);
+
+            while (pending.Count > 0)
+            {
+                var child = pending.Pop();
+
+                if (!seen.Add(child))
+                {
+                    continue;
+                }
+
+                acc.Add(child);
+                child.GroupChildren.ForEach(pending.Push);
+            }
         }
 
         public Rectangle GetExtents(List<GraphicElement> elems)
@@ -918,32 +974,45 @@ namespace FlowSharpLib
         /// </summary>
         private void RecursiveFindAllIntersections(List<GraphicElement> intersections, GraphicElement el, int dx = 0, int dy = 0)
         {
-            var elIdx = elements.IndexOf(el);
-            var rectExpanded = el.UpdateRectangle.Grow(dx, dy);
+            var pending = new Stack<Tuple<GraphicElement, int, int>>();
+            var seen = new HashSet<GraphicElement>(intersections);
+            pending.Push(new Tuple<GraphicElement, int, int>(el, dx, dy));
 
-            // Cool thing here is that if the element has no intersections, this list still returns that element because it intersects with itself!
-            // Optimization here is that we only collect shapes that intersect and are above (on top of) the current shape.
-            // This optimization works really well except that it has a bug, that shapes above connectors in the z-order do not
-            // redraw the attached connector.
-            elements.Where(e => !intersections.Contains(e) &&		// exclude elements we've already flagged as intersecting.
-            (elements.IndexOf(e) <= elIdx ||                        // elements higher in the z-order must be redrawn because the current element is underneath.
-            el.Connections.Any(c=>c.ToElement==e)) &&				// or the element is connected the shape being moved.
-            e.UpdateRectangle.IntersectsWith(rectExpanded)).		// and they intersect.
-            ForEach((e) =>
+            while (pending.Count > 0)
             {
-                intersections.Add(e);
-                RecursiveFindAllIntersections(intersections, e);
-            });
+                var item = pending.Pop();
+                var currentElement = item.Item1;
+                var currentDx = item.Item2;
+                var currentDy = item.Item3;
+                var currentElementIdx = elements.IndexOf(currentElement);
+                var rectExpanded = currentElement.UpdateRectangle.Grow(currentDx, currentDy);
+                var currentConnections = currentElement.Connections.Select(c => c.ToElement).ToList();
+
+                // Cool thing here is that if the element has no intersections, this list still returns that element because it intersects with itself!
+                // Optimization here is that we only collect shapes that intersect and are above (on top of) the current shape.
+                // This optimization works really well except that it has a bug, that shapes above connectors in the z-order do not
+                // redraw the attached connector.
+                var candidates = elements.Where(e =>
+                    !seen.Contains(e) &&
+                    (elements.IndexOf(e) <= currentElementIdx ||
+                    currentConnections.Contains(e)) &&
+                    e.UpdateRectangle.IntersectsWith(rectExpanded)).ToList();
+
+                candidates.ForEach(e =>
+                {
+                    seen.Add(e);
+                    intersections.Add(e);
+                    pending.Push(new Tuple<GraphicElement, int, int>(e, 0, 0));
+                });
+            }
         }
 
         protected List<GraphicElement> EraseOurselvesAndIntersectionsTopToBottom(GraphicElement el, int dx = 0, int dy = 0)
         {
             if (++eraseCount > 1)
             {
-                Trace.WriteLine("Shape:*** TOO MANY ERASE " + eraseCount + " ***");
             }
 
-            Trace.WriteLine("Shape:EraseIntersectionsTopToBottom " + eraseCount);
             var intersections = FindAllIntersections(el, dx, dy).ToList();
             intersections.AddIfUnique(el);
             intersections.Where(e => e.OnScreen(dx, dy)).OrderBy(e => elements.IndexOf(e)).ForEach(e => e.Erase());
@@ -954,7 +1023,6 @@ namespace FlowSharpLib
         // ReSharper disable once ParameterHidesMember
         protected void CanvasPaintComplete(Canvas canvas)
         {
-            Trace.WriteLine("*** CanvasPaintComplete");
             eraseCount = 1;         // Diagnostics
             DrawBottomToTop(elements);
         }

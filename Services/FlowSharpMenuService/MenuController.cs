@@ -20,7 +20,7 @@ using FlowSharpServiceInterfaces;
 
 namespace FlowSharpMenuService
 {
-    public class NavigateToShape : IComparable
+    public class NavigateToShape
     {
         public GraphicElement Shape { get; set; }
         public string Name { get; set; }
@@ -29,18 +29,13 @@ namespace FlowSharpMenuService
         {
             return Name;
         }
-
-        public int CompareTo(object obj)
-        {
-            return Name.CompareTo(((NavigateToShape)obj).Name);
-        }
     }
 
     public partial class MenuController
     {
         private const string MRU_FILENAME = "FlowSharp.mru";
 
-        public string Filename => filename;
+        public string Filename => GetCurrentFilename();
 
         protected string filename;
         protected IServiceManager serviceManager;
@@ -50,6 +45,7 @@ namespace FlowSharpMenuService
         public MenuController(IServiceManager serviceManager)
         {
             this.serviceManager = serviceManager;
+            mru = new List<string>();
             Initialize();
         }
 
@@ -84,14 +80,15 @@ namespace FlowSharpMenuService
         public bool SaveOrSaveAs(bool forceSaveAs = false, bool selectionOnly = false)
         {
             var ret = true;
+            var currentFilename = GetCurrentFilename();
 
-            if (string.IsNullOrEmpty(filename) || forceSaveAs)
+            if (string.IsNullOrEmpty(currentFilename) || forceSaveAs)
             {
                 ret = SaveAs(selectionOnly);
             }
             else
             {
-                SaveDiagram(filename);
+                SaveDiagram(currentFilename, selectionOnly);
             }
 
             return ret;
@@ -389,7 +386,7 @@ namespace FlowSharpMenuService
             var navShapes = canvasController.Elements.
                 Where(el=>el.IsBookmarked).
                 Select(el => new NavigateToShape() { Shape = el, Name = el.NavigateName }).
-                OrderBy(s=>s).
+                OrderBy(s => s.Name).
                 ToList();
             ShowNavigateDialog(canvasController, navShapes);
         }
@@ -419,20 +416,21 @@ namespace FlowSharpMenuService
         {
             if (!File.Exists(MRU_FILENAME)) return;
             mru = File.ReadAllLines(MRU_FILENAME).ToList();
-            foreach (var f in mru)
-            {
-                ToolStripItem tsi = new ToolStripMenuItem(f);
-                tsi.Click += OnRecentFileSelected;
-                mnuRecentFiles.DropDownItems.Add(tsi);
-            }
+            RefreshRecentFilesMenu();
         }
 
         protected void UpdateMru(string fname)
         {
+            if (string.IsNullOrWhiteSpace(fname))
+            {
+                return;
+            }
+
             // Any existing MRU, remove, and regardless, insert at beginning of list.
             mru.Remove(fname);
             mru.Insert(0, fname);
             File.WriteAllLines(MRU_FILENAME, mru);
+            RefreshRecentFilesMenu();
         }
 
         private void OnRecentFileSelected(object sender, EventArgs e)
@@ -840,7 +838,6 @@ namespace FlowSharpMenuService
                 if (!selectionOnly)
                 {
                     UpdateCaption();
-                    UpdateMru(filename);
                 }
             }
 
@@ -858,12 +855,43 @@ namespace FlowSharpMenuService
             if (!selectionOnly)
             {
                 serviceManager.Get<IFlowSharpEditService>().SetSavePoint();
+                filename = GetCurrentFilename();
+                UpdateMru(filename);
             }
         }
 
         protected void UpdateCaption()
         {
-            mainForm.Text = "FlowSharp" + (String.IsNullOrEmpty(filename) ? "" : " - ") + filename;
+            var currentFilename = GetCurrentFilename();
+            mainForm.Text = "FlowSharp" + (String.IsNullOrEmpty(currentFilename) ? "" : " - ") + currentFilename;
+        }
+
+        protected string GetCurrentFilename()
+        {
+            var canvasController = GetActiveCanvasController();
+
+            return String.IsNullOrEmpty(canvasController?.Filename)
+                ? filename
+                : canvasController.Filename;
+        }
+
+        protected BaseController GetActiveCanvasController()
+        {
+            return serviceManager.Exists<IFlowSharpCanvasService>()
+                ? serviceManager.Get<IFlowSharpCanvasService>().ActiveController
+                : null;
+        }
+
+        protected void RefreshRecentFilesMenu()
+        {
+            mnuRecentFiles.DropDownItems.Clear();
+
+            foreach (var f in mru)
+            {
+                ToolStripItem tsi = new ToolStripMenuItem(f);
+                tsi.Click += OnRecentFileSelected;
+                mnuRecentFiles.DropDownItems.Add(tsi);
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 using Clifton.Core.ServiceManagement;
@@ -43,6 +44,12 @@ namespace Clifton.WinForm.ServiceInterfaces
         public string OriginalPath { get; set; }
     }
 
+    public class DockDocumentClosingEventArgs : CancelEventArgs
+    {
+        public Control DockContent { get; set; }
+        public CloseReason CloseReason { get; set; }
+    }
+
     public interface IBaseForm
     {
         event EventHandler<ProcessCmdKeyEventArgs> ProcessCmdKeyEvent;
@@ -58,7 +65,7 @@ namespace Clifton.WinForm.ServiceInterfaces
     {
         event EventHandler<ContentLoadedEventArgs> ContentLoaded;
         event EventHandler<EventArgs> ActiveDocumentChanged;
-        event EventHandler<EventArgs> DocumentClosing;
+        event EventHandler<DockDocumentClosingEventArgs> DocumentClosing;
 
         Panel DockPanel { get; }
         List<IDockDocument> Documents { get; }

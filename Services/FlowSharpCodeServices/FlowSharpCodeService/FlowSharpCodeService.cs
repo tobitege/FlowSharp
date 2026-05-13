@@ -41,6 +41,7 @@ namespace FlowSharpCodeService
         protected readonly ToolStripMenuItem mnuOutput = new ToolStripMenuItem() { Name = "mnuOutput", Text = "Output" };
 
         protected Dictionary<string, int> fileCaretPos = new Dictionary<string, int>();
+        protected bool updatingEditorTextFromSelection;
 
         public override void FinishedInitialization()
         {
@@ -361,12 +362,16 @@ namespace FlowSharpCodeService
 
         protected void OnFlowSharpInitialized(object sender, EventArgs args)
         {
-             //IDockDocument csEditor = CreateCSharpEditor();
-             //CreateEditor("python");
-             //CreateOutputWindow();
+            var dockingService = ServiceManager.Get<IDockingFormService>();
+            bool hasEditorDocument =
+                FindDocument(dockingService, FlowSharpCodeServiceInterfaces.Constants.META_CSHARP_EDITOR) != null ||
+                FindDocument(dockingService, FlowSharpCodeServiceInterfaces.Constants.META_SCINTILLA_EDITOR) != null;
 
-            // Select C# editor, as it's the first tab in the code editor panel.
-            // ServiceManager.Get<IDockingFormService>().SetActiveDocument(csEditor);
+            if (!hasEditorDocument)
+            {
+                CreateCSharpEditor();
+                mnuCSharp.Checked = true;
+            }
         }
 
         Control csDocEditor;
@@ -510,33 +515,51 @@ namespace FlowSharpCodeService
                     Trace.WriteLine("*** " + csCodeEditorService.Filename + " => SET CURRENT POS: " + curpos);
                 }
 
-                el.Json.TryGetValue("Code", out var code);
-                csCodeEditorService.SetText("C#", code ?? string.Empty);
+                updatingEditorTextFromSelection = true;
 
-                var fn = el.Id.ToString();               // Use something that is unique for this shape's code.
-                Trace.WriteLine("*** " + fn + " => SET ID");
-                csCodeEditorService.Filename = fn;
-
-                // Set the last known position if we have one.
-                if (fileCaretPos.TryGetValue(fn, out var pos))
+                try
                 {
-                    Trace.WriteLine("*** " + fn + " => SET PREVIOUS POS: " + pos);
-                    csCodeEditorService.SetPosition(pos);
-                }
-                else
-                {
-                    // A newly seen document, set the caret to pos 0 so the editor doesn't retain
-                    // the previous scrollbar location.
-                    csCodeEditorService.SetPosition(0);
-                }
+                    el.Json.TryGetValue("Code", out var code);
+                    csCodeEditorService.SetText("C#", code ?? string.Empty);
 
-                el.Json.TryGetValue("python", out code);
-                editorService.SetText("python", code ?? string.Empty);
+                    var fn = el.Id.ToString();               // Use something that is unique for this shape's code.
+                    Trace.WriteLine("*** " + fn + " => SET ID");
+                    csCodeEditorService.Filename = fn;
+
+                    // Set the last known position if we have one.
+                    if (fileCaretPos.TryGetValue(fn, out var pos))
+                    {
+                        Trace.WriteLine("*** " + fn + " => SET PREVIOUS POS: " + pos);
+                        csCodeEditorService.SetPosition(pos);
+                    }
+                    else
+                    {
+                        // A newly seen document, set the caret to pos 0 so the editor doesn't retain
+                        // the previous scrollbar location.
+                        csCodeEditorService.SetPosition(0);
+                    }
+
+                    el.Json.TryGetValue("python", out code);
+                    editorService.SetText("python", code ?? string.Empty);
+                }
+                finally
+                {
+                    updatingEditorTextFromSelection = false;
+                }
             }
             else
             {
-                csCodeEditorService.SetText("C#", string.Empty);
-                editorService.SetText("python", string.Empty);
+                updatingEditorTextFromSelection = true;
+
+                try
+                {
+                    csCodeEditorService.SetText("C#", string.Empty);
+                    editorService.SetText("python", string.Empty);
+                }
+                finally
+                {
+                    updatingEditorTextFromSelection = false;
+                }
             }
         }
 
@@ -546,6 +569,8 @@ namespace FlowSharpCodeService
 
         protected void OnCSharpEditorServiceTextChanged(object sender, TextChangedEventArgs e)
         {
+            if (updatingEditorTextFromSelection) return;
+
             var canvasService = ServiceManager.Get<IFlowSharpCanvasService>();
             if (canvasService.ActiveController.SelectedElements.Count != 1) return;
             var el = canvasService.ActiveController.SelectedElements[0];
@@ -555,6 +580,8 @@ namespace FlowSharpCodeService
 
         protected void OnScintillaEditorServiceTextChanged(object sender, TextChangedEventArgs e)
         {
+            if (updatingEditorTextFromSelection) return;
+
             var canvasService = ServiceManager.Get<IFlowSharpCanvasService>();
             if (canvasService.ActiveController.SelectedElements.Count != 1) return;
             var el = canvasService.ActiveController.SelectedElements[0];
