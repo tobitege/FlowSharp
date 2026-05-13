@@ -233,13 +233,21 @@ namespace FlowSharpEditService
 
         public ClosingState CheckForChanges()
         {
+            return CheckForChanges(null);
+        }
+
+        public ClosingState CheckForChanges(BaseController controller)
+        {
             IFlowSharpCanvasService canvasService = ServiceManager.Get<IFlowSharpCanvasService>();
-            bool changed = canvasService.Controllers.Any(c => GetSavePoint(c) != c.UndoStack.UndoStackSize);
+            IEnumerable<BaseController> controllers = controller == null
+                ? canvasService.Controllers
+                : canvasService.Controllers.Where(c => c == controller);
+            bool changed = controllers.Any(HasChanges);
             ClosingState ret = ClosingState.NoChanges;
 
             if (changed)
             {
-                DialogResult res = MessageBox.Show("Do you wish to save changes to this drawing?", "Save Changes", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                DialogResult res = ShowSaveChangesPrompt(controller);
 
                 switch (res)
                 {
@@ -674,6 +682,17 @@ namespace FlowSharpEditService
             if (savePoints.TryGetValue(controller, out var ret)) return ret;
             savePoints[controller] = 0;
             return 0;
+        }
+
+        protected virtual bool HasChanges(BaseController controller)
+        {
+            return GetSavePoint(controller) != controller.UndoStack.UndoStackSize;
+        }
+
+        protected virtual DialogResult ShowSaveChangesPrompt(BaseController controller)
+        {
+            string target = controller == null ? "this drawing" : "this canvas";
+            return MessageBox.Show("Do you wish to save changes to " + target + "?", "Save Changes", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
         }
 
         protected void SetSavePoint(BaseController controller)

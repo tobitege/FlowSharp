@@ -53,7 +53,7 @@ namespace FlowSharpService
             dockingService = ServiceManager.Get<IDockingFormService>();
             dockingService.ContentLoaded += OnContentLoaded;
             dockingService.ActiveDocumentChanged += (sndr, args) => OnActiveDocumentChanged(sndr);
-            dockingService.DocumentClosing += (sndr, args) => OnDocumentClosing(sndr);
+            dockingService.DocumentClosing += OnDocumentClosing;
             form = dockingService.CreateMainForm<FlowSharpForm>();
             ((FlowSharpForm)form).ServiceManager = ServiceManager;
             form.Text = "FlowSharp";
@@ -343,15 +343,43 @@ namespace FlowSharpService
             }
         }
 
-        protected void OnDocumentClosing(object document)
+        protected void OnDocumentClosing(object sender, DockDocumentClosingEventArgs e)
         {
-            if (!(document is Control ctrl && ctrl.Controls?.Count > 0))
+            if (e.CloseReason != CloseReason.UserClosing)
+            {
+                return;
+            }
+
+            if (!(e.DockContent is Control ctrl && ctrl.Controls?.Count > 0))
                 return;
 
-            switch(((IDockDocument)document).Metadata.LeftOf(","))
+            switch(((IDockDocument)e.DockContent).Metadata.LeftOf(","))
             {
                 case Constants.META_CANVAS:
                     var child = ctrl.Controls[0];
+                    var canvas = child.Controls.OfType<Canvas>().FirstOrDefault();
+
+                    if (canvas?.Controller != null)
+                    {
+                        var state = ServiceManager.Get<IFlowSharpEditService>().CheckForChanges(canvas.Controller);
+
+                        if (state == ClosingState.SaveChanges)
+                        {
+                            ServiceManager.Get<IFlowSharpCanvasService>().SetActiveController(child);
+
+                            if (!ServiceManager.Get<IFlowSharpMenuService>().SaveOrSaveAs())
+                            {
+                                e.Cancel = true;
+                                return;
+                            }
+                        }
+                        else if (state == ClosingState.CancelClose)
+                        {
+                            e.Cancel = true;
+                            return;
+                        }
+                    }
+
                     ServiceManager.Get<IFlowSharpCanvasService>().DeleteCanvas(child);
                     break;
 

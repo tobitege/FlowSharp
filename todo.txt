@@ -7,7 +7,7 @@ Bugs:
 [DONE] 4. In a multiple canvas drawing, saving when 2nd canvas doesn't have a filename threw an exception.
 [DONE] 5. Saving multiple canvases lost my work in one of the canvases, perhaps related to #4
 [DONE] 6. Copy of a grouped shape and paste results in a shape that can't be moved/selected.
-[DONE] 7. Notice connector from ModuleManagement to DockPanelSuiteServices double moves when moving the 
+[DONE] 7. Notice connector from ModuleManagement to DockPanelSuiteServices double moves when moving the
 DockPanelSuiteServices GroupBox, because it appears to have been wired up at least twice.
 
 Human UI Testing:
@@ -57,7 +57,7 @@ Verify completed bug fixes:
 
 TODO:
 
-1. Be able to select alternate shape when there is more than one option at the click point
+[DONE] 1. Be able to select alternate shape when there is more than one option at the click point
 2. Custom anchor points
 3. Try intersection depth limit of 1 deep
 4. "Regroup", so shapes can be manipulated and then regrouped.

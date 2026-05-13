@@ -5,8 +5,6 @@
 */
 
 using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
 using System.Windows.Forms;
 
 using Clifton.Core.ServiceManagement;
@@ -19,8 +17,6 @@ namespace FlowSharpMenuService
     public partial class NavigateDlg : Form
     {
         protected IServiceManager serviceManager;
-        protected BaseController canvasController;
-
         public NavigateDlg(IServiceManager serviceManager, List<NavigateToShape> navNames)
         {
             this.serviceManager = serviceManager;
@@ -39,18 +35,25 @@ namespace FlowSharpMenuService
 
                 case (char)Keys.Enter:
                     e.Handled = true;
-                    Close();
-                    GraphicElement shape = ((NavigateToShape)lbShapes.SelectedItem).Shape;
-                    serviceManager.Get<IFlowSharpEditService>().FocusOnShape(shape);
+                    FocusSelectedShape();
                     break;
             }
         }
 
         private void LbShapes_MouseClick(object sender, MouseEventArgs e)
         {
+            FocusSelectedShape();
+        }
+
+        private void FocusSelectedShape()
+        {
+            if (!(lbShapes.SelectedItem is NavigateToShape selectedShape))
+            {
+                return;
+            }
+
             Close();
-            GraphicElement shape = ((NavigateToShape)lbShapes.SelectedItem).Shape;
-            serviceManager.Get<IFlowSharpEditService>().FocusOnShape(shape);
+            serviceManager.Get<IFlowSharpEditService>().FocusOnShape(selectedShape.Shape);
         }
     }
 }

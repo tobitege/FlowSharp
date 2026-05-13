@@ -102,6 +102,7 @@ namespace FlowSharpServiceInterfaces
         void Redo();
         void EditText();
         ClosingState CheckForChanges();
+        ClosingState CheckForChanges(BaseController controller);
         void ResetSavePoint();
         void ClearSavePoints();
         void SetSavePoint();
