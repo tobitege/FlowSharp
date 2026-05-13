@@ -261,26 +261,46 @@ Workspaces can save multiple canvases. Unnamed secondary canvases are assigned s
 ## Grouping
 ![Grouping](https://github.com/cliftonm/FlowSharp/blob/master/Article/img36.png)
 
-# What's not implemented:
+## What's Not Implemented
+
 Please contribute to working on this list!
-* Shape text:
-  * Boundaries can be easily exceeded.
-  * No full paragraph justification.
-  * Single line only - no auto-wrap.
-* Scrollbars for canvas - currently you drag the canvas to move it.
-* Zoom.
-* Shape rotation.
-* Custom defined connection points.
-  * Including on connectors.
-* Adjust custom connection points intelligently when shape is resized.
-* True dynamic connectors.
-* Other line caps besides an arrow and diamond.
-* Ruler margins / page boundaries.
-* Snap shapes to centers and edges.
-* Printing (more or less easily implemented, actually)  If you want to print, save the diagram as a PNG and use some other tool!
-* True drag-from-toolbox-onto-surface.
-* Undo/redo.  That'll be fun!
-* Better property UX - PropertyGrid's are ok for developers, they are awful for users.
+
+- Document and shell workflow:
+  - Close document prompts to save changes.
+  - Saving drawing updates MRU when a new filename is introduced.
+  - Add panels back in that have been removed: Toolbox, PropertyGrid, code editor.
+- Selection and hit testing:
+  - Be able to select alternate shape when there is more than one option at the click point.
+  - Try intersection depth limit of 1 deep.
+- Viewport and placement:
+  - Scrollbars for canvas - currently you drag the canvas to move it.
+  - Full zoom behavior for rendering, hit testing, grips, selection feedback, and scrollbars.
+  - True drag-from-toolbox-onto-surface.
+- Page and print workflow:
+  - Ruler margins / page boundaries.
+  - Printing.
+- Shape and connector text:
+  - Shape text boundaries can be easily exceeded.
+  - No full paragraph justification.
+  - Single line only - no auto-wrap.
+  - Connector text.
+- Connector rendering, anchors, and routing:
+  - Other line caps besides an arrow and diamond.
+  - Property changes, like end caps, can force a full page redraw.
+  - Custom defined connection points / custom anchor points, including on connectors.
+  - Adjust custom connection points intelligently when shape is resized.
+  - Auto-anchor.
+  - Force vertical/horizontal connectors.
+  - Three-line connector middle-line repositioning.
+  - True dynamic connectors.
+- Geometry and layout commands:
+  - Shape rotation.
+  - Snap shapes to centers and edges.
+  - Align selected shapes left/top/right/bottom to leftmost/topmost/rightmost/bottommost.
+  - Regroup, so shapes can be manipulated and then regrouped.
+- Cross-cutting UX and history:
+  - Better property UX - PropertyGrid's are ok for developers, they are awful for users.
+  - Undo/redo.
 
 # License
 [The Code Project Open License (CPOL) 1.02](http://htmlpreview.github.io/?http://www.codeproject.com/info/cpol10.aspx)

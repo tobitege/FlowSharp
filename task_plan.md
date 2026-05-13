@@ -6,7 +6,7 @@ This file tracks only open work. Completed items and historical discovery notes 
 
 ## Source Of Truth
 
-- `open-features.md` remains the full dependency-ordered backlog.
+- This file is the current dependency-ordered open backlog.
 - `README.md` "What's not implemented" is the public open-feature summary.
 - `progress.md` tracks active progress and verification for these open items.
 
@@ -43,7 +43,7 @@ Viewport foundation remains the next dependency group: scrollbars, full zoom beh
 | 23 | Add panels back in that have been removed: Toolbox, PropertyGrid, code editor | Open | Imported from `todo.txt`; verify startup/docking layout behavior. |
 | 24 | Saving drawing updates MRU when a new filename is introduced | Open | Imported from `todo.txt`; verify normal save and save-as flows. |
 | 25 | Close document prompts to save changes | Open | Imported from `todo.txt`; verify canvas-tab close and application close paths. |
-| 26 | Be able to select alternate shape when there is more than one option at the click point | Open | Imported from `open-features.md`; verify shared-point selection behavior. |
+| 26 | Be able to select alternate shape when there is more than one option at the click point | Open | Verify shared-point selection behavior. |
 
 ## Open Regression Work
 
