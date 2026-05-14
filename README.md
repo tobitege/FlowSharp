@@ -321,7 +321,6 @@ Workspaces can save multiple canvases. Unnamed secondary canvases are assigned s
 Please contribute to working on this list!
 
 - Selection and hit testing:
-  - Be able to select alternate shape when there is more than one option at the click point.
   - Try intersection depth limit of 1 deep.
 - Viewport and placement:
   - Scrollbars for canvas - currently you drag the canvas to move it.
