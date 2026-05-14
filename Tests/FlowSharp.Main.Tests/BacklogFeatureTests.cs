@@ -406,6 +406,35 @@ namespace FlowSharp.Main.Tests
         }
 
         [TestMethod]
+        public void DynamicConnectorMiddleLineHandles_RepositionThreeLineConnectors()
+        {
+            BaseController controller = CreateController(600, 400);
+            DynamicConnectorLR leftRight = new DynamicConnectorLR(controller.Canvas, new Point(20, 40), new Point(180, 120));
+            DynamicConnectorUD upDown = new DynamicConnectorUD(controller.Canvas, new Point(260, 30), new Point(340, 190));
+            controller.AddElement(leftRight);
+            controller.AddElement(upDown);
+            leftRight.UpdatePath();
+            upDown.UpdatePath();
+
+            ShapeAnchor leftRightMiddle = leftRight.GetAnchors().Single(anchor => anchor.Type == GripType.LeftMiddle);
+            ShapeAnchor upDownMiddle = upDown.GetAnchors().Single(anchor => anchor.Type == GripType.TopMiddle);
+            Point originalLeftRightStart = leftRight.StartPoint;
+            Point originalLeftRightEnd = leftRight.EndPoint;
+            Point originalUpDownStart = upDown.StartPoint;
+            Point originalUpDownEnd = upDown.EndPoint;
+
+            leftRight.UpdateSize(leftRightMiddle, new Point(30, 0));
+            upDown.UpdateSize(upDownMiddle, new Point(0, 35));
+
+            Assert.AreEqual(leftRightMiddle.Rectangle.X + 30, leftRight.GetAnchors().Single(anchor => anchor.Type == GripType.LeftMiddle).Rectangle.X);
+            Assert.AreEqual(upDownMiddle.Rectangle.Y + 35, upDown.GetAnchors().Single(anchor => anchor.Type == GripType.TopMiddle).Rectangle.Y);
+            Assert.AreEqual(originalLeftRightStart, leftRight.StartPoint);
+            Assert.AreEqual(originalLeftRightEnd, leftRight.EndPoint);
+            Assert.AreEqual(originalUpDownStart, upDown.StartPoint);
+            Assert.AreEqual(originalUpDownEnd, upDown.EndPoint);
+        }
+
+        [TestMethod]
         public void ConnectorLabelRectangle_UsesMidpointOffsetAndSize()
         {
             BaseController controller = CreateController(600, 400);

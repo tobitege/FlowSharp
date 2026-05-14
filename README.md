@@ -320,8 +320,6 @@ Workspaces can save multiple canvases. Unnamed secondary canvases are assigned s
 
 Please contribute to working on this list!
 
-- Connector rendering, anchors, and routing:
-  - Three-line connector middle-line repositioning.
 - Geometry and layout commands:
   - Shape rotation.
   - Regroup, so shapes can be manipulated and then regrouped.
