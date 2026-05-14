@@ -320,8 +320,6 @@ Workspaces can save multiple canvases. Unnamed secondary canvases are assigned s
 
 Please contribute to working on this list!
 
-- Document and shell workflow:
-  - Add panels back in that have been removed: Toolbox, PropertyGrid, code editor.
 - Selection and hit testing:
   - Be able to select alternate shape when there is more than one option at the click point.
   - Try intersection depth limit of 1 deep.
