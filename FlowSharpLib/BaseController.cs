@@ -672,12 +672,48 @@ namespace FlowSharpLib
                 return source;
             }
 
+            return ConvertConnectorToOrthogonal(source, orientation, true);
+        }
+
+        public DynamicConnector ConvertConnectorToOrthogonalWithUndo(Connector connector, OrthogonalConnectorOrientation orientation)
+        {
+            if (!(connector is DynamicConnector source))
+            {
+                throw new ArgumentException("Only dynamic connectors can be converted.", nameof(connector));
+            }
+
+            if ((orientation == OrthogonalConnectorOrientation.LeftRight && connector is DynamicConnectorLR) ||
+                (orientation == OrthogonalConnectorOrientation.UpDown && connector is DynamicConnectorUD))
+            {
+                return source;
+            }
+
+            DynamicConnector replacement = null;
+
+            undoStack.UndoRedo(
+                "ConvertConnector",
+                () => replacement = ConvertConnectorToOrthogonal(source, orientation, false),
+                () =>
+                {
+                    if (replacement != null)
+                    {
+                        ReplaceConnector(replacement, source, false);
+                    }
+                },
+                true,
+                () => replacement = ConvertConnectorToOrthogonal(source, orientation, false));
+
+            return replacement;
+        }
+
+        protected DynamicConnector ConvertConnectorToOrthogonal(DynamicConnector source, OrthogonalConnectorOrientation orientation, bool disposeSource)
+        {
             DynamicConnector replacement = orientation == OrthogonalConnectorOrientation.LeftRight
                 ? new DynamicConnectorLR(canvas, source.StartPoint, source.EndPoint)
                 : new DynamicConnectorUD(canvas, source.StartPoint, source.EndPoint);
 
             CopyConnectorProperties(source, replacement);
-            ReplaceConnector(source, replacement);
+            ReplaceConnector(source, replacement, disposeSource);
 
             return replacement;
         }
@@ -722,7 +758,7 @@ namespace FlowSharpLib
             }
         }
 
-        protected void ReplaceConnector(DynamicConnector source, DynamicConnector replacement)
+        protected void ReplaceConnector(DynamicConnector source, DynamicConnector replacement, bool disposeSource = true)
         {
             int index = elements.IndexOf(source);
             if (index < 0)
@@ -754,8 +790,14 @@ namespace FlowSharpLib
             replacement.DisplayRectangle = replacement.DisplayRectangle == Rectangle.Empty
                 ? replacement.DefaultRectangle()
                 : replacement.DisplayRectangle;
-            source.Removed(true);
-            source.Dispose();
+            replacement.Restored();
+            source.Removed(disposeSource);
+
+            if (disposeSource)
+            {
+                source.Dispose();
+            }
+
             UpdateViewport();
             canvas.Invalidate();
         }

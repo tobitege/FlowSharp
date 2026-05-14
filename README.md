@@ -258,6 +258,8 @@ The Align menu exposes left, right, top, and bottom selected-shape alignment com
 
 The property grid uses categorized friendly names, descriptions, and read-only metadata for shape type fields to make common shape, text, connector, and styling properties easier to identify.
 
+Undo/redo covers the new property-grid layout and connector label edits, align menu actions, and orthogonal connector conversion.
+
 ## Export diagram to PNG
 ![PNG](https://github.com/cliftonm/FlowSharp/blob/master/Article/img5.png)
 
@@ -308,7 +310,6 @@ Please contribute to working on this list!
   - Shape rotation.
   - Regroup, so shapes can be manipulated and then regrouped.
 - Cross-cutting UX and history:
-  - Undo/redo.
 
 # License
 [The Code Project Open License (CPOL) 1.02](http://htmlpreview.github.io/?http://www.codeproject.com/info/cpol10.aspx)

@@ -12,15 +12,12 @@ This file tracks only open work. Completed items and historical discovery notes 
 
 ## Current Focus
 
-Finish the remaining partial feature work: richer text/connector editing, targeted redraw behavior, connector conversion/rerouting semantics, snapping integration, layout command wiring, property UX, and broader undo/redo coverage.
+No open partial feature work remains from the current ten-item backlog.
 
 ## Open Issues
 
-| # | Issue | Status | Notes |
-| --- | --- | --- | --- |
-| 10 | Undo/redo | Partial | Existing undo/redo remains available; broad command coverage for new feature actions remains open. |
+None.
 
 ## Open Regression Work
 
-- [ ] Re-run connector checks when anchor, routing, V/H conversion, or dynamic connector behavior changes.
-- [ ] Re-run selection, grouping, snapping, and layout checks when drag integration or alignment workflow changes.
+None.

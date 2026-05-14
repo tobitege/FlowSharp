@@ -4,9 +4,13 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
 
+using Clifton.Core.ServiceManagement;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using FlowSharpLib;
+using FlowSharpPropertyGridService;
+
+using PropertyGrid = System.Windows.Forms.PropertyGrid;
 
 namespace FlowSharp.Main.Tests
 {
@@ -475,6 +479,81 @@ namespace FlowSharp.Main.Tests
         }
 
         [TestMethod]
+        public void ConvertConnectorToOrthogonalWithUndo_RestoresOriginalConnectorAndConnections()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box source = AddBox(controller, new Rectangle(10, 100, 50, 50));
+            Box target = AddBox(controller, new Rectangle(200, 100, 50, 50));
+            DiagonalConnector diagonal = new DiagonalConnector(controller.Canvas, source.DisplayRectangle.RightMiddle(), target.DisplayRectangle.LeftMiddle())
+            {
+                StartConnectedShape = source,
+                EndConnectedShape = target
+            };
+            controller.AddElement(diagonal);
+            source.AddConnection(new Connection { ToElement = diagonal, ToConnectionPoint = new ConnectionPoint(GripType.Start, diagonal.StartPoint), ElementConnectionPoint = new ConnectionPoint(GripType.RightMiddle, source.DisplayRectangle.RightMiddle()) });
+            target.AddConnection(new Connection { ToElement = diagonal, ToConnectionPoint = new ConnectionPoint(GripType.End, diagonal.EndPoint), ElementConnectionPoint = new ConnectionPoint(GripType.LeftMiddle, target.DisplayRectangle.LeftMiddle()) });
+
+            DynamicConnector replacement = controller.ConvertConnectorToOrthogonalWithUndo(diagonal, OrthogonalConnectorOrientation.LeftRight);
+
+            Assert.IsInstanceOfType(replacement, typeof(DynamicConnectorLR));
+            Assert.AreSame(replacement, source.Connections.Single().ToElement);
+
+            Assert.IsTrue(controller.UndoStack.Undo());
+            Assert.IsTrue(controller.Elements.Contains(diagonal));
+            Assert.AreSame(diagonal, source.Connections.Single().ToElement);
+            Assert.AreSame(diagonal, target.Connections.Single().ToElement);
+
+            Assert.IsTrue(controller.UndoStack.Redo());
+            DynamicConnectorLR redone = controller.Elements.OfType<DynamicConnectorLR>().Single();
+            Assert.AreSame(redone, source.Connections.Single().ToElement);
+            Assert.AreSame(redone, target.Connections.Single().ToElement);
+            Assert.IsFalse(controller.Elements.Contains(diagonal));
+        }
+
+        [TestMethod]
+        public void PropertyGridUndoRedo_RestoresTextBoundsAndConnectorLabelProperties()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box box = AddBox(controller, new Rectangle(10, 20, 100, 80));
+            var propertyGridController = new TestablePropertyGridController();
+            Rectangle newTextBounds = new Rectangle(5, 6, 40, 30);
+            controller.SelectElement(box);
+
+            propertyGridController.UpdateWithUndo(
+                controller,
+                new ShapeProperties(box),
+                nameof(ShapeProperties.TextBounds),
+                Rectangle.Empty,
+                newTextBounds);
+
+            Assert.AreEqual(newTextBounds, box.TextBounds);
+            Assert.IsTrue(controller.UndoStack.Undo());
+            Assert.AreEqual(Rectangle.Empty, box.TextBounds);
+            Assert.IsTrue(controller.UndoStack.Redo());
+            Assert.AreEqual(newTextBounds, box.TextBounds);
+
+            DynamicConnectorLR connector = new DynamicConnectorLR(controller.Canvas, new Point(20, 20), new Point(120, 90));
+            controller.AddElement(connector);
+            controller.DeselectCurrentSelectedElements();
+            controller.SelectElement(connector);
+            Size oldLabelSize = connector.LabelSize;
+            Size newLabelSize = new Size(120, 24);
+
+            propertyGridController.UpdateWithUndo(
+                controller,
+                new DynamicConnectorProperties(connector),
+                nameof(DynamicConnectorProperties.LabelSize),
+                oldLabelSize,
+                newLabelSize);
+
+            Assert.AreEqual(newLabelSize, connector.LabelSize);
+            Assert.IsTrue(controller.UndoStack.Undo());
+            Assert.AreEqual(oldLabelSize, connector.LabelSize);
+            Assert.IsTrue(controller.UndoStack.Redo());
+            Assert.AreEqual(newLabelSize, connector.LabelSize);
+        }
+
+        [TestMethod]
         public void ConvertConnectorToOrthogonal_CanCreateUpDownConnector()
         {
             BaseController controller = CreateController(600, 400);
@@ -602,6 +681,19 @@ namespace FlowSharp.Main.Tests
             connector.AutoAnchor();
 
             return connector;
+        }
+
+        private sealed class TestablePropertyGridController : PropertyGridController
+        {
+            public TestablePropertyGridController() : base(new ServiceManager(), new PropertyGrid())
+            {
+            }
+
+            public void UpdateWithUndo(BaseController controller, ElementProperties properties, string label, object oldValue, object newValue)
+            {
+                elementProperties = properties;
+                UpdateSelectedElementsWithUndo(controller, label, oldValue, newValue);
+            }
         }
 
         private static Rectangle RenderBounds(BaseController controller)
