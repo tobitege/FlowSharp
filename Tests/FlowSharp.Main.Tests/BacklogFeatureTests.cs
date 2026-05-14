@@ -92,6 +92,9 @@ namespace FlowSharp.Main.Tests
             Box source = AddBox(sourceController, new Rectangle(10, 20, 100, 80));
             source.RotationAngle = 45;
             source.WordWrap = false;
+            source.TextBounds = new Rectangle(5, 6, 40, 30);
+            source.TextMargin = 4;
+            source.ParagraphJustification = ParagraphJustification.Justify;
             source.SetCustomConnectionPoints(new[]
             {
                 new ConnectionPoint(GripType.Center, new Point(5000, 5000))
@@ -103,7 +106,60 @@ namespace FlowSharp.Main.Tests
 
             Assert.AreEqual(45, target.RotationAngle);
             Assert.IsFalse(target.WordWrap);
+            Assert.AreEqual(new Rectangle(5, 6, 40, 30), target.TextBounds);
+            Assert.AreEqual(4, target.TextMargin);
+            Assert.AreEqual(ParagraphJustification.Justify, target.ParagraphJustification);
             Assert.AreEqual(new Point(5000, 5000), target.CustomConnectionPoints.Single().Point);
+        }
+
+        [TestMethod]
+        public void NewShapes_DefaultToWrappedMultilineTextLayout()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box box = AddBox(controller, new Rectangle(10, 20, 100, 80));
+
+            Assert.IsTrue(box.Multiline);
+            Assert.IsTrue(box.WordWrap);
+            Assert.AreEqual(box.DisplayRectangle, box.GetTextDisplayRectangle());
+        }
+
+        [TestMethod]
+        public void TextBounds_AreLocalToTheShapeDisplayRectangle()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box box = AddBox(controller, new Rectangle(10, 20, 100, 80));
+            box.TextBounds = new Rectangle(5, 10, 40, 25);
+
+            Assert.AreEqual(new Rectangle(15, 30, 40, 25), box.GetTextDisplayRectangle());
+
+            box.Move(new Point(20, 30));
+
+            Assert.AreEqual(new Rectangle(35, 60, 40, 25), box.GetTextDisplayRectangle());
+        }
+
+        [TestMethod]
+        public void JustifiedText_RendersInsideCustomTextBounds()
+        {
+            BaseController controller = CreateController(260, 180);
+            Box box = AddBox(controller, new Rectangle(10, 10, 220, 140));
+            box.Text = "one two three four five six seven eight";
+            box.TextAlign = ContentAlignment.TopLeft;
+            box.TextBounds = new Rectangle(40, 35, 90, 60);
+            box.ParagraphJustification = ParagraphJustification.Justify;
+
+            using Bitmap bitmap = new Bitmap(260, 180);
+            using Graphics graphics = Graphics.FromImage(bitmap);
+            graphics.Clear(Color.White);
+            box.DrawText(graphics);
+
+            Rectangle bounds = FindNonWhiteBounds(bitmap);
+            Rectangle textBounds = box.GetTextDisplayRectangle().Grow(-box.TextMargin);
+
+            Assert.AreNotEqual(Rectangle.Empty, bounds);
+            Assert.IsTrue(bounds.Left >= textBounds.Left - 1);
+            Assert.IsTrue(bounds.Top >= textBounds.Top - 1);
+            Assert.IsTrue(bounds.Right <= textBounds.Right + 1);
+            Assert.IsTrue(bounds.Bottom <= textBounds.Bottom + 1);
         }
 
         [TestMethod]

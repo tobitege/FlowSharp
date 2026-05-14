@@ -238,7 +238,7 @@ The repository includes `tools\FlowSharpRepl.ps1`, a PowerShell REPL client for 
 
 ## Text for shapes
 
-Shape text supports top, middle, and bottom vertical alignment combined with left, center, and right horizontal alignment. Text alignment is persisted with diagrams.
+Shape text supports wrapped multiline layout, local text bounds, text margins, paragraph justification, and top, middle, and bottom vertical alignment combined with left, center, and right horizontal alignment. Text layout settings are persisted with diagrams.
 
 ![Text](https://github.com/cliftonm/FlowSharp/blob/master/Article/img4.png)
 
@@ -283,9 +283,6 @@ Please contribute to working on this list!
 - Page and print workflow:
   - Ruler margins / page boundaries.
 - Shape and connector text:
-  - Shape text boundaries can be easily exceeded.
-  - No full paragraph justification.
-  - Single line only - no auto-wrap.
   - Connector text.
 - Connector rendering, anchors, and routing:
   - Other line caps besides an arrow and diamond.

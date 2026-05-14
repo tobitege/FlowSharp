@@ -25,6 +25,12 @@ namespace FlowSharpLib
         public bool Multiline { get; set; }
         [Category("Text")]
         public bool WordWrap { get; set; }
+        [Category("Text")]
+        public Rectangle TextBounds { get; set; }
+        [Category("Text")]
+        public int TextMargin { get; set; }
+        [Category("Text")]
+        public ParagraphJustification ParagraphJustification { get; set; }
         [Category("Geometry")]
         public int RotationAngle { get; set; }
 
@@ -36,6 +42,9 @@ namespace FlowSharpLib
             TextAlign = el.TextAlign;
             Multiline = el.Multiline;
             WordWrap = el.WordWrap;
+            TextBounds = el.TextBounds;
+            TextMargin = el.TextMargin;
+            ParagraphJustification = el.ParagraphJustification;
             RotationAngle = el.RotationAngle;
         }
 
@@ -52,6 +61,9 @@ namespace FlowSharpLib
             (label == nameof(TextAlign)).If(() => el.TextAlign = TextAlign);
             (label == nameof(Multiline)).If(() => el.Multiline = Multiline);
             (label == nameof(WordWrap)).If(() => el.WordWrap = WordWrap);
+            (label == nameof(TextBounds)).If(() => el.TextBounds = TextBounds);
+            (label == nameof(TextMargin)).If(() => el.TextMargin = TextMargin);
+            (label == nameof(ParagraphJustification)).If(() => el.ParagraphJustification = ParagraphJustification);
             (label == nameof(RotationAngle)).If(() => el.RotationAngle = RotationAngle);
             base.Update(el, label);
         }

@@ -18,7 +18,6 @@ Finish the remaining partial feature work: richer text/connector editing, target
 
 | # | Issue | Status | Notes |
 | --- | --- | --- | --- |
-| 2 | Shape text improvements | Partial | Word-wrap state and persistence are implemented; text bounds, paragraph justification, and richer layout behavior remain open. |
 | 3 | Connector text | Partial | Dynamic connector midpoint labels are implemented; broader connector label editing remains open. |
 | 4 | Property-change redraw optimization | Partial | New editable values are exposed through existing property paths; targeted redraw optimization remains limited. |
 | 5 | Force V/H connectors | Partial | Orthogonal connector types exist; force-convert/remove-diagonal behavior remains open. |
@@ -30,6 +29,6 @@ Finish the remaining partial feature work: richer text/connector editing, target
 
 ## Open Regression Work
 
-- [ ] Re-run text and connector rendering checks when label editing or text layout changes.
+- [ ] Re-run text and connector rendering checks when label editing changes.
 - [ ] Re-run connector checks when anchor, routing, V/H conversion, or dynamic connector behavior changes.
 - [ ] Re-run selection, grouping, snapping, and layout checks when drag integration or alignment workflow changes.

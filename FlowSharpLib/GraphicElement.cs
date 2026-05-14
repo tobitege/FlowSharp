@@ -40,6 +40,12 @@ namespace FlowSharpLib
         }
     }
 
+    public enum ParagraphJustification
+    {
+        Normal,
+        Justify
+    }
+
     public class GraphicElement : IDisposable
     {
         // public EventHandler<PropertiesChangedEventArgs> PropertiesChanged;
@@ -110,6 +116,9 @@ namespace FlowSharpLib
         public ContentAlignment TextAlign { get; set; }
         public bool Multiline { get; set; }
         public bool WordWrap { get; set; }
+        public Rectangle TextBounds { get; set; }
+        public int TextMargin { get; set; }
+        public ParagraphJustification ParagraphJustification { get; set; }
         public int RotationAngle { get; set; }
         public List<ConnectionPoint> CustomConnectionPoints { get; set; }
         // TODO: Text location - left, top, right, middle, bottom
@@ -169,7 +178,10 @@ namespace FlowSharpLib
             TextFont = new Font(FontFamily.GenericSansSerif, 10);
             TextColor = Color.Black;
             TextAlign = ContentAlignment.MiddleCenter;
+            Multiline = true;
             WordWrap = true;
+            TextMargin = 3;
+            ParagraphJustification = ParagraphJustification.Normal;
             CustomConnectionPoints = new List<ConnectionPoint>();
         }
 
@@ -307,8 +319,9 @@ namespace FlowSharpLib
 
             if (Multiline)
             {
-                tb.Location = DisplayRectangle.Location;
-                tb.Size = new Size(DisplayRectangle.Width, DisplayRectangle.Height);
+                Rectangle textRectangle = GetTextDisplayRectangle();
+                tb.Location = textRectangle.Location;
+                tb.Size = textRectangle.Size;
             }
             else
             {
@@ -356,6 +369,9 @@ namespace FlowSharpLib
             epb.TextAlign = TextAlign;
             epb.Multiline = Multiline;
             epb.WordWrap = WordWrap;
+            epb.TextBounds = TextBounds;
+            epb.TextMargin = TextMargin;
+            epb.ParagraphJustification = ParagraphJustification;
             epb.RotationAngle = RotationAngle;
             epb.TextFontFamily = TextFont.FontFamily.Name;
             epb.TextFontSize = TextFont.Size;
@@ -405,6 +421,9 @@ namespace FlowSharpLib
             TextAlign = epb.TextAlign == 0 ? ContentAlignment.MiddleCenter : epb.TextAlign;
             Multiline = epb.Multiline;
             WordWrap = epb.WordWrap;
+            TextBounds = epb.TextBounds;
+            TextMargin = epb.TextMargin <= 0 ? 3 : epb.TextMargin;
+            ParagraphJustification = epb.ParagraphJustification;
             RotationAngle = epb.RotationAngle;
             TextFont.Dispose();
             var fontStyle = (epb.TextFontUnderline ? FontStyle.Underline : FontStyle.Regular) | (epb.TextFontItalic ? FontStyle.Italic : FontStyle.Regular) | (epb.TextFontStrikeout ? FontStyle.Strikeout : FontStyle.Regular) | (epb.TextFontBold ? FontStyle.Bold : FontStyle.Regular);
@@ -833,12 +852,163 @@ namespace FlowSharpLib
             using (var brush = new SolidBrush(textColor))
             using (var format = CreateTextFormat(textAlign))
             {
-                gr.DrawString(text, font, brush, ZoomRectangle.Grow(-3), format);
+                Rectangle layoutRectangle = GetZoomTextDisplayRectangle().Grow(-TextMargin);
+
+                if (ParagraphJustification == ParagraphJustification.Justify && Multiline && WordWrap)
+                {
+                    DrawJustifiedText(gr, text, font, brush, layoutRectangle, format);
+                }
+                else
+                {
+                    gr.DrawString(text, font, brush, layoutRectangle, format);
+                }
             }
 
             if (disposeFont)
             {
                 font.Dispose();
+            }
+        }
+
+        public Rectangle GetTextDisplayRectangle()
+        {
+            if (TextBounds == Rectangle.Empty || TextBounds.Width <= 0 || TextBounds.Height <= 0)
+            {
+                return DisplayRectangle;
+            }
+
+            return new Rectangle(
+                DisplayRectangle.Left + TextBounds.X,
+                DisplayRectangle.Top + TextBounds.Y,
+                TextBounds.Width,
+                TextBounds.Height);
+        }
+
+        protected Rectangle GetZoomTextDisplayRectangle()
+        {
+            Rectangle textRectangle = GetTextDisplayRectangle();
+
+            return canvas.Controller == null
+                ? textRectangle
+                : canvas.WorldToClient(textRectangle, canvas.Controller.Zoom);
+        }
+
+        protected virtual void DrawJustifiedText(Graphics gr, string text, Font font, Brush brush, Rectangle layoutRectangle, StringFormat format)
+        {
+            var lines = BuildTextLayoutLines(gr, text, font, layoutRectangle.Width);
+            if (lines.Count == 0)
+            {
+                return;
+            }
+
+            var state = gr.Save();
+            try
+            {
+                gr.SetClip(layoutRectangle);
+                float lineHeight = font.GetHeight(gr);
+                float totalHeight = lineHeight * lines.Count;
+                float y = GetAlignedTextY(layoutRectangle, totalHeight, format.LineAlignment);
+
+                foreach (var line in lines)
+                {
+                    if (line.Words.Count > 1 && !line.LastInParagraph)
+                    {
+                        DrawJustifiedLine(gr, line.Words, font, brush, layoutRectangle, y);
+                    }
+                    else
+                    {
+                        gr.DrawString(line.Text, font, brush, new RectangleF(layoutRectangle.Left, y, layoutRectangle.Width, lineHeight), format);
+                    }
+
+                    y += lineHeight;
+                }
+            }
+            finally
+            {
+                gr.Restore(state);
+            }
+        }
+
+        protected virtual List<TextLayoutLine> BuildTextLayoutLines(Graphics gr, string text, Font font, int width)
+        {
+            var lines = new List<TextLayoutLine>();
+            var paragraphs = (text ?? string.Empty).Replace("\r\n", "\n").Split('\n');
+
+            foreach (string paragraph in paragraphs)
+            {
+                if (!Multiline || !WordWrap || width <= 0)
+                {
+                    lines.Add(new TextLayoutLine(paragraph, true));
+                    continue;
+                }
+
+                var words = paragraph.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (words.Length == 0)
+                {
+                    lines.Add(new TextLayoutLine(string.Empty, true));
+                    continue;
+                }
+
+                string current = words[0];
+                for (int n = 1; n < words.Length; n++)
+                {
+                    string candidate = current + " " + words[n];
+                    if (gr.MeasureString(candidate, font).Width <= width)
+                    {
+                        current = candidate;
+                    }
+                    else
+                    {
+                        lines.Add(new TextLayoutLine(current, false));
+                        current = words[n];
+                    }
+                }
+
+                lines.Add(new TextLayoutLine(current, true));
+            }
+
+            return lines;
+        }
+
+        protected virtual void DrawJustifiedLine(Graphics gr, IReadOnlyList<string> words, Font font, Brush brush, Rectangle layoutRectangle, float y)
+        {
+            float wordsWidth = words.Sum(word => gr.MeasureString(word, font).Width);
+            float spaceWidth = (layoutRectangle.Width - wordsWidth) / (words.Count - 1);
+            float x = layoutRectangle.Left;
+
+            foreach (string word in words)
+            {
+                gr.DrawString(word, font, brush, x, y);
+                x += gr.MeasureString(word, font).Width + spaceWidth;
+            }
+        }
+
+        protected static float GetAlignedTextY(Rectangle layoutRectangle, float textHeight, StringAlignment lineAlignment)
+        {
+            switch (lineAlignment)
+            {
+                case StringAlignment.Center:
+                    return layoutRectangle.Top + (layoutRectangle.Height - textHeight) / 2;
+
+                case StringAlignment.Far:
+                    return layoutRectangle.Bottom - textHeight;
+
+                default:
+                    return layoutRectangle.Top;
+            }
+        }
+
+        protected class TextLayoutLine
+        {
+            public string Text { get; }
+            public IReadOnlyList<string> Words { get; }
+            public bool LastInParagraph { get; }
+
+            public TextLayoutLine(string text, bool lastInParagraph)
+            {
+                Text = text;
+                Words = text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                LastInParagraph = lastInParagraph;
             }
         }
 
