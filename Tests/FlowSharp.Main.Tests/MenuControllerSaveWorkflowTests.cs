@@ -71,6 +71,46 @@ namespace FlowSharp.Main.Tests
         }
 
         [TestMethod]
+        public void SaveDiagram_WhenSaveIntroducesActiveCanvasFilename_UpdatesMruWithNewFilename()
+        {
+            string originalDirectory = Directory.GetCurrentDirectory();
+            string tempDir = Path.Combine(Path.GetTempPath(), "flowsharp-mru-new-filename-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDir);
+
+            try
+            {
+                Directory.SetCurrentDirectory(tempDir);
+
+                string newFilename = Path.Combine(tempDir, "new-diagram.fsd");
+                BaseController activeController = CreateController();
+                var canvasService = new TestCanvasService(activeController)
+                {
+                    AssignActiveFilenameOnSave = true
+                };
+                var editService = new TestEditService();
+                ServiceManager serviceManager = CreateServiceManager(canvasService, editService);
+                var controller = new TestableMenuController(serviceManager);
+
+                controller.InvokeSaveDiagram(newFilename);
+
+                Assert.AreEqual(newFilename, activeController.Filename);
+                Assert.AreEqual(newFilename, canvasService.LastSavedFilename);
+                CollectionAssert.AreEqual(
+                    new[] { newFilename },
+                    File.ReadAllLines(Path.Combine(tempDir, "FlowSharp.mru")));
+            }
+            finally
+            {
+                Directory.SetCurrentDirectory(originalDirectory);
+
+                if (Directory.Exists(tempDir))
+                {
+                    Directory.Delete(tempDir, true);
+                }
+            }
+        }
+
+        [TestMethod]
         public void MenuStrip_ExposesPrintCommandWithShortcut()
         {
             BaseController activeController = CreateController();
@@ -257,6 +297,7 @@ namespace FlowSharp.Main.Tests
 
             public string LastSavedFilename { get; private set; }
             public bool LastSelectionOnly { get; private set; }
+            public bool AssignActiveFilenameOnSave { get; set; }
 
             public TestCanvasService(BaseController activeController)
             {
@@ -292,6 +333,11 @@ namespace FlowSharp.Main.Tests
             {
                 LastSavedFilename = filename;
                 LastSelectionOnly = selectionOnly;
+                if (AssignActiveFilenameOnSave)
+                {
+                    ActiveController.Filename = filename;
+                }
+
                 File.WriteAllText(filename, "saved");
             }
 
