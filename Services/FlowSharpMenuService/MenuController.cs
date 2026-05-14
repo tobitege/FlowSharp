@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Printing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
@@ -138,6 +139,7 @@ namespace FlowSharpMenuService
             mnuSave.Click += MnuSave_Click;
             mnuSaveAs.Click += MnuSaveAs_Click;
             mnuSaveSelectionAs.Click += MnuSaveSelectionAs_Click;
+            mnuPrint.Click += MnuPrint_Click;
             mnuExit.Click += MnuExit_Click;
             mnuCopy.Click += MnuCopy_Click;
             mnuPaste.Click += MnuPaste_Click;
@@ -639,6 +641,33 @@ namespace FlowSharpMenuService
             {
                 MessageBox.Show("Nothing to save.", "Empty Canvas", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
+        }
+
+        private void MnuPrint_Click(object sender, EventArgs e)
+        {
+            var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
+
+            if (canvasController.Elements.Count == 0)
+            {
+                MessageBox.Show("Nothing to print.", "Empty Canvas", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using (PrintDocument document = canvasController.CreatePrintDocument())
+            {
+                ShowPrintDialog(document);
+            }
+        }
+
+        protected virtual DialogResult ShowPrintDialog(PrintDocument document)
+        {
+            using var dialog = new PrintDialog
+            {
+                Document = document,
+                UseEXDialog = true
+            };
+
+            return dialog.ShowDialog(mainForm);
         }
 
         private void MnuExit_Click(object sender, EventArgs e)

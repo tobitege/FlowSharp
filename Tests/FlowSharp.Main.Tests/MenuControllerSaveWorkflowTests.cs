@@ -1,5 +1,8 @@
 using System;
+using System.Drawing;
+using System.Drawing.Printing;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 using Clifton.Core.ServiceManagement;
@@ -67,6 +70,39 @@ namespace FlowSharp.Main.Tests
             }
         }
 
+        [TestMethod]
+        public void MenuStrip_ExposesPrintCommandWithShortcut()
+        {
+            BaseController activeController = CreateController();
+            var canvasService = new TestCanvasService(activeController);
+            var editService = new TestEditService();
+            ServiceManager serviceManager = CreateServiceManager(canvasService, editService);
+            var controller = new MenuController(serviceManager);
+
+            ToolStripMenuItem printItem = FindMenuItem(controller.MenuStrip.Items, "mnuPrint");
+
+            Assert.IsNotNull(printItem);
+            Assert.AreEqual("&Print...", printItem.Text);
+            Assert.AreEqual(Keys.Control | Keys.P, printItem.ShortcutKeys);
+        }
+
+        [TestMethod]
+        public void PrintCommand_CreatesPrintDocumentAndShowsDialog()
+        {
+            BaseController activeController = CreateController();
+            AddBox(activeController);
+            var canvasService = new TestCanvasService(activeController);
+            var editService = new TestEditService();
+            ServiceManager serviceManager = CreateServiceManager(canvasService, editService);
+            var controller = new TestableMenuController(serviceManager);
+
+            controller.ClickMenuItem("mnuPrint");
+
+            Assert.IsTrue(controller.PrintDialogShown);
+            Assert.IsNotNull(controller.PrintDialogDocument);
+            Assert.AreEqual("document", controller.PrintDialogDocument.DocumentName);
+        }
+
         private static ServiceManager CreateServiceManager(TestCanvasService canvasService, TestEditService editService)
         {
             var serviceManager = new ServiceManager();
@@ -85,15 +121,66 @@ namespace FlowSharp.Main.Tests
             return new CanvasController(canvas);
         }
 
+        private static void AddBox(BaseController controller)
+        {
+            var box = new Box(controller.Canvas)
+            {
+                DisplayRectangle = new Rectangle(10, 10, 20, 20)
+            };
+            box.UpdatePath();
+            controller.AddElement(box);
+        }
+
+        private static ToolStripMenuItem FindMenuItem(ToolStripItemCollection items, string name)
+        {
+            foreach (ToolStripItem item in items)
+            {
+                if (item is ToolStripMenuItem menuItem)
+                {
+                    if (menuItem.Name == name)
+                    {
+                        return menuItem;
+                    }
+
+                    ToolStripMenuItem child = FindMenuItem(menuItem.DropDownItems, name);
+                    if (child != null)
+                    {
+                        return child;
+                    }
+                }
+            }
+
+            return null;
+        }
+
         private sealed class TestableMenuController : MenuController
         {
             public TestableMenuController(IServiceManager serviceManager) : base(serviceManager)
             {
+                InitializeMenuHandlers();
             }
 
             public void InvokeSaveDiagram(string filename)
             {
                 SaveDiagram(filename);
+            }
+
+            public bool PrintDialogShown { get; private set; }
+            public PrintDocument PrintDialogDocument { get; private set; }
+
+            public void ClickMenuItem(string name)
+            {
+                ToolStripMenuItem item = FindMenuItem(MenuStrip.Items, name);
+                Assert.IsNotNull(item);
+                item.PerformClick();
+            }
+
+            protected override DialogResult ShowPrintDialog(PrintDocument document)
+            {
+                PrintDialogShown = true;
+                PrintDialogDocument = document;
+
+                return DialogResult.Cancel;
             }
         }
 

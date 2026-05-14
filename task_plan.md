@@ -12,13 +12,12 @@ This file tracks only open work. Completed items and historical discovery notes 
 
 ## Current Focus
 
-Finish the remaining partial feature work: print command verification, richer text/connector editing, targeted redraw behavior, connector conversion/rerouting semantics, snapping integration, layout command wiring, property UX, and broader undo/redo coverage.
+Finish the remaining partial feature work: richer text/connector editing, targeted redraw behavior, connector conversion/rerouting semantics, snapping integration, layout command wiring, property UX, and broader undo/redo coverage.
 
 ## Open Issues
 
 | # | Issue | Status | Notes |
 | --- | --- | --- | --- |
-| 1 | Printing | Partial | `RenderTo` and `CreatePrintDocument` exist and have tests; print UI command/dialog verification remains open. |
 | 2 | Shape text improvements | Partial | Word-wrap state and persistence are implemented; text bounds, paragraph justification, and richer layout behavior remain open. |
 | 3 | Connector text | Partial | Dynamic connector midpoint labels are implemented; broader connector label editing remains open. |
 | 4 | Property-change redraw optimization | Partial | New editable values are exposed through existing property paths; targeted redraw optimization remains limited. |
@@ -31,7 +30,6 @@ Finish the remaining partial feature work: print command verification, richer te
 
 ## Open Regression Work
 
-- [ ] Re-run printing and export checks when print UI command behavior changes.
 - [ ] Re-run text and connector rendering checks when label editing or text layout changes.
 - [ ] Re-run connector checks when anchor, routing, V/H conversion, or dynamic connector behavior changes.
 - [ ] Re-run selection, grouping, snapping, and layout checks when drag integration or alignment workflow changes.

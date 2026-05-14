@@ -245,6 +245,10 @@ Shape text supports top, middle, and bottom vertical alignment combined with lef
 ## Export diagram to PNG
 ![PNG](https://github.com/cliftonm/FlowSharp/blob/master/Article/img5.png)
 
+## Print workflow
+
+The File menu includes a Print command that opens the Windows print dialog and prints the active diagram through the same viewport-independent renderer used by export.
+
 ## Multi-canvas workspace saves
 
 Workspaces can save multiple canvases. Unnamed secondary canvases are assigned sibling filenames such as `diagram-1.fsd`, including when the base filename is relative.
@@ -278,7 +282,6 @@ Please contribute to working on this list!
   - True drag-from-toolbox-onto-surface.
 - Page and print workflow:
   - Ruler margins / page boundaries.
-  - Printing.
 - Shape and connector text:
   - Shape text boundaries can be easily exceeded.
   - No full paragraph justification.
