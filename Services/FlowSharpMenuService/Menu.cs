@@ -427,6 +427,7 @@ namespace FlowSharpMenuService
             mnuZoom10.Tag = 10;
 
             // alignToolStripMenuItem
+            alignToolStripMenuItem.Name = "alignToolStripMenuItem";
             alignToolStripMenuItem.Text = "Al&ign";
             alignToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[]
                 {
@@ -438,11 +439,17 @@ namespace FlowSharpMenuService
                     mnuAlignSizes
                 });
 
+            mnuAlignLefts.Name = "mnuAlignLefts";
             mnuAlignLefts.Text = "Align &Lefts";
+            mnuAlignRights.Name = "mnuAlignRights";
             mnuAlignRights.Text = "Align &Rights";
+            mnuAlignTops.Name = "mnuAlignTops";
             mnuAlignTops.Text = "Align &Tops";
+            mnuAlignBottoms.Name = "mnuAlignBottoms";
             mnuAlignBottoms.Text = "Align &Bottoms";
+            mnuAlignCenters.Name = "mnuAlignCenters";
             mnuAlignCenters.Text = "Align &Centers";
+            mnuAlignSizes.Name = "mnuAlignSizes";
             mnuAlignSizes.Text = "Align &Sizes";
 
             // 

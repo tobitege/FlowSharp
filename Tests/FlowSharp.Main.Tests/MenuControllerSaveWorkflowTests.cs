@@ -103,6 +103,47 @@ namespace FlowSharp.Main.Tests
             Assert.AreEqual("document", controller.PrintDialogDocument.DocumentName);
         }
 
+        [TestMethod]
+        public void MenuStrip_ExposesAlignCommands()
+        {
+            BaseController activeController = CreateController();
+            var canvasService = new TestCanvasService(activeController);
+            var editService = new TestEditService();
+            ServiceManager serviceManager = CreateServiceManager(canvasService, editService);
+            var controller = new MenuController(serviceManager);
+
+            Assert.AreEqual("Al&ign", FindMenuItem(controller.MenuStrip.Items, "alignToolStripMenuItem").Text);
+            Assert.AreEqual("Align &Lefts", FindMenuItem(controller.MenuStrip.Items, "mnuAlignLefts").Text);
+            Assert.AreEqual("Align &Rights", FindMenuItem(controller.MenuStrip.Items, "mnuAlignRights").Text);
+            Assert.AreEqual("Align &Tops", FindMenuItem(controller.MenuStrip.Items, "mnuAlignTops").Text);
+            Assert.AreEqual("Align &Bottoms", FindMenuItem(controller.MenuStrip.Items, "mnuAlignBottoms").Text);
+        }
+
+        [TestMethod]
+        public void AlignLeftsMenuCommand_AlignsSelectedShapesAndSupportsUndoRedo()
+        {
+            BaseController activeController = CreateController();
+            Box left = AddBox(activeController, new Rectangle(10, 10, 20, 20));
+            Box right = AddBox(activeController, new Rectangle(50, 25, 20, 20));
+            activeController.SelectElement(left);
+            activeController.SelectElement(right);
+            var canvasService = new TestCanvasService(activeController);
+            var editService = new TestEditService();
+            ServiceManager serviceManager = CreateServiceManager(canvasService, editService);
+            var controller = new TestableMenuController(serviceManager);
+
+            controller.ClickMenuItem("mnuAlignLefts");
+
+            Assert.AreEqual(10, left.DisplayRectangle.Left);
+            Assert.AreEqual(10, right.DisplayRectangle.Left);
+
+            Assert.IsTrue(activeController.UndoStack.Undo());
+            Assert.AreEqual(50, right.DisplayRectangle.Left);
+
+            Assert.IsTrue(activeController.UndoStack.Redo());
+            Assert.AreEqual(10, right.DisplayRectangle.Left);
+        }
+
         private static ServiceManager CreateServiceManager(TestCanvasService canvasService, TestEditService editService)
         {
             var serviceManager = new ServiceManager();
@@ -123,12 +164,19 @@ namespace FlowSharp.Main.Tests
 
         private static void AddBox(BaseController controller)
         {
+            AddBox(controller, new Rectangle(10, 10, 20, 20));
+        }
+
+        private static Box AddBox(BaseController controller, Rectangle rectangle)
+        {
             var box = new Box(controller.Canvas)
             {
-                DisplayRectangle = new Rectangle(10, 10, 20, 20)
+                DisplayRectangle = rectangle
             };
             box.UpdatePath();
             controller.AddElement(box);
+
+            return box;
         }
 
         private static ToolStripMenuItem FindMenuItem(ToolStripItemCollection items, string name)

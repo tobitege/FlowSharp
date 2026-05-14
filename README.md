@@ -254,6 +254,8 @@ Dynamic connectors reroute to facing shape anchors when connected shapes move or
 
 Dragging selected shapes snaps nearby centers and edges to other visible shapes.
 
+The Align menu exposes left, right, top, and bottom selected-shape alignment commands with undo/redo support.
+
 ## Export diagram to PNG
 ![PNG](https://github.com/cliftonm/FlowSharp/blob/master/Article/img5.png)
 
@@ -302,7 +304,6 @@ Please contribute to working on this list!
   - Three-line connector middle-line repositioning.
 - Geometry and layout commands:
   - Shape rotation.
-  - Align selected shapes left/top/right/bottom to leftmost/topmost/rightmost/bottommost.
   - Regroup, so shapes can be manipulated and then regrouped.
 - Cross-cutting UX and history:
   - Better property UX - PropertyGrid's are ok for developers, they are awful for users.
