@@ -475,6 +475,40 @@ namespace FlowSharp.Main.Tests
         }
 
         [TestMethod]
+        public void MoveConnectedShape_ReroutesDynamicConnectorToFacingAnchors()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box source = AddBox(controller, new Rectangle(100, 100, 50, 50));
+            Box target = AddBox(controller, new Rectangle(240, 100, 50, 50));
+            DynamicConnectorLR connector = AddDynamicConnector(controller, source, target);
+
+            controller.MoveElement(target, new Point(-220, 0));
+
+            Assert.AreEqual(source.DisplayRectangle.LeftMiddle(), connector.StartPoint);
+            Assert.AreEqual(target.DisplayRectangle.RightMiddle(), connector.EndPoint);
+            Assert.AreEqual(GripType.LeftMiddle, source.Connections.Single().ElementConnectionPoint.Type);
+            Assert.AreEqual(GripType.RightMiddle, target.Connections.Single().ElementConnectionPoint.Type);
+        }
+
+        [TestMethod]
+        public void UpdateConnections_ReroutesDynamicConnectorAfterShapeGeometryChange()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box source = AddBox(controller, new Rectangle(100, 100, 50, 50));
+            Box target = AddBox(controller, new Rectangle(240, 100, 50, 50));
+            DynamicConnectorLR connector = AddDynamicConnector(controller, source, target);
+
+            target.DisplayRectangle = new Rectangle(100, 240, 50, 50);
+            target.UpdatePath();
+            controller.UpdateConnections(target);
+
+            Assert.AreEqual(source.DisplayRectangle.BottomMiddle(), connector.StartPoint);
+            Assert.AreEqual(target.DisplayRectangle.TopMiddle(), connector.EndPoint);
+            Assert.AreEqual(GripType.BottomMiddle, source.Connections.Single().ElementConnectionPoint.Type);
+            Assert.AreEqual(GripType.TopMiddle, target.Connections.Single().ElementConnectionPoint.Type);
+        }
+
+        [TestMethod]
         public void RegroupShapes_RestoresGroupMembershipAfterUngroup()
         {
             BaseController controller = CreateController(600, 400);
@@ -516,6 +550,24 @@ namespace FlowSharp.Main.Tests
             controller.AddElement(box);
 
             return box;
+        }
+
+        private static DynamicConnectorLR AddDynamicConnector(BaseController controller, Box source, Box target)
+        {
+            DynamicConnectorLR connector = new DynamicConnectorLR(
+                controller.Canvas,
+                source.DisplayRectangle.RightMiddle(),
+                target.DisplayRectangle.LeftMiddle())
+            {
+                StartConnectedShape = source,
+                EndConnectedShape = target
+            };
+            controller.AddElement(connector);
+            source.AddConnection(new Connection { ToElement = connector, ToConnectionPoint = new ConnectionPoint(GripType.Start, connector.StartPoint), ElementConnectionPoint = new ConnectionPoint(GripType.RightMiddle, source.DisplayRectangle.RightMiddle()) });
+            target.AddConnection(new Connection { ToElement = connector, ToConnectionPoint = new ConnectionPoint(GripType.End, connector.EndPoint), ElementConnectionPoint = new ConnectionPoint(GripType.LeftMiddle, target.DisplayRectangle.LeftMiddle()) });
+            connector.AutoAnchor();
+
+            return connector;
         }
 
         private static Rectangle RenderBounds(BaseController controller)

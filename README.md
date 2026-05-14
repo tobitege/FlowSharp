@@ -250,6 +250,8 @@ Connectors support editable labels with persisted label size and offset, so conn
 
 Diagonal connectors can be converted to left-right or up-down orthogonal dynamic connectors while preserving labels, caps, endpoints, and attached shape connections.
 
+Dynamic connectors reroute to facing shape anchors when connected shapes move or their geometry changes, and the stored attachment metadata follows the new anchor points.
+
 ## Export diagram to PNG
 ![PNG](https://github.com/cliftonm/FlowSharp/blob/master/Article/img5.png)
 
@@ -296,7 +298,6 @@ Please contribute to working on this list!
   - Adjust custom connection points intelligently when shape is resized.
   - Auto-anchor.
   - Three-line connector middle-line repositioning.
-  - True dynamic connectors.
 - Geometry and layout commands:
   - Shape rotation.
   - Snap shapes to centers and edges.

@@ -638,8 +638,12 @@ namespace FlowSharpLib
 
         public void MoveLineOrAnchor(Connection c, Point delta)
         {
-            // TODO: Improve this code, somehow.
-            if (c.ToElement is Line)
+            if (c.ToElement is DynamicConnector dynamicConnector &&
+                (dynamicConnector.StartConnectedShape != null || dynamicConnector.EndConnectedShape != null))
+            {
+                dynamicConnector.AutoAnchor();
+            }
+            else if (c.ToElement is Line)
             {
                 c.ToElement.Move(delta);
             }
@@ -1329,8 +1333,21 @@ namespace FlowSharpLib
 
         public void UpdateConnections(GraphicElement el)
         {
+            HashSet<DynamicConnector> reroutedConnectors = new HashSet<DynamicConnector>();
+
             el.Connections.ForEach(c =>
             {
+                if (c.ToElement is DynamicConnector dynamicConnector &&
+                    (dynamicConnector.StartConnectedShape != null || dynamicConnector.EndConnectedShape != null))
+                {
+                    if (reroutedConnectors.Add(dynamicConnector))
+                    {
+                        dynamicConnector.AutoAnchor();
+                    }
+
+                    return;
+                }
+
                 // Connection point on shape.
                 var cps = el.GetConnectionPoints().Where(cp2 => cp2.Type == c.ElementConnectionPoint.Type);
                 cps.ForEach(cp => c.ToElement.MoveAnchor(cp, c.ToConnectionPoint));

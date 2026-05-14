@@ -179,6 +179,7 @@ namespace FlowSharpLib
                 Point target = EndConnectedShape?.DisplayRectangle.Center() ?? EndPoint;
                 ConnectionPoint start = GetFacingConnectionPoint(StartConnectedShape, target);
                 StartPoint = start.Point;
+                UpdateAttachedConnection(StartConnectedShape, GripType.Start, start);
             }
 
             if (EndConnectedShape != null)
@@ -186,6 +187,7 @@ namespace FlowSharpLib
                 Point target = StartConnectedShape?.DisplayRectangle.Center() ?? StartPoint;
                 ConnectionPoint end = GetFacingConnectionPoint(EndConnectedShape, target);
                 EndPoint = end.Point;
+                UpdateAttachedConnection(EndConnectedShape, GripType.End, end);
             }
 
             UpdatePath();
@@ -213,6 +215,21 @@ namespace FlowSharpLib
 
             return shape.GetConnectionPoints().FirstOrDefault(cp => cp.Type == preferred)
                 ?? shape.GetNearestConnectionPoint(target);
+        }
+
+        protected void UpdateAttachedConnection(GraphicElement shape, GripType connectorGrip, ConnectionPoint shapeConnectionPoint)
+        {
+            ConnectionPoint connectorConnectionPoint = new ConnectionPoint(
+                connectorGrip,
+                connectorGrip == GripType.Start ? StartPoint : EndPoint);
+
+            shape.Connections
+                .Where(c => c.ToElement == this && c.ToConnectionPoint.Type == connectorGrip)
+                .ForEach(c =>
+                {
+                    c.ToConnectionPoint = connectorConnectionPoint;
+                    c.ElementConnectionPoint = shapeConnectionPoint;
+                });
         }
 
         public override void UpdateSize(ShapeAnchor anchor, Point delta)
