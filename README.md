@@ -321,7 +321,6 @@ Workspaces can save multiple canvases. Unnamed secondary canvases are assigned s
 Please contribute to working on this list!
 
 - Viewport and placement:
-  - Full zoom behavior for rendering, hit testing, grips, selection feedback, and scrollbars.
   - True drag-from-toolbox-onto-surface.
 - Page and print workflow:
   - Ruler margins / page boundaries.

@@ -45,6 +45,27 @@ namespace FlowSharp.Main.Tests
         }
 
         [TestMethod]
+        public void SetZoom_UsesViewportAdjustedCoordinatesForHitTestingSelectionAndGrips()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box box = AddBox(controller, new Rectangle(100, 80, 50, 40));
+
+            controller.Canvas.UpdateScrollbars(new Rectangle(0, 0, 1200, 900), 100);
+            controller.Canvas.SetViewportOrigin(30, 20);
+            controller.SetZoom(200);
+
+            Point clientCenter = box.ZoomRectangle.Center();
+            GraphicElement hit = controller.GetRootShapeAt(clientCenter);
+            controller.SelectElement(box);
+            ShapeAnchor bottomRightGrip = box.GetAnchors().Single(anchor => anchor.Type == GripType.BottomRight);
+
+            Assert.AreSame(box, hit);
+            Assert.IsTrue(box.Selected);
+            Assert.AreEqual(box.ZoomRectangle.Right, bottomRightGrip.Rectangle.Right);
+            Assert.AreEqual(box.ZoomRectangle.Bottom, bottomRightGrip.Rectangle.Bottom);
+        }
+
+        [TestMethod]
         public void InsertAt_CentersDefaultShapeAtClientPointInWorldCoordinates()
         {
             BaseController controller = CreateController(600, 400);
