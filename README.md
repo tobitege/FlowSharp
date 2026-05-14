@@ -320,8 +320,6 @@ Workspaces can save multiple canvases. Unnamed secondary canvases are assigned s
 
 Please contribute to working on this list!
 
-- Page and print workflow:
-  - Ruler margins / page boundaries.
 - Connector rendering, anchors, and routing:
   - Other line caps besides an arrow and diamond.
   - Custom defined connection points / custom anchor points, including on connectors.

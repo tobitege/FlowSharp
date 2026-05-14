@@ -79,6 +79,31 @@ namespace FlowSharp.Main.Tests
         }
 
         [TestMethod]
+        public void PageBounds_DrawsPageMarginsAndContributesToScrollableViewport()
+        {
+            TestableCanvas canvas = new TestableCanvas
+            {
+                Size = new Size(120, 100),
+                PageBounds = new Rectangle(10, 10, 180, 140),
+                PageMargins = new System.Windows.Forms.Padding(20, 15, 30, 25),
+                ShowPageBounds = true
+            };
+            canvas.CreateBitmap(120, 100);
+            BaseController controller = new CanvasController(canvas);
+
+            canvas.UpdateScrollbars(Rectangle.Empty, controller.Zoom);
+
+            using Bitmap bitmap = new Bitmap(240, 180);
+            using Graphics graphics = Graphics.FromImage(bitmap);
+            graphics.Clear(Color.White);
+            canvas.RenderPageBounds(graphics);
+
+            Assert.AreEqual(new Size(180, 140), canvas.VirtualSize);
+            Assert.IsTrue(ContainsNonWhitePixel(bitmap, new Rectangle(10, 10, 181, 1)));
+            Assert.IsTrue(ContainsNonWhitePixel(bitmap, new Rectangle(30, 25, 121, 1)));
+        }
+
+        [TestMethod]
         public void CustomConnectionPoints_RemainRelativeWhenShapeIsResized()
         {
             BaseController controller = CreateController(600, 400);
@@ -751,6 +776,30 @@ namespace FlowSharp.Main.Tests
             }
 
             return maxX < 0 ? Rectangle.Empty : Rectangle.FromLTRB(minX, minY, maxX + 1, maxY + 1);
+        }
+
+        private static bool ContainsNonWhitePixel(Bitmap bitmap, Rectangle rectangle)
+        {
+            for (int y = rectangle.Top; y < rectangle.Bottom; y++)
+            {
+                for (int x = rectangle.Left; x < rectangle.Right; x++)
+                {
+                    if (bitmap.GetPixel(x, y).ToArgb() != Color.White.ToArgb())
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private sealed class TestableCanvas : Canvas
+        {
+            public void RenderPageBounds(Graphics graphics)
+            {
+                DrawPageBounds(graphics);
+            }
         }
     }
 }
