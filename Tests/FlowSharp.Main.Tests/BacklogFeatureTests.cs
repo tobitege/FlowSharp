@@ -175,6 +175,19 @@ namespace FlowSharp.Main.Tests
         }
 
         [TestMethod]
+        public void DragSelectedElements_SnapsShapeToNearbyCentersAndEdges()
+        {
+            BaseController controller = CreateController(600, 400);
+            AddBox(controller, new Rectangle(100, 100, 50, 50));
+            Box moving = AddBox(controller, new Rectangle(154, 200, 30, 30));
+            controller.SelectElement(moving);
+
+            controller.DragSelectedElements(new Point(-2, 0));
+
+            Assert.AreEqual(150, moving.DisplayRectangle.Left);
+        }
+
+        [TestMethod]
         public void AlignSelected_AlignsToOutermostSelectedEdge()
         {
             BaseController controller = CreateController(600, 400);

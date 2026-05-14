@@ -677,7 +677,7 @@ namespace FlowSharpRestService
                 controller.SelectElements(targets);
             }
 
-            controller.DragSelectedElements(delta);
+            controller.MoveSelectedElements(delta);
         }
 
         protected bool HaveSameSelection(BaseController controller, List<GraphicElement> targets)

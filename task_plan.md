@@ -18,7 +18,6 @@ Finish the remaining partial feature work: richer text/connector editing, target
 
 | # | Issue | Status | Notes |
 | --- | --- | --- | --- |
-| 7 | Snap shapes to centers and edges | Partial | Center/edge snap delta helper exists; drag integration remains open. |
 | 8 | Align selected shapes | Partial | Controller-level edge alignment exists; remaining UI/workflow coverage still needs verification against the final command surface. |
 | 9 | Better property UX | Partial | PropertyGrid exposes added values; redesigned property UX remains open. |
 | 10 | Undo/redo | Partial | Existing undo/redo remains available; broad command coverage for new feature actions remains open. |

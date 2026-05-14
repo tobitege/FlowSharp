@@ -571,12 +571,18 @@ namespace FlowSharpLib
             return GroupShapes(groupBox);
         }
 
-        public void MoveSelectedElements(Point delta)
+        public void MoveSelectedElements(Point delta, bool snapToCentersAndEdges = false)
         {
             // TODO: We shouldn't even be calling this method if there are no selected elements!
             if (selectedElements.Count == 0) return;
 
             delta = InverseZoomAdjust(delta);
+
+            if (snapToCentersAndEdges)
+            {
+                Point snapDelta = GetSelectedCenterEdgeSnapDelta(delta);
+                delta = new Point(delta.X + snapDelta.X, delta.Y + snapDelta.Y);
+            }
 
             var dx = delta.X.Abs();
             var dy = delta.Y.Abs();
@@ -903,6 +909,11 @@ namespace FlowSharpLib
 
         public Point GetCenterEdgeSnapDelta(GraphicElement movingElement, int range = 5)
         {
+            return GetCenterEdgeSnapDelta(movingElement, Point.Empty, range);
+        }
+
+        public Point GetCenterEdgeSnapDelta(GraphicElement movingElement, Point proposedDelta, int range = 5)
+        {
             var candidates = elements.Where(e => e != movingElement && e.Visible).ToList();
 
             if (!candidates.Any())
@@ -910,7 +921,32 @@ namespace FlowSharpLib
                 return Point.Empty;
             }
 
-            var moving = movingElement.DisplayRectangle;
+            var moving = movingElement.DisplayRectangle.Move(proposedDelta);
+            return GetCenterEdgeSnapDelta(moving, candidates, range);
+        }
+
+        protected Point GetSelectedCenterEdgeSnapDelta(Point proposedDelta, int range = 5)
+        {
+            var movingElements = selectedElements.Where(e => !e.IsConnector && e.Visible).ToList();
+
+            if (!movingElements.Any())
+            {
+                return Point.Empty;
+            }
+
+            var candidates = elements.Where(e => !movingElements.Contains(e) && e.Visible).ToList();
+
+            if (!candidates.Any())
+            {
+                return Point.Empty;
+            }
+
+            Rectangle moving = GetExtents(movingElements).Move(proposedDelta);
+            return GetCenterEdgeSnapDelta(moving, candidates, range);
+        }
+
+        protected Point GetCenterEdgeSnapDelta(Rectangle moving, IEnumerable<GraphicElement> candidates, int range)
+        {
             var movingXs = new[] { moving.Left, moving.Center().X, moving.Right };
             var movingYs = new[] { moving.Top, moving.Center().Y, moving.Bottom };
             var targetXs = candidates.SelectMany(e => new[] { e.DisplayRectangle.Left, e.DisplayRectangle.Center().X, e.DisplayRectangle.Right });

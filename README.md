@@ -252,6 +252,8 @@ Diagonal connectors can be converted to left-right or up-down orthogonal dynamic
 
 Dynamic connectors reroute to facing shape anchors when connected shapes move or their geometry changes, and the stored attachment metadata follows the new anchor points.
 
+Dragging selected shapes snaps nearby centers and edges to other visible shapes.
+
 ## Export diagram to PNG
 ![PNG](https://github.com/cliftonm/FlowSharp/blob/master/Article/img5.png)
 
@@ -300,7 +302,6 @@ Please contribute to working on this list!
   - Three-line connector middle-line repositioning.
 - Geometry and layout commands:
   - Shape rotation.
-  - Snap shapes to centers and edges.
   - Align selected shapes left/top/right/bottom to leftmost/topmost/rightmost/bottommost.
   - Regroup, so shapes can be manipulated and then regrouped.
 - Cross-cutting UX and history:
