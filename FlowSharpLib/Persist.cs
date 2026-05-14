@@ -80,6 +80,8 @@ namespace FlowSharpLib
 
         public AvailableLineCap StartCap { get; set; }
         public AvailableLineCap EndCap { get; set; }
+        public Point LabelOffset { get; set; }
+        public Size LabelSize { get; set; }
 
         public Guid StartConnectedShapeId { get; set; }
         public Guid EndConnectedShapeId { get; set; }

@@ -242,6 +242,10 @@ Shape text supports wrapped multiline layout, local text bounds, text margins, p
 
 ![Text](https://github.com/cliftonm/FlowSharp/blob/master/Article/img4.png)
 
+## Connector labels
+
+Connectors support editable labels with persisted label size and offset, so connector text can be positioned away from the midpoint when needed.
+
 ## Export diagram to PNG
 ![PNG](https://github.com/cliftonm/FlowSharp/blob/master/Article/img5.png)
 
@@ -282,8 +286,6 @@ Please contribute to working on this list!
   - True drag-from-toolbox-onto-surface.
 - Page and print workflow:
   - Ruler margins / page boundaries.
-- Shape and connector text:
-  - Connector text.
 - Connector rendering, anchors, and routing:
   - Other line caps besides an arrow and diamond.
   - Property changes, like end caps, can force a full page redraw.

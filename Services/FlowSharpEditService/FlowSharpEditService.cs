@@ -292,7 +292,6 @@ namespace FlowSharpEditService
             }
             if (canvasController.Canvas.Focused &&
                 canvasController.SelectedElements?.Count == 1 &&
-                !canvasController.SelectedElements[0].IsConnector &&
                 CanStartEditing(keyData))
             {
                 EditText();
@@ -336,8 +335,6 @@ namespace FlowSharpEditService
             var canvasController = ServiceManager.Get<IFlowSharpCanvasService>().ActiveController;
             if (canvasController.SelectedElements.Count != 1) return;
 
-            // TODO: At the moment, connectors do not support text.
-            if (canvasController.SelectedElements[0].IsConnector) return;
             shapeBeingEdited = canvasController.SelectedElements[0];
             editBox = shapeBeingEdited.CreateTextBox(Cursor.Position);
             canvasController.Canvas.Controls.Add(editBox);

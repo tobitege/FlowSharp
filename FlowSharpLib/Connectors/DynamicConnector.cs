@@ -192,6 +192,11 @@ namespace FlowSharpLib
             DisplayRectangle = RecalcDisplayRectangle();
         }
 
+        protected override Point GetLabelCenter()
+        {
+            return new Point((StartPoint.X + EndPoint.X) / 2, (StartPoint.Y + EndPoint.Y) / 2);
+        }
+
         protected ConnectionPoint GetFacingConnectionPoint(GraphicElement shape, Point target)
         {
             Point center = shape.DisplayRectangle.Center();
@@ -268,11 +273,7 @@ namespace FlowSharpLib
                 return;
             }
 
-            Rectangle original = ZoomRectangle;
-            Point midpoint = new Point((ZoomStartPoint.X + ZoomEndPoint.X) / 2, (ZoomStartPoint.Y + ZoomEndPoint.Y) / 2);
-            ZoomRectangle = new Rectangle(midpoint.X - 80, midpoint.Y - 15, 160, 30);
             base.DrawText(gr);
-            ZoomRectangle = original;
         }
 
         protected Rectangle RecalcDisplayRectangle()

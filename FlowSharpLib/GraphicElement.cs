@@ -870,7 +870,7 @@ namespace FlowSharpLib
             }
         }
 
-        public Rectangle GetTextDisplayRectangle()
+        public virtual Rectangle GetTextDisplayRectangle()
         {
             if (TextBounds == Rectangle.Empty || TextBounds.Width <= 0 || TextBounds.Height <= 0)
             {
@@ -884,7 +884,7 @@ namespace FlowSharpLib
                 TextBounds.Height);
         }
 
-        protected Rectangle GetZoomTextDisplayRectangle()
+        protected virtual Rectangle GetZoomTextDisplayRectangle()
         {
             Rectangle textRectangle = GetTextDisplayRectangle();
 

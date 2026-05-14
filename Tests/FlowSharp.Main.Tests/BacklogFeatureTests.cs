@@ -319,6 +319,60 @@ namespace FlowSharp.Main.Tests
         }
 
         [TestMethod]
+        public void ConnectorLabelRectangle_UsesMidpointOffsetAndSize()
+        {
+            BaseController controller = CreateController(600, 400);
+            DynamicConnectorLR connector = new DynamicConnectorLR(controller.Canvas, new Point(10, 20), new Point(110, 80))
+            {
+                LabelOffset = new Point(20, -10),
+                LabelSize = new Size(100, 24)
+            };
+
+            Assert.AreEqual(new Rectangle(30, 28, 100, 24), connector.GetLabelDisplayRectangle());
+            Assert.AreEqual(connector.GetLabelDisplayRectangle(), connector.GetTextDisplayRectangle());
+        }
+
+        [TestMethod]
+        public void ConnectorCreateTextBox_UsesLabelRectangle()
+        {
+            BaseController controller = CreateController(600, 400);
+            DynamicConnectorLR connector = new DynamicConnectorLR(controller.Canvas, new Point(10, 20), new Point(110, 80))
+            {
+                Text = "connector label",
+                LabelOffset = new Point(20, -10),
+                LabelSize = new Size(100, 24)
+            };
+
+            using System.Windows.Forms.TextBox textBox = connector.CreateTextBox(Point.Empty);
+
+            Assert.AreEqual(new Point(30, 28), textBox.Location);
+            Assert.AreEqual(new Size(100, 24), textBox.Size);
+            Assert.AreEqual("connector label", textBox.Text);
+            Assert.IsTrue(textBox.Multiline);
+            Assert.IsTrue(textBox.WordWrap);
+        }
+
+        [TestMethod]
+        public void Persist_RoundTripsConnectorLabelLayout()
+        {
+            BaseController sourceController = CreateController(600, 400);
+            DynamicConnectorLR source = new DynamicConnectorLR(sourceController.Canvas, new Point(10, 20), new Point(110, 80))
+            {
+                Text = "connector label",
+                LabelOffset = new Point(12, -8),
+                LabelSize = new Size(120, 26)
+            };
+
+            string xml = Persist.Serialize(new List<GraphicElement> { source });
+            BaseController targetController = CreateController(600, 400);
+            DynamicConnectorLR target = (DynamicConnectorLR)Persist.Deserialize(targetController.Canvas, xml).Single();
+
+            Assert.AreEqual("connector label", target.Text);
+            Assert.AreEqual(new Point(12, -8), target.LabelOffset);
+            Assert.AreEqual(new Size(120, 26), target.LabelSize);
+        }
+
+        [TestMethod]
         public void RegroupShapes_RestoresGroupMembershipAfterUngroup()
         {
             BaseController controller = CreateController(600, 400);
