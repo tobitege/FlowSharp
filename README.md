@@ -321,7 +321,6 @@ Workspaces can save multiple canvases. Unnamed secondary canvases are assigned s
 Please contribute to working on this list!
 
 - Document and shell workflow:
-  - Close document prompts to save changes.
   - Saving drawing updates MRU when a new filename is introduced.
   - Add panels back in that have been removed: Toolbox, PropertyGrid, code editor.
 - Selection and hit testing:
