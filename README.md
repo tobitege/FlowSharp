@@ -320,8 +320,6 @@ Workspaces can save multiple canvases. Unnamed secondary canvases are assigned s
 
 Please contribute to working on this list!
 
-- Viewport and placement:
-  - True drag-from-toolbox-onto-surface.
 - Page and print workflow:
   - Ruler margins / page boundaries.
 - Connector rendering, anchors, and routing:
