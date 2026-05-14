@@ -1,0 +1,82 @@
+clearcanvas
+dropshape ShapeName=Box Name=TextBox X=80 Y=80 Width=180 Height=120 Text="one two three four five six"
+setproperty Name=TextBox PropertyName=TextBounds Value="20, 15, 130, 70"
+setproperty Name=TextBox PropertyName=TextMargin Value=6
+setproperty Name=TextBox PropertyName=ParagraphJustification Value=Justify
+setproperty Name=TextBox PropertyName=TextAlign Value=BottomRight
+inspectshape Name=TextBox Properties=TextBounds,TextMargin,ParagraphJustification,TextAlign
+dropshape ShapeName=Box Name=Source X=360 Y=120 Width=60 Height=50 Text=Source
+dropshape ShapeName=Box Name=Target X=520 Y=120 Width=60 Height=50 Text=Target
+connectshapes Source=Source Target=Target ConnectorName=DiagonalConnector Name=Flow StartCap=Arrow EndCap=Diamond
+setproperty Name=Flow PropertyName=Text Value=approved
+setproperty Name=Flow PropertyName=LabelOffset Value="12, -8"
+setproperty Name=Flow PropertyName=LabelSize Value="120, 26"
+convertconnector Name=Flow Orientation=LeftRight
+inspectshape Name=Flow Properties=LabelOffset,LabelSize,Text,StartCap,EndCap
+dropshape ShapeName=Box Name=AlignA X=100 Y=260 Width=50 Height=50
+dropshape ShapeName=Box Name=AlignB X=180 Y=280 Width=40 Height=40
+selectshapes Name=AlignA
+selectshapes Name=AlignB Mode=add
+alignselection Alignment=Left
+listshapes Name=AlignB IncludeConnectors=false
+dropshape ShapeName=Box Name=SnapTarget X=100 Y=360 Width=50 Height=50
+dropshape ShapeName=Box Name=SnapMoving X=154 Y=460 Width=30 Height=30
+selectshapes Name=SnapMoving
+dragselection Dx=-2 Dy=0 SnapToCentersAndEdges=true
+listshapes Name=SnapMoving IncludeConnectors=false
+dropshape ShapeName=Box Name=CustomPointBox X=10 Y=20 Width=100 Height=80
+setcustomconnectionpoints Name=CustomPointBox Points=Center:5000,2500
+inspectshape Name=CustomPointBox IncludeConnectionPoints=true
+moveshape Name=CustomPointBox Relative=false X=10 Y=20 Width=200 Height=160
+inspectshape Name=CustomPointBox IncludeConnectionPoints=true
+dropconnector ConnectorName=HorizontalLine Name=CapLine X1=20 Y1=520 X2=140 Y2=520 StartCap=Square EndCap=Round
+inspectshape Name=CapLine Properties=StartCap,EndCap
+dropconnector ConnectorName=DiagonalConnector Name=UpDownCandidate X1=170 Y1=520 X2=230 Y2=590
+convertconnector Name=UpDownCandidate Orientation=UpDown
+inspectshape Name=UpDownCandidate
+dropconnector ConnectorName=DiagonalConnector Name=RemovableDiag X1=40 Y1=520 X2=120 Y2=580
+removediagonalconnectors
+undo
+redo
+dropshape ShapeName=Box Name=RotateBox X=260 Y=360 Width=80 Height=40
+selectshapes Name=RotateBox
+rotateselection Degrees=23
+inspectshape Name=RotateBox Properties=RotationAngle
+undo
+inspectshape Name=RotateBox Properties=RotationAngle
+redo
+inspectshape Name=RotateBox Properties=RotationAngle
+dropshape ShapeName=GroupBox Name=RegroupBox X=420 Y=360 Width=180 Height=140 Text=Regroup
+dropshape ShapeName=Box Name=RegroupA X=450 Y=400 Width=40 Height=30 AutoGroup=true
+dropshape ShapeName=Box Name=RegroupB X=520 Y=410 Width=40 Height=30 AutoGroup=true
+selectshapes Name=RegroupBox
+ungroupselection
+regroupselection Name=RegroupBox
+inspectshape Name=RegroupBox
+dropshape ShapeName=Box Name=RouteSource X=100 Y=700 Width=50 Height=50
+dropshape ShapeName=Box Name=RouteTarget X=240 Y=700 Width=50 Height=50
+connectshapes Source=RouteSource Target=RouteTarget ConnectorName=DynamicConnectorLR Name=RouteFlow SourceGrip=RightMiddle TargetGrip=LeftMiddle
+inspectshape Name=RouteSource
+moveshape Name=RouteTarget Dx=-220 Dy=0
+inspectshape Name=RouteSource
+inspectshape Name=RouteTarget
+moveshape Name=RouteTarget Relative=false X=100 Y=840
+inspectshape Name=RouteSource
+inspectshape Name=RouteTarget
+dropshape ShapeName=Box Name=FocusBox X=500 Y=1000 Width=50 Height=50
+getcanvasview
+showshape Name=FocusBox
+getcanvasview
+dropshape ShapeName=Box Name=PersistBox X=20 Y=640 Width=100 Height=80 Text="persist me"
+setproperty Name=PersistBox PropertyName=WordWrap Value=false
+setproperty Name=PersistBox PropertyName=RotationAngle Value=45
+setproperty Name=PersistBox PropertyName=TextBounds Value="5, 6, 40, 30"
+setproperty Name=PersistBox PropertyName=TextMargin Value=4
+setproperty Name=PersistBox PropertyName=ParagraphJustification Value=Justify
+setcustomconnectionpoints Name=PersistBox Points=Center:5000,5000
+inspectshape Name=PersistBox Properties=WordWrap,RotationAngle,TextBounds,TextMargin,ParagraphJustification IncludeConnectionPoints=true
+saveworkspace Filename=%TEMP%\flowsharp-runtime-feature-surfaces.fsd RebaseFilenames=true
+clearcanvas
+loaddiagram Filename=%TEMP%\flowsharp-runtime-feature-surfaces.fsd
+inspectshape Name=PersistBox Properties=WordWrap,RotationAngle,TextBounds,TextMargin,ParagraphJustification IncludeConnectionPoints=true
+renderprintpage Filename=%TEMP%\flowsharp-runtime-feature-surfaces-print.png Width=600 Height=800 Margin=40

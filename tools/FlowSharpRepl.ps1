@@ -1,20 +1,56 @@
 param(
-    [string]$Uri = "ws://localhost:1100/flowsharp/",
+    [string]$Uri,
     [string]$Command,
     [string]$ScriptFile,
-    [switch]$Raw
+    [switch]$Raw,
+    [string]$OutputFile,
+    [int]$ConnectTimeoutSeconds = 3
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 $script:UseRaw = $Raw.IsPresent
+$script:OutputFile = $OutputFile
 
-function Connect-FlowSharpSocket {
+function Resolve-FlowSharpUri {
     param([string]$Endpoint)
 
+    if (-not [string]::IsNullOrWhiteSpace($Endpoint)) {
+        return $Endpoint
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($env:FLOWSHARP_REPL_URI)) {
+        return $env:FLOWSHARP_REPL_URI
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($env:FLOWSHARP_WEBSOCKET_PORT)) {
+        return "ws://localhost:$($env:FLOWSHARP_WEBSOCKET_PORT)/flowsharp/"
+    }
+
+    return "ws://localhost:1100/flowsharp/"
+}
+
+function Connect-FlowSharpSocket {
+    param(
+        [string]$Endpoint,
+        [int]$TimeoutSeconds
+    )
+
     $socket = [System.Net.WebSockets.ClientWebSocket]::new()
-    $socket.ConnectAsync([Uri]$Endpoint, [Threading.CancellationToken]::None).GetAwaiter().GetResult()
-    return $socket
+    $timeout = [Math]::Max(1, $TimeoutSeconds)
+    $cts = [Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds($timeout))
+
+    try {
+        $null = $socket.ConnectAsync([Uri]$Endpoint, $cts.Token).GetAwaiter().GetResult()
+        return $socket
+    }
+    catch {
+        $socket.Dispose()
+        throw "Could not connect to FlowSharp WebSocket endpoint $Endpoint within $timeout second(s)."
+    }
+    finally {
+        $cts.Dispose()
+    }
 }
 
 function Disconnect-FlowSharpSocket {
@@ -26,7 +62,7 @@ function Disconnect-FlowSharpSocket {
 
     try {
         if ($Socket.State -eq [System.Net.WebSockets.WebSocketState]::Open) {
-            $Socket.CloseAsync(
+            $null = $Socket.CloseAsync(
                 [System.Net.WebSockets.WebSocketCloseStatus]::NormalClosure,
                 "Closing",
                 [Threading.CancellationToken]::None
@@ -68,7 +104,7 @@ function Send-FlowSharpMessage {
 
     $bytes = [Text.Encoding]::UTF8.GetBytes($Payload)
     $segment = [ArraySegment[byte]]::new($bytes)
-    $Socket.SendAsync($segment, [System.Net.WebSockets.WebSocketMessageType]::Text, $true, [Threading.CancellationToken]::None).GetAwaiter().GetResult()
+    $null = $Socket.SendAsync($segment, [System.Net.WebSockets.WebSocketMessageType]::Text, $true, [Threading.CancellationToken]::None).GetAwaiter().GetResult()
     return Receive-FlowSharpMessage -Socket $Socket
 }
 
@@ -100,7 +136,7 @@ function Format-FlowSharpResponse {
             return $Response
         }
 
-        Write-Host $Response
+        Write-FlowSharpRawOutput -Text $Response
         return
     }
 
@@ -128,6 +164,18 @@ function Format-FlowSharpResponse {
     Write-Host $Response
 }
 
+function Write-FlowSharpRawOutput {
+    param([string]$Text)
+
+    if ([string]::IsNullOrWhiteSpace($script:OutputFile)) {
+        [Console]::Out.Write($Text)
+        return
+    }
+
+    $encoding = [System.Text.UTF8Encoding]::new($false)
+    [System.IO.File]::WriteAllText($script:OutputFile, $Text, $encoding)
+}
+
 function Show-Help {
     @"
 FlowSharp REPL
@@ -150,9 +198,10 @@ Local commands:
 }
 
 $socket = $null
+$Uri = Resolve-FlowSharpUri -Endpoint $Uri
 
 try {
-    $socket = Connect-FlowSharpSocket -Endpoint $Uri
+    $socket = Connect-FlowSharpSocket -Endpoint $Uri -TimeoutSeconds $ConnectTimeoutSeconds
 
     if ($Command) {
         $response = Send-FlowSharpMessage -Socket $socket -Payload $Command

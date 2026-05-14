@@ -41,6 +41,13 @@ The runtime control API is available through:
 - HTTP: `http://localhost:8001/flowsharp`
 - WebSocket: `ws://localhost:1100/flowsharp/`
 
+The default `modules.xml` starts the normal desktop app without runtime-control listeners. For runtime/REPL automation, launch FlowSharp with the runtime-control module set:
+
+```powershell
+$env:FLOWSHARP_MACRO_STEP_DELAY_MS = "0"
+.\bin\Debug\net8.0-windows\FlowSharp.exe .\bin\Debug\net8.0-windows\FlowSharpRuntimeControlModules.xml
+```
+
 Commands are sent as query string style data with `cmd=<command>`. For example, `cmd=listcanvases` asks the running app which canvases are open, while commands like `dropshape`, `connectshapes`, and `inspectshape` drive and observe the diagram.
 
 ### Command Groups
@@ -59,6 +66,7 @@ setcanvasoffset X=15 Y=5
 setcanvasoffset Relative=true Dx=40 Dy=0
 saveworkspace Filename=C:\temp\verify\diagram.fsd RebaseFilenames=true
 exportpng Filename=C:\temp\verify\canvas.png
+renderprintpage Filename=C:\temp\verify\print-page.png Width=850 Height=1100 Margin=50
 loaddiagram Filename=C:\temp\verify\diagram.fsd
 clearcanvas
 ```
@@ -68,16 +76,18 @@ clearcanvas
 ```text
 dropshape ShapeName=Box Name=Start X=100 Y=120 Text="Start"
 dropshape ShapeName=Box Name=InsideGroup X=160 Y=180 AutoGroup=true
-dropconnector ConnectorName=DiagonalConnector Name=Wire X1=100 Y1=100 X2=240 Y2=180
+dropconnector ConnectorName=DiagonalConnector Name=Wire X1=100 Y1=100 X2=240 Y2=180 StartCap=Arrow EndCap=Diamond
 connectshapes Source=Start Target=End SourceGrip=RightMiddle TargetGrip=LeftMiddle ConnectorName=DiagonalConnector
 moveshape Name=Start Dx=0 Dy=80
 deleteshape Name=End
 updateproperty Name=Start PropertyName=TextAlign Value=TopLeft
+setproperty Name=Start PropertyName=TextBounds Value="20, 15, 130, 70"
+setcustomconnectionpoints Name=Start Points=Center:5000,2500
 ```
 
 `dropshape` now auto-groups by default when the dropped shape lands fully inside a group box, matching the toolbox behavior.
 Shape placement is coordinate-based: `dropshape` uses `X`/`Y` plus optional `Width`/`Height`, and `dropconnector` uses `X1`/`Y1`/`X2`/`Y2`.
-`getcanvasview` returns the active canvas zoom and tracked canvas offset.
+`getcanvasview` returns the active canvas zoom, tracked canvas offset, and viewport origin.
 `setcanvasoffset` translates the current root content under FlowSharp's existing canvas-drag model; it is not a separate camera transform.
 
 3. Selection and movement
@@ -88,7 +98,10 @@ selectshapes Name=End Mode=add
 selectregion X=80 Y=80 Width=260 Height=140
 getselection
 moveselection Dx=40 Dy=0
+dragselection Dx=-2 Dy=0 SnapToCentersAndEdges=true
 deleteselection
+alignselection Alignment=Left
+rotateselection Degrees=30
 ```
 
 4. Clipboard, grouping, and history
@@ -96,10 +109,13 @@ deleteselection
 ```text
 groupselection
 ungroupselection
+regroupselection Name=GroupRoot
 copyselection
 pasteclipboard
 undo
 redo
+convertconnector Name=Flow Orientation=LeftRight
+removediagonalconnectors
 ```
 
 5. Inspection and assertions
@@ -171,6 +187,8 @@ A local REPL client is included:
 powershell -ExecutionPolicy Bypass -File tools\FlowSharpRepl.ps1
 ```
 
+The REPL defaults to `ws://localhost:1100/flowsharp/`. To target a runtime launched on a different port, pass `-Uri`, set `FLOWSHARP_REPL_URI`, or set `FLOWSHARP_WEBSOCKET_PORT`.
+
 Useful REPL forms:
 
 ```text
@@ -192,6 +210,13 @@ tools\repl-scripts\bug-review\04-multi-select.flow
 tools\repl-scripts\bug-review\05-duplicate-connector-attachment.flow
 tools\repl-scripts\bug-review\06-group-move-and-autogroup.flow
 tools\repl-scripts\bug-review\07-grouped-copy-paste.flow
+tools\repl-scripts\bug-review\08-runtime-feature-surfaces.flow
+```
+
+The runtime feature-surface script has a fast verifier that uses the same REPL client. With no URI supplied, it starts FlowSharp with `FlowSharpRuntimeControlModules.xml` on dynamic ports, runs the macro, and shuts FlowSharp down:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\repl-scripts\bug-review\Test-RuntimeFeatureSurfaces.ps1
 ```
 
 ### Mapping To `Verify completed bug fixes:`
@@ -204,6 +229,14 @@ tools\repl-scripts\bug-review\07-grouped-copy-paste.flow
 - Duplicate connector attachment: `moveshape` + `inspectshape` on the grouped shape to compare `ConnectionCount` and `DistinctConnectionCount`
 - Group move and auto-group on drop: `dropshape AutoGroup=true` into a group box + `inspectshape` on the dropped shape and group box
 - Grouped copy/paste with undo/redo: `groupselection` + `copyselection` + `pasteclipboard` + `moveselection` + `undo` + `redo`
+- Text bounds, paragraph justification, word wrap, connector label layout, line caps, rotation, and property-grid redraw policy: `setproperty` or `dropconnector StartCap`/`EndCap` + `inspectshape` + `undo`/`redo`
+- Print renderer verification: `renderprintpage`
+- Orthogonal connector conversion and diagonal removal: `convertconnector Orientation=LeftRight|UpDown` + `removediagonalconnectors` + `inspectshape` + `undo`/`redo`
+- Center/edge drag snapping and align workflow actions: `dragselection SnapToCentersAndEdges=true` + `alignselection` + `listshapes`
+- Custom connection points: `setcustomconnectionpoints` + `inspectshape IncludeConnectionPoints=true`, including resize and save/load persistence checks
+- Regroup: `ungroupselection` + `regroupselection` + `inspectshape`
+- Dynamic rerouting: `connectshapes` with a dynamic connector + `moveshape`/geometry changes + `inspectshape` connection grips
+- Focus/pan behavior: `showshape` + `getcanvasview` viewport-origin assertions
 
 Current caveat: the text-alignment script/test is still a proxy check. It verifies `TextAlign`, persistence after reload, and that top/bottom PNG exports differ, but it does not yet perform pixel-level validation that the text is visually near the top versus near the bottom.
 

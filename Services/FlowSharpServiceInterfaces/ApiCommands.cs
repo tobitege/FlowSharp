@@ -20,6 +20,25 @@ namespace FlowSharpServiceInterfaces
         public string Value { get; set; }
     }
 
+    public class CmdSetShapeProperty : ISemanticType, IHasResponse
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Text { get; set; }
+        public string Type { get; set; }
+        public bool All { get; set; }
+        public bool IncludeConnectors { get; set; } = true;
+        public bool IncludeChildren { get; set; } = true;
+        public string PropertyName { get; set; }
+        public string Value { get; set; }
+        public string ResultJson { get; set; }
+
+        public string SerializeResponse()
+        {
+            return ResultJson ?? "{}";
+        }
+    }
+
     public class CmdShowShape : ISemanticType
     {
         // Options for indicating what shape to show:
@@ -82,6 +101,8 @@ namespace FlowSharpServiceInterfaces
         public int X2 { get; set; }
         public int Y2 { get; set; }
         public string BorderColor { get; set; }
+        public string StartCap { get; set; }
+        public string EndCap { get; set; }
     }
 
     public class CmdLoadDiagram : ISemanticType
@@ -122,6 +143,15 @@ namespace FlowSharpServiceInterfaces
     {
         public string Filename { get; set; }
         public bool SelectionOnly { get; set; }
+    }
+
+    public class CmdRenderPrintPage : ISemanticType
+    {
+        public string Filename { get; set; }
+        public bool SelectionOnly { get; set; }
+        public int Width { get; set; } = 850;
+        public int Height { get; set; } = 1100;
+        public int Margin { get; set; } = 50;
     }
 
     public class CmdDeleteShape : ISemanticType
@@ -216,6 +246,24 @@ namespace FlowSharpServiceInterfaces
     {
         public int Dx { get; set; }
         public int Dy { get; set; }
+        public bool SnapToCentersAndEdges { get; set; }
+    }
+
+    public class CmdDragSelection : ISemanticType
+    {
+        public int Dx { get; set; }
+        public int Dy { get; set; }
+        public bool SnapToCentersAndEdges { get; set; } = true;
+    }
+
+    public class CmdAlignSelection : ISemanticType
+    {
+        public string Alignment { get; set; }
+    }
+
+    public class CmdRotateSelection : ISemanticType
+    {
+        public int Degrees { get; set; }
     }
 
     public class CmdCopySelection : ISemanticType { }
@@ -228,9 +276,56 @@ namespace FlowSharpServiceInterfaces
 
     public class CmdUngroupSelection : ISemanticType { }
 
+    public class CmdRegroupSelection : ISemanticType
+    {
+        public string Name { get; set; }
+    }
+
     public class CmdUndo : ISemanticType { }
 
     public class CmdRedo : ISemanticType { }
+
+    public class CmdConvertConnector : ISemanticType, IHasResponse
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Text { get; set; }
+        public string Type { get; set; }
+        public string Orientation { get; set; } = "LeftRight";
+        public string ResultJson { get; set; }
+
+        public string SerializeResponse()
+        {
+            return ResultJson ?? "{}";
+        }
+    }
+
+    public class CmdRemoveDiagonalConnectors : ISemanticType, IHasResponse
+    {
+        public string ResultJson { get; set; }
+
+        public string SerializeResponse()
+        {
+            return ResultJson ?? "{}";
+        }
+    }
+
+    public class CmdSetCustomConnectionPoints : ISemanticType, IHasResponse
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Text { get; set; }
+        public string Type { get; set; }
+        public bool All { get; set; }
+        public bool IncludeChildren { get; set; } = true;
+        public string Points { get; set; }
+        public string ResultJson { get; set; }
+
+        public string SerializeResponse()
+        {
+            return ResultJson ?? "{}";
+        }
+    }
 
     public class CmdGetCanvasView : ISemanticType, IHasResponse
     {
@@ -266,6 +361,7 @@ namespace FlowSharpServiceInterfaces
         public bool IncludeConnectors { get; set; } = true;
         public bool IncludeChildren { get; set; } = true;
         public bool IncludeConnections { get; set; } = true;
+        public bool IncludeConnectionPoints { get; set; } = true;
         public string Properties { get; set; }
         public string ShapesJson { get; set; }
 
@@ -326,6 +422,8 @@ namespace FlowSharpServiceInterfaces
         public int Zoom { get; set; }
         public int OffsetX { get; set; }
         public int OffsetY { get; set; }
+        public int ViewportOriginX { get; set; }
+        public int ViewportOriginY { get; set; }
     }
 
     public class ShapeConnectionSummary
@@ -340,10 +438,40 @@ namespace FlowSharpServiceInterfaces
         public string ConnectedShapeType { get; set; }
     }
 
+    public class ShapeConnectionPointSummary
+    {
+        public string Grip { get; set; }
+        public int X { get; set; }
+        public int Y { get; set; }
+        public bool IsCustom { get; set; }
+    }
+
+    public class CommandCountResult
+    {
+        public int Count { get; set; }
+    }
+
+    public class PropertyCommandResult
+    {
+        public int Count { get; set; }
+        public string PropertyName { get; set; }
+        public string RedrawMode { get; set; }
+        public string Value { get; set; }
+    }
+
+    public class ConnectorCommandResult
+    {
+        public int Count { get; set; }
+        public Guid? ConnectorId { get; set; }
+        public string ConnectorName { get; set; }
+        public string ConnectorType { get; set; }
+    }
+
     public class ShapeDetail : ShapeSummary
     {
         public Dictionary<string, string> Properties { get; set; }
         public List<ShapeConnectionSummary> Connections { get; set; }
+        public List<ShapeConnectionPointSummary> ConnectionPoints { get; set; }
         public List<ShapeSummary> Children { get; set; }
     }
 }

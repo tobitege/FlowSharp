@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
@@ -160,6 +161,88 @@ namespace FlowSharpRestService
             });
         }
 
+        public void Process(ISemanticProcessor proc, IMembrane membrane, CmdRenderPrintPage cmd)
+        {
+            if (string.IsNullOrWhiteSpace(cmd.Filename))
+            {
+                throw new InvalidOperationException("Filename is required.");
+            }
+
+            if (cmd.Width <= 0 || cmd.Height <= 0)
+            {
+                throw new InvalidOperationException("Width and Height must be greater than zero.");
+            }
+
+            var controller = GetRequiredActiveController(proc.ServiceManager);
+            var filename = ResolvePath(cmd.Filename);
+
+            RunOnUiThread(controller, () =>
+            {
+                if (cmd.SelectionOnly)
+                {
+                    EnsureSelection(controller, "render print page");
+                }
+
+                using var bitmap = new Bitmap(cmd.Width, cmd.Height);
+                using var graphics = Graphics.FromImage(bitmap);
+                graphics.Clear(Color.White);
+
+                int margin = Math.Max(0, cmd.Margin);
+                int printableWidth = Math.Max(1, cmd.Width - margin * 2);
+                int printableHeight = Math.Max(1, cmd.Height - margin * 2);
+                controller.RenderTo(graphics, new Rectangle(margin, margin, printableWidth, printableHeight), cmd.SelectionOnly);
+                bitmap.Save(filename, System.Drawing.Imaging.ImageFormat.Png);
+            });
+        }
+
+        public void Process(ISemanticProcessor proc, IMembrane membrane, CmdSetShapeProperty cmd)
+        {
+            if (string.IsNullOrWhiteSpace(cmd.PropertyName))
+            {
+                throw new InvalidOperationException("PropertyName is required.");
+            }
+
+            var controller = GetRequiredActiveController(proc.ServiceManager);
+
+            cmd.ResultJson = RunOnUiThread(controller, () =>
+            {
+                var targets = FindShapes(controller, cmd.Id, cmd.Name, cmd.Text, cmd.Type, cmd.IncludeConnectors, cmd.IncludeChildren)
+                    .ToList();
+
+                if (!targets.Any())
+                {
+                    throw new InvalidOperationException("No shapes matched the property target criteria.");
+                }
+
+                if (!cmd.All)
+                {
+                    targets = targets.Take(1).ToList();
+                }
+
+                var changes = targets.Select(el => CreatePropertyChange(el, cmd.PropertyName, cmd.Value)).ToList();
+                var redrawModes = changes.Select(change => change.RedrawMode.ToString()).Distinct().ToList();
+                string redrawMode = redrawModes.Count == 1 ? redrawModes[0] : "Mixed";
+
+                changes.ForEach(change =>
+                {
+                    controller.UndoStack.UndoRedo(
+                        "RuntimeUpdate " + change.PropertyName,
+                        () => ApplyRuntimePropertyChange(controller, change.Element, change.PropertyName, change.NewValue, change.RedrawMode, change.UseElementProperty),
+                        () => ApplyRuntimePropertyChange(controller, change.Element, change.PropertyName, change.OldValue, change.RedrawMode, change.UseElementProperty),
+                        false);
+                });
+                controller.UndoStack.FinishGroup();
+
+                return JsonConvert.SerializeObject(new PropertyCommandResult
+                {
+                    Count = changes.Count,
+                    PropertyName = changes[0].PropertyName,
+                    RedrawMode = redrawMode,
+                    Value = FormatInspectableValue(changes[0].NewValue)
+                });
+            });
+        }
+
         public void Process(ISemanticProcessor proc, IMembrane membrane, CmdSelectShapes cmd)
         {
             var controller = GetRequiredActiveController(proc.ServiceManager);
@@ -218,12 +301,88 @@ namespace FlowSharpRestService
                 var targets = controller.SelectedElements.ToList();
                 var delta = new Point(cmd.Dx, cmd.Dy);
 
+                if (cmd.SnapToCentersAndEdges)
+                {
+                    MoveSelectionWithCapturedUndo(controller, targets, delta, true, "RemoteMoveSelection");
+                }
+                else
+                {
+                    controller.UndoStack.UndoRedo(
+                        "RemoteMoveSelection",
+                        () => MoveCapturedSelection(controller, targets, delta),
+                        () => MoveCapturedSelection(controller, targets, Reverse(delta)),
+                        true,
+                        () => MoveCapturedSelection(controller, targets, delta));
+                }
+            });
+        }
+
+        public void Process(ISemanticProcessor proc, IMembrane membrane, CmdDragSelection cmd)
+        {
+            var controller = GetRequiredActiveController(proc.ServiceManager);
+
+            RunOnUiThread(controller, () =>
+            {
+                EnsureSelection(controller, "drag");
+                var targets = controller.SelectedElements.ToList();
+                var delta = new Point(cmd.Dx, cmd.Dy);
+                MoveSelectionWithCapturedUndo(controller, targets, delta, cmd.SnapToCentersAndEdges, "RemoteDragSelection");
+            });
+        }
+
+        public void Process(ISemanticProcessor proc, IMembrane membrane, CmdAlignSelection cmd)
+        {
+            var controller = GetRequiredActiveController(proc.ServiceManager);
+
+            RunOnUiThread(controller, () =>
+            {
+                EnsureSelection(controller, "align");
+                if (controller.SelectedElements.Count < 2)
+                {
+                    throw new InvalidOperationException("Select at least two shapes before attempting to align.");
+                }
+
+                var targets = controller.SelectedElements.ToList();
+                var alignment = ResolveAlignment(cmd.Alignment);
+                var before = CaptureRectangles(targets);
+                Dictionary<GraphicElement, Rectangle> after = null;
+
                 controller.UndoStack.UndoRedo(
-                    "RemoteMoveSelection",
-                    () => MoveCapturedSelection(controller, targets, delta),
-                    () => MoveCapturedSelection(controller, targets, Reverse(delta)),
+                    "RemoteAlignSelection",
+                    () =>
+                    {
+                        RestoreSelection(controller, targets);
+                        controller.AlignSelected(alignment);
+                        after = CaptureRectangles(targets);
+                    },
+                    () => RestoreRectangles(controller, before),
                     true,
-                    () => MoveCapturedSelection(controller, targets, delta));
+                    () => RestoreRectangles(controller, after ?? before));
+            });
+        }
+
+        public void Process(ISemanticProcessor proc, IMembrane membrane, CmdRotateSelection cmd)
+        {
+            var controller = GetRequiredActiveController(proc.ServiceManager);
+
+            RunOnUiThread(controller, () =>
+            {
+                EnsureSelection(controller, "rotate");
+                var targets = controller.SelectedElements.ToList();
+                var before = targets.ToDictionary(el => el, el => el.RotationAngle);
+                Dictionary<GraphicElement, int> after = null;
+
+                controller.UndoStack.UndoRedo(
+                    "RemoteRotateSelection",
+                    () =>
+                    {
+                        RestoreSelection(controller, targets);
+                        controller.RotateSelected(cmd.Degrees);
+                        after = targets.ToDictionary(el => el, el => el.RotationAngle);
+                    },
+                    () => RestoreRotations(controller, before),
+                    true,
+                    () => RestoreRotations(controller, after ?? before));
             });
         }
 
@@ -310,6 +469,7 @@ namespace FlowSharpRestService
 
                 var groupedShapes = new List<GraphicElement>(groupBox.GroupChildren);
                 var collapsed = groupBox.State == GroupBoxShape.CollapseState.Collapsed;
+                var ungroupedState = new UngroupedGroupState(groupBox, groupedShapes, collapsed);
 
                 controller.UndoStack.UndoRedo(
                     "Ungroup",
@@ -321,11 +481,13 @@ namespace FlowSharpRestService
                         }
 
                         controller.UngroupShapes(groupBox, false);
+                        lastUngroupedGroups[controller] = ungroupedState;
                         controller.DeselectCurrentSelectedElements();
                         controller.SelectElements(groupedShapes);
                     },
                     () =>
                     {
+                        lastUngroupedGroups.Remove(controller);
                         controller.GroupShapes(groupBox);
                         controller.DeselectCurrentSelectedElements();
                         controller.SelectElement(groupBox);
@@ -334,6 +496,60 @@ namespace FlowSharpRestService
                         {
                             CollapseGroupBox(controller, groupBox, controller.Elements.Where(el => el.Parent == groupBox));
                         }
+                    });
+            });
+        }
+
+        public void Process(ISemanticProcessor proc, IMembrane membrane, CmdRegroupSelection cmd)
+        {
+            var controller = GetRequiredActiveController(proc.ServiceManager);
+
+            RunOnUiThread(controller, () =>
+            {
+                EnsureSelection(controller, "regroup");
+
+                if (!lastUngroupedGroups.TryGetValue(controller, out UngroupedGroupState state))
+                {
+                    throw new InvalidOperationException("No previous ungroup operation is available to regroup.");
+                }
+
+                GroupBoxShape groupBox = state.GroupBox;
+                if (!string.IsNullOrWhiteSpace(cmd.Name) && groupBox.Name != cmd.Name)
+                {
+                    throw new InvalidOperationException("The last ungrouped group does not match the requested name.");
+                }
+
+                var selectedShapes = controller.SelectedElements.Where(el => el != groupBox).ToList();
+                if (!selectedShapes.Any())
+                {
+                    throw new InvalidOperationException("Select at least one shape to regroup.");
+                }
+
+                controller.UndoStack.UndoRedo(
+                    "Regroup",
+                    () =>
+                    {
+                        controller.RegroupShapes(groupBox, selectedShapes);
+                        lastUngroupedGroups.Remove(controller);
+                        controller.DeselectCurrentSelectedElements();
+                        controller.SelectElement(groupBox);
+
+                        if (state.WasCollapsed)
+                        {
+                            CollapseGroupBox(controller, groupBox, selectedShapes);
+                        }
+                    },
+                    () =>
+                    {
+                        if (state.WasCollapsed)
+                        {
+                            ExpandGroupBox(controller, groupBox, controller.Elements.Where(el => el.Parent == groupBox));
+                        }
+
+                        controller.UngroupShapes(groupBox, false);
+                        lastUngroupedGroups[controller] = state;
+                        controller.DeselectCurrentSelectedElements();
+                        controller.SelectElements(selectedShapes);
                     });
             });
         }
@@ -352,6 +568,87 @@ namespace FlowSharpRestService
             var editService = proc.ServiceManager.Get<IFlowSharpEditService>();
 
             RunOnUiThread(controller, editService.Redo);
+        }
+
+        public void Process(ISemanticProcessor proc, IMembrane membrane, CmdConvertConnector cmd)
+        {
+            var controller = GetRequiredActiveController(proc.ServiceManager);
+
+            cmd.ResultJson = RunOnUiThread(controller, () =>
+            {
+                var connector = FindShapes(controller, cmd.Id, cmd.Name, cmd.Text, cmd.Type, true, true)
+                    .OfType<Connector>()
+                    .FirstOrDefault();
+                if (connector == null)
+                {
+                    throw new InvalidOperationException("Connector was not found.");
+                }
+
+                var orientation = ResolveOrthogonalOrientation(cmd.Orientation);
+                var replacement = controller.ConvertConnectorToOrthogonalWithUndo(connector, orientation);
+
+                return JsonConvert.SerializeObject(new ConnectorCommandResult
+                {
+                    Count = 1,
+                    ConnectorId = replacement.Id,
+                    ConnectorName = replacement.Name,
+                    ConnectorType = replacement.GetType().Name
+                });
+            });
+        }
+
+        public void Process(ISemanticProcessor proc, IMembrane membrane, CmdRemoveDiagonalConnectors cmd)
+        {
+            var controller = GetRequiredActiveController(proc.ServiceManager);
+
+            cmd.ResultJson = RunOnUiThread(controller, () =>
+            {
+                var previousSelection = controller.SelectedElements.ToList();
+                var diagonals = controller.Elements.OfType<DiagonalConnector>().Cast<GraphicElement>().ToList();
+                if (diagonals.Any())
+                {
+                    controller.DeselectCurrentSelectedElements();
+                    controller.SelectElements(diagonals);
+                    DeleteCurrentSelection(proc, controller);
+                    controller.DeselectCurrentSelectedElements();
+                    controller.SelectElements(previousSelection.Where(el => controller.Elements.Contains(el)).ToList());
+                }
+
+                return JsonConvert.SerializeObject(new CommandCountResult { Count = diagonals.Count });
+            });
+        }
+
+        public void Process(ISemanticProcessor proc, IMembrane membrane, CmdSetCustomConnectionPoints cmd)
+        {
+            var controller = GetRequiredActiveController(proc.ServiceManager);
+
+            cmd.ResultJson = RunOnUiThread(controller, () =>
+            {
+                var targets = FindShapes(controller, cmd.Id, cmd.Name, cmd.Text, cmd.Type, false, cmd.IncludeChildren)
+                    .ToList();
+
+                if (!targets.Any())
+                {
+                    throw new InvalidOperationException("No shapes matched the custom connection point target criteria.");
+                }
+
+                if (!cmd.All)
+                {
+                    targets = targets.Take(1).ToList();
+                }
+
+                var points = ParseCustomConnectionPoints(cmd.Points).ToList();
+                var before = targets.ToDictionary(el => el, el => el.CustomConnectionPoints.ToList());
+
+                controller.UndoStack.UndoRedo(
+                    "RemoteCustomConnectionPoints",
+                    () => targets.ForEach(el => ApplyCustomConnectionPoints(controller, el, points)),
+                    () => before.ForEach(kvp => ApplyCustomConnectionPoints(controller, kvp.Key, kvp.Value)),
+                    true,
+                    () => targets.ForEach(el => ApplyCustomConnectionPoints(controller, el, points)));
+
+                return JsonConvert.SerializeObject(new CommandCountResult { Count = targets.Count });
+            });
         }
 
         public void Process(ISemanticProcessor proc, IMembrane membrane, CmdInspectShape cmd)
@@ -373,7 +670,7 @@ namespace FlowSharpRestService
                     shapes = shapes.Take(1).ToList();
                 }
 
-                var details = shapes.Select(el => BuildShapeDetail(controller, el, cmd.Properties, cmd.IncludeConnections));
+                var details = shapes.Select(el => BuildShapeDetail(controller, el, cmd.Properties, cmd.IncludeConnections, cmd.IncludeConnectionPoints));
                 return JsonConvert.SerializeObject(details);
             });
         }
@@ -410,7 +707,7 @@ namespace FlowSharpRestService
             };
         }
 
-        protected ShapeDetail BuildShapeDetail(BaseController controller, GraphicElement el, string propertyFilter, bool includeConnections)
+        protected ShapeDetail BuildShapeDetail(BaseController controller, GraphicElement el, string propertyFilter, bool includeConnections, bool includeConnectionPoints)
         {
             var summary = BuildShapeSummary(controller, el);
 
@@ -435,8 +732,29 @@ namespace FlowSharpRestService
                 DistinctConnectionCount = summary.DistinctConnectionCount,
                 Properties = GetInspectableProperties(el, propertyFilter),
                 Connections = includeConnections ? BuildConnectionSummaries(el) : new List<ShapeConnectionSummary>(),
+                ConnectionPoints = includeConnectionPoints ? BuildConnectionPointSummaries(el) : new List<ShapeConnectionPointSummary>(),
                 Children = el.GroupChildren.Select(child => BuildShapeSummary(controller, child)).ToList()
             };
+        }
+
+        protected List<ShapeConnectionPointSummary> BuildConnectionPointSummaries(GraphicElement el)
+        {
+            var customPoints = el.GetCustomConnectionPoints()
+                .Select(cp => cp.Type.ToString() + ":" + cp.Point.X.ToString(CultureInfo.InvariantCulture) + "," + cp.Point.Y.ToString(CultureInfo.InvariantCulture))
+                .ToHashSet(StringComparer.Ordinal);
+
+            return el.GetConnectionPoints().Select(cp =>
+            {
+                string key = cp.Type.ToString() + ":" + cp.Point.X.ToString(CultureInfo.InvariantCulture) + "," + cp.Point.Y.ToString(CultureInfo.InvariantCulture);
+
+                return new ShapeConnectionPointSummary
+                {
+                    Grip = cp.Type.ToString(),
+                    X = cp.Point.X,
+                    Y = cp.Point.Y,
+                    IsCustom = customPoints.Contains(key)
+                };
+            }).ToList();
         }
 
         protected List<ShapeConnectionSummary> BuildConnectionSummaries(GraphicElement el)
@@ -536,7 +854,9 @@ namespace FlowSharpRestService
             {
                 Zoom = controller.Zoom,
                 OffsetX = controller.CanvasOffset.X,
-                OffsetY = controller.CanvasOffset.Y
+                OffsetY = controller.CanvasOffset.Y,
+                ViewportOriginX = controller.Canvas.ViewportOrigin.X,
+                ViewportOriginY = controller.Canvas.ViewportOrigin.Y
             };
         }
 
@@ -669,7 +989,7 @@ namespace FlowSharpRestService
             return new Rectangle(left, top, Math.Abs(width), Math.Abs(height));
         }
 
-        protected void MoveCapturedSelection(BaseController controller, List<GraphicElement> targets, Point delta)
+        protected void MoveCapturedSelection(BaseController controller, List<GraphicElement> targets, Point delta, bool snapToCentersAndEdges = false)
         {
             if (!HaveSameSelection(controller, targets))
             {
@@ -677,12 +997,67 @@ namespace FlowSharpRestService
                 controller.SelectElements(targets);
             }
 
-            controller.MoveSelectedElements(delta);
+            controller.MoveSelectedElements(delta, snapToCentersAndEdges);
+        }
+
+        protected void MoveSelectionWithCapturedUndo(BaseController controller, List<GraphicElement> targets, Point delta, bool snapToCentersAndEdges, string commandName)
+        {
+            var before = CaptureRectangles(targets);
+            Dictionary<GraphicElement, Rectangle> after = null;
+
+            controller.UndoStack.UndoRedo(
+                commandName,
+                () =>
+                {
+                    MoveCapturedSelection(controller, targets, delta, snapToCentersAndEdges);
+                    after = CaptureRectangles(targets);
+                },
+                () => RestoreRectangles(controller, before),
+                true,
+                () => RestoreRectangles(controller, after ?? before));
         }
 
         protected bool HaveSameSelection(BaseController controller, List<GraphicElement> targets)
         {
             return controller.SelectedElements.Count == targets.Count && controller.SelectedElements.All(targets.Contains);
+        }
+
+        protected Dictionary<GraphicElement, Rectangle> CaptureRectangles(IEnumerable<GraphicElement> targets)
+        {
+            return targets.ToDictionary(el => el, el => el.DisplayRectangle);
+        }
+
+        protected void RestoreSelection(BaseController controller, List<GraphicElement> targets)
+        {
+            if (HaveSameSelection(controller, targets))
+            {
+                return;
+            }
+
+            controller.DeselectCurrentSelectedElements();
+            controller.SelectElements(targets);
+        }
+
+        protected void RestoreRectangles(BaseController controller, Dictionary<GraphicElement, Rectangle> rectangles)
+        {
+            rectangles.ForEach(kvp =>
+            {
+                controller.Redraw(kvp.Key, el =>
+                {
+                    el.DisplayRectangle = kvp.Value;
+                    el.UpdatePath();
+                    controller.UpdateConnections(el);
+                });
+            });
+        }
+
+        protected void RestoreRotations(BaseController controller, Dictionary<GraphicElement, int> rotations)
+        {
+            rotations.ForEach(kvp =>
+            {
+                kvp.Key.RotationAngle = kvp.Value;
+                controller.Redraw(kvp.Key);
+            });
         }
 
         protected void EnsureSelection(BaseController controller, string action)
@@ -913,6 +1288,294 @@ namespace FlowSharpRestService
         protected Point Reverse(Point point)
         {
             return new Point(-point.X, -point.Y);
+        }
+
+        protected RuntimePropertyChange CreatePropertyChange(GraphicElement element, string propertyName, string value)
+        {
+            var properties = element.CreateProperties();
+            var property = TryResolveProperty(properties, propertyName);
+            if (property != null)
+            {
+                var newValue = ConvertRuntimeValue(property.PropertyType, value);
+
+                return new RuntimePropertyChange
+                {
+                    Element = element,
+                    PropertyName = property.Name,
+                    OldValue = property.GetValue(properties),
+                    NewValue = newValue,
+                    RedrawMode = properties.GetRedrawMode(property.Name)
+                };
+            }
+
+            var elementProperty = ResolveElementProperty(element, propertyName);
+            var elementNewValue = ConvertRuntimeValue(elementProperty.PropertyType, value);
+
+            return new RuntimePropertyChange
+            {
+                Element = element,
+                PropertyName = elementProperty.Name,
+                OldValue = elementProperty.GetValue(element),
+                NewValue = elementNewValue,
+                RedrawMode = PropertyRedrawMode.Element,
+                UseElementProperty = true
+            };
+        }
+
+        protected PropertyInfo TryResolveProperty(ElementProperties properties, string propertyName)
+        {
+            var property = properties.GetType().GetProperty(
+                propertyName,
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+
+            return property?.CanWrite == true ? property : null;
+        }
+
+        protected PropertyInfo ResolveProperty(ElementProperties properties, string propertyName)
+        {
+            var property = TryResolveProperty(properties, propertyName);
+
+            if (property == null)
+            {
+                throw new InvalidOperationException("Property '" + propertyName + "' is not editable for this shape.");
+            }
+
+            return property;
+        }
+
+        protected PropertyInfo ResolveElementProperty(GraphicElement element, string propertyName)
+        {
+            var property = element.GetType().GetProperty(
+                propertyName,
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+
+            if (property == null || !property.CanWrite || property.GetIndexParameters().Length != 0 || !IsInspectablePropertyType(property.PropertyType))
+            {
+                throw new InvalidOperationException("Property '" + propertyName + "' is not editable for this shape.");
+            }
+
+            return property;
+        }
+
+        protected object ConvertRuntimeValue(Type targetType, string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                if (!targetType.IsValueType || Nullable.GetUnderlyingType(targetType) != null)
+                {
+                    return null;
+                }
+
+                return Activator.CreateInstance(targetType);
+            }
+
+            var convertedType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+
+            if (convertedType.IsEnum)
+            {
+                return Enum.Parse(convertedType, value, true);
+            }
+
+            if (convertedType == typeof(Color))
+            {
+                return GetColor(value);
+            }
+
+            var converter = TypeDescriptor.GetConverter(convertedType);
+            if (converter != null && converter.CanConvertFrom(typeof(string)))
+            {
+                return converter.ConvertFromInvariantString(value);
+            }
+
+            return Convert.ChangeType(value, convertedType, CultureInfo.InvariantCulture);
+        }
+
+        protected void ApplyRuntimePropertyChange(
+            BaseController controller,
+            GraphicElement element,
+            string propertyName,
+            object value,
+            PropertyRedrawMode redrawMode,
+            bool useElementProperty)
+        {
+            if (useElementProperty)
+            {
+                var elementProperty = ResolveElementProperty(element, propertyName);
+                controller.Redraw(element, el => ApplyRuntimeElementPropertyValue(controller, el, elementProperty, value));
+                return;
+            }
+
+            var properties = element.CreateProperties();
+            var property = ResolveProperty(properties, propertyName);
+
+            if (redrawMode == PropertyRedrawMode.None)
+            {
+                ApplyRuntimePropertyValue(controller, element, properties, property, property.Name, value, redrawMode);
+                return;
+            }
+
+            controller.Redraw(element, el =>
+                ApplyRuntimePropertyValue(controller, el, properties, property, property.Name, value, redrawMode));
+        }
+
+        protected void ApplyRuntimeElementPropertyValue(
+            BaseController controller,
+            GraphicElement element,
+            PropertyInfo property,
+            object value)
+        {
+            property.SetValue(element, value);
+            element.UpdateProperties();
+            element.UpdatePath();
+
+            if (property.Name == nameof(GraphicElement.DisplayRectangle) ||
+                property.Name == nameof(GraphicElement.RotationAngle))
+            {
+                controller.UpdateConnections(element);
+            }
+        }
+
+        protected void ApplyRuntimePropertyValue(
+            BaseController controller,
+            GraphicElement element,
+            ElementProperties properties,
+            PropertyInfo property,
+            string propertyName,
+            object value,
+            PropertyRedrawMode redrawMode)
+        {
+            property.SetValue(properties, value);
+            properties.Update(element, propertyName);
+            element.UpdateProperties();
+            element.UpdatePath();
+
+            if (redrawMode == PropertyRedrawMode.ElementAndConnections)
+            {
+                controller.UpdateConnections(element);
+            }
+        }
+
+        protected GripType ResolveAlignment(string alignment)
+        {
+            switch ((alignment ?? string.Empty).Trim().ToLowerInvariant())
+            {
+                case "left":
+                case "lefts":
+                case "leftmiddle":
+                    return GripType.LeftMiddle;
+
+                case "right":
+                case "rights":
+                case "rightmiddle":
+                    return GripType.RightMiddle;
+
+                case "top":
+                case "tops":
+                case "topmiddle":
+                    return GripType.TopMiddle;
+
+                case "bottom":
+                case "bottoms":
+                case "bottommiddle":
+                    return GripType.BottomMiddle;
+
+                default:
+                    throw new InvalidOperationException("Unsupported alignment '" + alignment + "'.");
+            }
+        }
+
+        protected OrthogonalConnectorOrientation ResolveOrthogonalOrientation(string orientation)
+        {
+            switch ((orientation ?? string.Empty).Trim().ToLowerInvariant())
+            {
+                case "leftright":
+                case "left-right":
+                case "lr":
+                case "horizontal":
+                    return OrthogonalConnectorOrientation.LeftRight;
+
+                case "updown":
+                case "up-down":
+                case "ud":
+                case "vertical":
+                    return OrthogonalConnectorOrientation.UpDown;
+
+                default:
+                    throw new InvalidOperationException("Unsupported connector orientation '" + orientation + "'.");
+            }
+        }
+
+        protected IEnumerable<ConnectionPoint> ParseCustomConnectionPoints(string points)
+        {
+            if (string.IsNullOrWhiteSpace(points))
+            {
+                return Enumerable.Empty<ConnectionPoint>();
+            }
+
+            return points
+                .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(ParseCustomConnectionPoint)
+                .ToList();
+        }
+
+        protected ConnectionPoint ParseCustomConnectionPoint(string value)
+        {
+            var separator = value.IndexOf(':');
+            if (separator <= 0)
+            {
+                throw new InvalidOperationException("Custom connection points must use Grip:X,Y format.");
+            }
+
+            var gripText = value.Substring(0, separator);
+            var coordinateText = value.Substring(separator + 1);
+            var coordinates = coordinateText.Split(',');
+            if (coordinates.Length != 2)
+            {
+                throw new InvalidOperationException("Custom connection point coordinates must use X,Y format.");
+            }
+
+            if (!Enum.TryParse<GripType>(gripText, true, out var grip))
+            {
+                throw new InvalidOperationException("Unsupported connection point grip '" + gripText + "'.");
+            }
+
+            int x = int.Parse(coordinates[0], NumberStyles.Integer, CultureInfo.InvariantCulture);
+            int y = int.Parse(coordinates[1], NumberStyles.Integer, CultureInfo.InvariantCulture);
+            return new ConnectionPoint(grip, new Point(x, y));
+        }
+
+        protected void ApplyCustomConnectionPoints(BaseController controller, GraphicElement element, IEnumerable<ConnectionPoint> points)
+        {
+            element.SetCustomConnectionPoints(points.Select(point => new ConnectionPoint(point.Type, point.Point)).ToList());
+            controller.Redraw(element, el =>
+            {
+                el.UpdatePath();
+                controller.UpdateConnections(el);
+            });
+        }
+
+        protected sealed class RuntimePropertyChange
+        {
+            public GraphicElement Element { get; set; }
+            public string PropertyName { get; set; }
+            public object OldValue { get; set; }
+            public object NewValue { get; set; }
+            public PropertyRedrawMode RedrawMode { get; set; }
+            public bool UseElementProperty { get; set; }
+        }
+
+        private sealed class UngroupedGroupState
+        {
+            public UngroupedGroupState(GroupBoxShape groupBox, List<GraphicElement> groupedShapes, bool wasCollapsed)
+            {
+                GroupBox = groupBox;
+                GroupedShapes = groupedShapes;
+                WasCollapsed = wasCollapsed;
+            }
+
+            public GroupBoxShape GroupBox { get; }
+            public List<GraphicElement> GroupedShapes { get; }
+            public bool WasCollapsed { get; }
         }
 
         protected sealed class CanvasReference
