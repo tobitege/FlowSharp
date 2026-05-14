@@ -31,6 +31,12 @@ namespace FlowSharpLib
         public Connection EndConnection { get; set; }
     }
 
+    public enum OrthogonalConnectorOrientation
+    {
+        LeftRight,
+        UpDown
+    }
+
     public abstract class BaseController
     {
         public event EventHandler<EventArgs> CanvasNameChanged;
@@ -643,6 +649,48 @@ namespace FlowSharpLib
             }
         }
 
+        public DynamicConnector ConvertConnectorToOrthogonal(Connector connector, OrthogonalConnectorOrientation orientation)
+        {
+            if (!(connector is DynamicConnector source))
+            {
+                throw new ArgumentException("Only dynamic connectors can be converted.", nameof(connector));
+            }
+
+            if ((orientation == OrthogonalConnectorOrientation.LeftRight && connector is DynamicConnectorLR) ||
+                (orientation == OrthogonalConnectorOrientation.UpDown && connector is DynamicConnectorUD))
+            {
+                return source;
+            }
+
+            DynamicConnector replacement = orientation == OrthogonalConnectorOrientation.LeftRight
+                ? new DynamicConnectorLR(canvas, source.StartPoint, source.EndPoint)
+                : new DynamicConnectorUD(canvas, source.StartPoint, source.EndPoint);
+
+            CopyConnectorProperties(source, replacement);
+            ReplaceConnector(source, replacement);
+
+            return replacement;
+        }
+
+        public int RemoveDiagonalConnectors()
+        {
+            var diagonals = elements.OfType<DiagonalConnector>().ToList();
+
+            diagonals.ForEach(connector =>
+            {
+                connector.DetachAll();
+                selectedElements.Remove(connector);
+                RemoveElement(connector, true);
+            });
+
+            if (diagonals.Any())
+            {
+                canvas.Invalidate();
+            }
+
+            return diagonals.Count;
+        }
+
         public void MoveElement(GraphicElement el, Point delta)
         {
             if (el.OnScreen())
@@ -662,6 +710,71 @@ namespace FlowSharpLib
                 el.Move(delta);
                 // TODO: Display element if moved back on screen at this point?
             }
+        }
+
+        protected void ReplaceConnector(DynamicConnector source, DynamicConnector replacement)
+        {
+            int index = elements.IndexOf(source);
+            if (index < 0)
+            {
+                throw new InvalidOperationException("Connector is not on this controller.");
+            }
+
+            elements[index] = replacement;
+
+            elements.ForEach(el =>
+            {
+                el.Connections.Where(connection => connection.ToElement == source).ForEach(connection =>
+                {
+                    connection.ToElement = replacement;
+                });
+            });
+
+            bool wasSelected = selectedElements.Remove(source);
+            source.Deselect();
+
+            if (wasSelected)
+            {
+                selectedElements.Add(replacement);
+                replacement.Select();
+            }
+
+            replacement.UpdateProperties();
+            replacement.UpdatePath();
+            replacement.DisplayRectangle = replacement.DisplayRectangle == Rectangle.Empty
+                ? replacement.DefaultRectangle()
+                : replacement.DisplayRectangle;
+            source.Removed(true);
+            source.Dispose();
+            UpdateViewport();
+            canvas.Invalidate();
+        }
+
+        protected void CopyConnectorProperties(DynamicConnector source, DynamicConnector replacement)
+        {
+            replacement.Name = source.Name;
+            replacement.Text = source.Text;
+            replacement.TextColor = source.TextColor;
+            replacement.TextAlign = source.TextAlign;
+            replacement.Multiline = source.Multiline;
+            replacement.WordWrap = source.WordWrap;
+            replacement.TextBounds = source.TextBounds;
+            replacement.TextMargin = source.TextMargin;
+            replacement.ParagraphJustification = source.ParagraphJustification;
+            replacement.LabelOffset = source.LabelOffset;
+            replacement.LabelSize = source.LabelSize;
+            replacement.BorderPenColor = source.BorderPenColor;
+            replacement.BorderPenWidth = source.BorderPenWidth;
+            replacement.FillColor = source.FillColor;
+            replacement.StartCap = source.StartCap;
+            replacement.EndCap = source.EndCap;
+            replacement.StartConnectedShape = source.StartConnectedShape;
+            replacement.EndConnectedShape = source.EndConnectedShape;
+            replacement.CustomConnectionPoints = source.CustomConnectionPoints.ToList();
+            replacement.Json = new Dictionary<string, string>(source.Json);
+            replacement.RotationAngle = source.RotationAngle;
+            replacement.TextFont.Dispose();
+            replacement.TextFont = (Font)source.TextFont.Clone();
         }
 
         public void MoveElementTo(GraphicElement el, Point location)

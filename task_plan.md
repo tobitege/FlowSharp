@@ -18,7 +18,6 @@ Finish the remaining partial feature work: richer text/connector editing, target
 
 | # | Issue | Status | Notes |
 | --- | --- | --- | --- |
-| 5 | Force V/H connectors | Partial | Orthogonal connector types exist; force-convert/remove-diagonal behavior remains open. |
 | 6 | True dynamic connectors | Partial | Dynamic connector render and anchor behavior improved; full rerouting semantics remain open. |
 | 7 | Snap shapes to centers and edges | Partial | Center/edge snap delta helper exists; drag integration remains open. |
 | 8 | Align selected shapes | Partial | Controller-level edge alignment exists; remaining UI/workflow coverage still needs verification against the final command surface. |

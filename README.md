@@ -246,6 +246,10 @@ Shape text supports wrapped multiline layout, local text bounds, text margins, p
 
 Connectors support editable labels with persisted label size and offset, so connector text can be positioned away from the midpoint when needed.
 
+## Orthogonal connector conversion
+
+Diagonal connectors can be converted to left-right or up-down orthogonal dynamic connectors while preserving labels, caps, endpoints, and attached shape connections.
+
 ## Export diagram to PNG
 ![PNG](https://github.com/cliftonm/FlowSharp/blob/master/Article/img5.png)
 
@@ -291,7 +295,6 @@ Please contribute to working on this list!
   - Custom defined connection points / custom anchor points, including on connectors.
   - Adjust custom connection points intelligently when shape is resized.
   - Auto-anchor.
-  - Force vertical/horizontal connectors.
   - Three-line connector middle-line repositioning.
   - True dynamic connectors.
 - Geometry and layout commands:

@@ -405,6 +405,76 @@ namespace FlowSharp.Main.Tests
         }
 
         [TestMethod]
+        public void ConvertConnectorToOrthogonal_ReplacesDiagonalAndPreservesConnections()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box source = AddBox(controller, new Rectangle(10, 100, 50, 50));
+            Box target = AddBox(controller, new Rectangle(200, 100, 50, 50));
+            DiagonalConnector diagonal = new DiagonalConnector(controller.Canvas, source.DisplayRectangle.RightMiddle(), target.DisplayRectangle.LeftMiddle())
+            {
+                Name = "diag",
+                Text = "label",
+                StartConnectedShape = source,
+                EndConnectedShape = target,
+                StartCap = AvailableLineCap.Arrow,
+                EndCap = AvailableLineCap.Diamond,
+                LabelOffset = new Point(5, -5)
+            };
+            controller.AddElement(diagonal);
+            source.AddConnection(new Connection { ToElement = diagonal, ToConnectionPoint = new ConnectionPoint(GripType.Start, diagonal.StartPoint), ElementConnectionPoint = new ConnectionPoint(GripType.RightMiddle, source.DisplayRectangle.RightMiddle()) });
+            target.AddConnection(new Connection { ToElement = diagonal, ToConnectionPoint = new ConnectionPoint(GripType.End, diagonal.EndPoint), ElementConnectionPoint = new ConnectionPoint(GripType.LeftMiddle, target.DisplayRectangle.LeftMiddle()) });
+
+            DynamicConnector replacement = controller.ConvertConnectorToOrthogonal(diagonal, OrthogonalConnectorOrientation.LeftRight);
+
+            Assert.IsInstanceOfType(replacement, typeof(DynamicConnectorLR));
+            Assert.IsFalse(controller.Elements.Contains(diagonal));
+            Assert.IsTrue(controller.Elements.Contains(replacement));
+            Assert.AreSame(replacement, source.Connections.Single().ToElement);
+            Assert.AreSame(replacement, target.Connections.Single().ToElement);
+            Assert.AreSame(source, replacement.StartConnectedShape);
+            Assert.AreSame(target, replacement.EndConnectedShape);
+            Assert.AreEqual("diag", replacement.Name);
+            Assert.AreEqual("label", replacement.Text);
+            Assert.AreEqual(AvailableLineCap.Arrow, replacement.StartCap);
+            Assert.AreEqual(AvailableLineCap.Diamond, replacement.EndCap);
+            Assert.AreEqual(new Point(5, -5), replacement.LabelOffset);
+        }
+
+        [TestMethod]
+        public void ConvertConnectorToOrthogonal_CanCreateUpDownConnector()
+        {
+            BaseController controller = CreateController(600, 400);
+            DiagonalConnector diagonal = new DiagonalConnector(controller.Canvas, new Point(20, 20), new Point(120, 90));
+            controller.AddElement(diagonal);
+
+            DynamicConnector replacement = controller.ConvertConnectorToOrthogonal(diagonal, OrthogonalConnectorOrientation.UpDown);
+
+            Assert.IsInstanceOfType(replacement, typeof(DynamicConnectorUD));
+            Assert.AreEqual(new Point(20, 20), replacement.StartPoint);
+            Assert.AreEqual(new Point(120, 90), replacement.EndPoint);
+        }
+
+        [TestMethod]
+        public void RemoveDiagonalConnectors_RemovesDiagonalConnectionsOnly()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box source = AddBox(controller, new Rectangle(10, 100, 50, 50));
+            DiagonalConnector diagonal = new DiagonalConnector(controller.Canvas, new Point(20, 20), new Point(120, 90));
+            DynamicConnectorLR orthogonal = new DynamicConnectorLR(controller.Canvas, new Point(20, 120), new Point(120, 160));
+            controller.AddElement(diagonal);
+            controller.AddElement(orthogonal);
+            source.AddConnection(new Connection { ToElement = diagonal, ToConnectionPoint = new ConnectionPoint(GripType.Start, diagonal.StartPoint), ElementConnectionPoint = new ConnectionPoint(GripType.RightMiddle, source.DisplayRectangle.RightMiddle()) });
+            diagonal.StartConnectedShape = source;
+
+            int removed = controller.RemoveDiagonalConnectors();
+
+            Assert.AreEqual(1, removed);
+            Assert.IsFalse(controller.Elements.Contains(diagonal));
+            Assert.IsTrue(controller.Elements.Contains(orthogonal));
+            Assert.AreEqual(0, source.Connections.Count);
+        }
+
+        [TestMethod]
         public void RegroupShapes_RestoresGroupMembershipAfterUngroup()
         {
             BaseController controller = CreateController(600, 400);
