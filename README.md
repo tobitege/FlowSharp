@@ -320,8 +320,6 @@ Workspaces can save multiple canvases. Unnamed secondary canvases are assigned s
 
 Please contribute to working on this list!
 
-- Selection and hit testing:
-  - Try intersection depth limit of 1 deep.
 - Viewport and placement:
   - Scrollbars for canvas - currently you drag the canvas to move it.
   - Full zoom behavior for rendering, hit testing, grips, selection feedback, and scrollbars.
