@@ -321,7 +321,6 @@ Workspaces can save multiple canvases. Unnamed secondary canvases are assigned s
 Please contribute to working on this list!
 
 - Geometry and layout commands:
-  - Shape rotation.
   - Regroup, so shapes can be manipulated and then regrouped.
 - Cross-cutting UX and history:
 
