@@ -5,7 +5,6 @@
 */
 
 using System;
-using System.Drawing;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -93,40 +92,9 @@ namespace FlowSharpPropertyGridService
             // Updating a shape.
             if (pgElement.SelectedObject is ElementProperties)
             {
-                canvasController.SelectedElements.ForEach(sel =>
-                {
-                    var ltype = elementProperties.GetType();
-                    var piElProps = ltype.GetProperty(label);
-                    if (piElProps == null) return;
-                    object oldVal = e.OldValue;
-                    object newVal = piElProps.GetValue(elementProperties);
-
-                    canvasController.UndoStack.UndoRedo("Update " + label,
-                        () =>
-                        {
-                            canvasController.Redraw(sel, el =>
-                            {
-                                piElProps.SetValue(elementProperties, newVal);
-                                elementProperties.Update(el, label);
-                                el.UpdateProperties();
-                                el.UpdatePath();
-                                pgElement.Refresh();
-                            });
-                        },
-                        () =>
-                        {
-                            canvasController.Redraw(sel, el =>
-                            {
-                                piElProps.SetValue(elementProperties, oldVal);
-                                elementProperties.Update(el, label);
-                                el.UpdateProperties();
-                                el.UpdatePath();
-                                pgElement.Refresh();
-                            });
-                        }, false);
-                });
-
-                canvasController.UndoStack.FinishGroup();
+                object oldVal = e.OldValue;
+                object newVal = elementProperties.GetType().GetProperty(label)?.GetValue(elementProperties);
+                UpdateSelectedElementsWithUndo(canvasController, label, oldVal, newVal);
 
                 // Return focus to the canvas so that keyboard actions, like copy/paste, undo/redo, are intercepted
                 // TODO: Seems really kludgy.
@@ -139,6 +107,63 @@ namespace FlowSharpPropertyGridService
                 // Updating canvas properties
                 (pgElement.SelectedObject as IPropertyObject).Update(label);
             }
+        }
+
+        protected virtual void UpdateSelectedElementsWithUndo(BaseController canvasController, string label, object oldValue, object newValue)
+        {
+            canvasController.SelectedElements.ForEach(sel =>
+            {
+                var ltype = elementProperties.GetType();
+                var piElProps = ltype.GetProperty(label);
+                if (piElProps == null) return;
+                PropertyRedrawMode redrawMode = elementProperties.GetRedrawMode(label);
+
+                canvasController.UndoStack.UndoRedo("Update " + label,
+                    () => ApplyPropertyChange(canvasController, sel, piElProps, label, newValue, redrawMode),
+                    () => ApplyPropertyChange(canvasController, sel, piElProps, label, oldValue, redrawMode),
+                    false);
+            });
+
+            canvasController.UndoStack.FinishGroup();
+        }
+
+        protected virtual void ApplyPropertyChange(
+            BaseController canvasController,
+            GraphicElement element,
+            PropertyInfo propertyInfo,
+            string label,
+            object value,
+            PropertyRedrawMode redrawMode)
+        {
+            if (redrawMode == PropertyRedrawMode.None)
+            {
+                ApplyPropertyValue(canvasController, element, propertyInfo, label, value, redrawMode);
+                return;
+            }
+
+            canvasController.Redraw(element, el =>
+                ApplyPropertyValue(canvasController, el, propertyInfo, label, value, redrawMode));
+        }
+
+        protected virtual void ApplyPropertyValue(
+            BaseController canvasController,
+            GraphicElement element,
+            PropertyInfo propertyInfo,
+            string label,
+            object value,
+            PropertyRedrawMode redrawMode)
+        {
+            propertyInfo.SetValue(elementProperties, value);
+            elementProperties.Update(element, label);
+            element.UpdateProperties();
+            element.UpdatePath();
+
+            if (redrawMode == PropertyRedrawMode.ElementAndConnections)
+            {
+                canvasController.UpdateConnections(element);
+            }
+
+            pgElement.Refresh();
         }
     }
 }

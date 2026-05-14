@@ -47,7 +47,7 @@ namespace FlowSharpLib
 
         public override void DragSelectedElements(Point delta)
         {
-            MoveSelectedElements(delta);
+            MoveSelectedElements(delta, true);
         }
 
         public override void DeselectCurrentSelectedElements()

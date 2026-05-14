@@ -1,11 +1,16 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
 
+using Clifton.Core.ServiceManagement;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using FlowSharpLib;
+using FlowSharpPropertyGridService;
+
+using PropertyGrid = System.Windows.Forms.PropertyGrid;
 
 namespace FlowSharp.Main.Tests
 {
@@ -92,6 +97,9 @@ namespace FlowSharp.Main.Tests
             Box source = AddBox(sourceController, new Rectangle(10, 20, 100, 80));
             source.RotationAngle = 45;
             source.WordWrap = false;
+            source.TextBounds = new Rectangle(5, 6, 40, 30);
+            source.TextMargin = 4;
+            source.ParagraphJustification = ParagraphJustification.Justify;
             source.SetCustomConnectionPoints(new[]
             {
                 new ConnectionPoint(GripType.Center, new Point(5000, 5000))
@@ -103,7 +111,60 @@ namespace FlowSharp.Main.Tests
 
             Assert.AreEqual(45, target.RotationAngle);
             Assert.IsFalse(target.WordWrap);
+            Assert.AreEqual(new Rectangle(5, 6, 40, 30), target.TextBounds);
+            Assert.AreEqual(4, target.TextMargin);
+            Assert.AreEqual(ParagraphJustification.Justify, target.ParagraphJustification);
             Assert.AreEqual(new Point(5000, 5000), target.CustomConnectionPoints.Single().Point);
+        }
+
+        [TestMethod]
+        public void NewShapes_DefaultToWrappedMultilineTextLayout()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box box = AddBox(controller, new Rectangle(10, 20, 100, 80));
+
+            Assert.IsTrue(box.Multiline);
+            Assert.IsTrue(box.WordWrap);
+            Assert.AreEqual(box.DisplayRectangle, box.GetTextDisplayRectangle());
+        }
+
+        [TestMethod]
+        public void TextBounds_AreLocalToTheShapeDisplayRectangle()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box box = AddBox(controller, new Rectangle(10, 20, 100, 80));
+            box.TextBounds = new Rectangle(5, 10, 40, 25);
+
+            Assert.AreEqual(new Rectangle(15, 30, 40, 25), box.GetTextDisplayRectangle());
+
+            box.Move(new Point(20, 30));
+
+            Assert.AreEqual(new Rectangle(35, 60, 40, 25), box.GetTextDisplayRectangle());
+        }
+
+        [TestMethod]
+        public void JustifiedText_RendersInsideCustomTextBounds()
+        {
+            BaseController controller = CreateController(260, 180);
+            Box box = AddBox(controller, new Rectangle(10, 10, 220, 140));
+            box.Text = "one two three four five six seven eight";
+            box.TextAlign = ContentAlignment.TopLeft;
+            box.TextBounds = new Rectangle(40, 35, 90, 60);
+            box.ParagraphJustification = ParagraphJustification.Justify;
+
+            using Bitmap bitmap = new Bitmap(260, 180);
+            using Graphics graphics = Graphics.FromImage(bitmap);
+            graphics.Clear(Color.White);
+            box.DrawText(graphics);
+
+            Rectangle bounds = FindNonWhiteBounds(bitmap);
+            Rectangle textBounds = box.GetTextDisplayRectangle().Grow(-box.TextMargin);
+
+            Assert.AreNotEqual(Rectangle.Empty, bounds);
+            Assert.IsTrue(bounds.Left >= textBounds.Left - 1);
+            Assert.IsTrue(bounds.Top >= textBounds.Top - 1);
+            Assert.IsTrue(bounds.Right <= textBounds.Right + 1);
+            Assert.IsTrue(bounds.Bottom <= textBounds.Bottom + 1);
         }
 
         [TestMethod]
@@ -116,6 +177,19 @@ namespace FlowSharp.Main.Tests
             Point delta = controller.GetCenterEdgeSnapDelta(moving, 5);
 
             Assert.AreEqual(new Point(-3, 0), delta);
+        }
+
+        [TestMethod]
+        public void DragSelectedElements_SnapsShapeToNearbyCentersAndEdges()
+        {
+            BaseController controller = CreateController(600, 400);
+            AddBox(controller, new Rectangle(100, 100, 50, 50));
+            Box moving = AddBox(controller, new Rectangle(154, 200, 30, 30));
+            controller.SelectElement(moving);
+
+            controller.DragSelectedElements(new Point(-2, 0));
+
+            Assert.AreEqual(150, moving.DisplayRectangle.Left);
         }
 
         [TestMethod]
@@ -263,6 +337,291 @@ namespace FlowSharp.Main.Tests
         }
 
         [TestMethod]
+        public void ConnectorLabelRectangle_UsesMidpointOffsetAndSize()
+        {
+            BaseController controller = CreateController(600, 400);
+            DynamicConnectorLR connector = new DynamicConnectorLR(controller.Canvas, new Point(10, 20), new Point(110, 80))
+            {
+                LabelOffset = new Point(20, -10),
+                LabelSize = new Size(100, 24)
+            };
+
+            Assert.AreEqual(new Rectangle(30, 28, 100, 24), connector.GetLabelDisplayRectangle());
+            Assert.AreEqual(connector.GetLabelDisplayRectangle(), connector.GetTextDisplayRectangle());
+        }
+
+        [TestMethod]
+        public void ConnectorCreateTextBox_UsesLabelRectangle()
+        {
+            BaseController controller = CreateController(600, 400);
+            DynamicConnectorLR connector = new DynamicConnectorLR(controller.Canvas, new Point(10, 20), new Point(110, 80))
+            {
+                Text = "connector label",
+                LabelOffset = new Point(20, -10),
+                LabelSize = new Size(100, 24)
+            };
+
+            using System.Windows.Forms.TextBox textBox = connector.CreateTextBox(Point.Empty);
+
+            Assert.AreEqual(new Point(30, 28), textBox.Location);
+            Assert.AreEqual(new Size(100, 24), textBox.Size);
+            Assert.AreEqual("connector label", textBox.Text);
+            Assert.IsTrue(textBox.Multiline);
+            Assert.IsTrue(textBox.WordWrap);
+        }
+
+        [TestMethod]
+        public void Persist_RoundTripsConnectorLabelLayout()
+        {
+            BaseController sourceController = CreateController(600, 400);
+            DynamicConnectorLR source = new DynamicConnectorLR(sourceController.Canvas, new Point(10, 20), new Point(110, 80))
+            {
+                Text = "connector label",
+                LabelOffset = new Point(12, -8),
+                LabelSize = new Size(120, 26)
+            };
+
+            string xml = Persist.Serialize(new List<GraphicElement> { source });
+            BaseController targetController = CreateController(600, 400);
+            DynamicConnectorLR target = (DynamicConnectorLR)Persist.Deserialize(targetController.Canvas, xml).Single();
+
+            Assert.AreEqual("connector label", target.Text);
+            Assert.AreEqual(new Point(12, -8), target.LabelOffset);
+            Assert.AreEqual(new Size(120, 26), target.LabelSize);
+        }
+
+        [TestMethod]
+        public void PropertyRedrawPolicy_SkipsNonVisualNameChanges()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box box = AddBox(controller, new Rectangle(10, 20, 100, 80));
+            ShapeProperties properties = new ShapeProperties(box);
+
+            Assert.AreEqual(PropertyRedrawMode.None, properties.GetRedrawMode(nameof(ElementProperties.Name)));
+        }
+
+        [TestMethod]
+        public void PropertyRedrawPolicy_UpdatesConnectionsForGeometryChanges()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box box = AddBox(controller, new Rectangle(10, 20, 100, 80));
+            ShapeProperties properties = new ShapeProperties(box);
+
+            Assert.AreEqual(PropertyRedrawMode.ElementAndConnections, properties.GetRedrawMode(nameof(ElementProperties.Rectangle)));
+            Assert.AreEqual(PropertyRedrawMode.ElementAndConnections, properties.GetRedrawMode(nameof(ShapeProperties.RotationAngle)));
+        }
+
+        [TestMethod]
+        public void PropertyRedrawPolicy_TargetsConnectorVisualProperties()
+        {
+            BaseController controller = CreateController(600, 400);
+            DynamicConnectorLR connector = new DynamicConnectorLR(controller.Canvas, new Point(10, 20), new Point(110, 80));
+            DynamicConnectorProperties properties = new DynamicConnectorProperties(connector);
+
+            Assert.AreEqual(PropertyRedrawMode.Element, properties.GetRedrawMode(nameof(DynamicConnectorProperties.EndCap)));
+            Assert.AreEqual(PropertyRedrawMode.Element, properties.GetRedrawMode(nameof(DynamicConnectorProperties.LabelOffset)));
+        }
+
+        [TestMethod]
+        public void PropertyUxMetadata_ProvidesFriendlyLabelsDescriptionsAndReadOnlyShapeType()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box box = AddBox(controller, new Rectangle(10, 20, 100, 80));
+            ShapeProperties properties = new ShapeProperties(box);
+
+            PropertyDescriptor shapeType = TypeDescriptor.GetProperties(properties)[nameof(ElementProperties.ShapeName)];
+            PropertyDescriptor textBounds = TypeDescriptor.GetProperties(properties)[nameof(ShapeProperties.TextBounds)];
+            PropertyDescriptor rotation = TypeDescriptor.GetProperties(properties)[nameof(ShapeProperties.RotationAngle)];
+
+            Assert.AreEqual("Shape Type", shapeType.DisplayName);
+            Assert.IsTrue(shapeType.IsReadOnly);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(shapeType.Description));
+            Assert.AreEqual("Text Bounds", textBounds.DisplayName);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(textBounds.Description));
+            Assert.AreEqual("Rotation Angle", rotation.DisplayName);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(rotation.Description));
+        }
+
+        [TestMethod]
+        public void ConvertConnectorToOrthogonal_ReplacesDiagonalAndPreservesConnections()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box source = AddBox(controller, new Rectangle(10, 100, 50, 50));
+            Box target = AddBox(controller, new Rectangle(200, 100, 50, 50));
+            DiagonalConnector diagonal = new DiagonalConnector(controller.Canvas, source.DisplayRectangle.RightMiddle(), target.DisplayRectangle.LeftMiddle())
+            {
+                Name = "diag",
+                Text = "label",
+                StartConnectedShape = source,
+                EndConnectedShape = target,
+                StartCap = AvailableLineCap.Arrow,
+                EndCap = AvailableLineCap.Diamond,
+                LabelOffset = new Point(5, -5)
+            };
+            controller.AddElement(diagonal);
+            source.AddConnection(new Connection { ToElement = diagonal, ToConnectionPoint = new ConnectionPoint(GripType.Start, diagonal.StartPoint), ElementConnectionPoint = new ConnectionPoint(GripType.RightMiddle, source.DisplayRectangle.RightMiddle()) });
+            target.AddConnection(new Connection { ToElement = diagonal, ToConnectionPoint = new ConnectionPoint(GripType.End, diagonal.EndPoint), ElementConnectionPoint = new ConnectionPoint(GripType.LeftMiddle, target.DisplayRectangle.LeftMiddle()) });
+
+            DynamicConnector replacement = controller.ConvertConnectorToOrthogonal(diagonal, OrthogonalConnectorOrientation.LeftRight);
+
+            Assert.IsInstanceOfType(replacement, typeof(DynamicConnectorLR));
+            Assert.IsFalse(controller.Elements.Contains(diagonal));
+            Assert.IsTrue(controller.Elements.Contains(replacement));
+            Assert.AreSame(replacement, source.Connections.Single().ToElement);
+            Assert.AreSame(replacement, target.Connections.Single().ToElement);
+            Assert.AreSame(source, replacement.StartConnectedShape);
+            Assert.AreSame(target, replacement.EndConnectedShape);
+            Assert.AreEqual("diag", replacement.Name);
+            Assert.AreEqual("label", replacement.Text);
+            Assert.AreEqual(AvailableLineCap.Arrow, replacement.StartCap);
+            Assert.AreEqual(AvailableLineCap.Diamond, replacement.EndCap);
+            Assert.AreEqual(new Point(5, -5), replacement.LabelOffset);
+        }
+
+        [TestMethod]
+        public void ConvertConnectorToOrthogonalWithUndo_RestoresOriginalConnectorAndConnections()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box source = AddBox(controller, new Rectangle(10, 100, 50, 50));
+            Box target = AddBox(controller, new Rectangle(200, 100, 50, 50));
+            DiagonalConnector diagonal = new DiagonalConnector(controller.Canvas, source.DisplayRectangle.RightMiddle(), target.DisplayRectangle.LeftMiddle())
+            {
+                StartConnectedShape = source,
+                EndConnectedShape = target
+            };
+            controller.AddElement(diagonal);
+            source.AddConnection(new Connection { ToElement = diagonal, ToConnectionPoint = new ConnectionPoint(GripType.Start, diagonal.StartPoint), ElementConnectionPoint = new ConnectionPoint(GripType.RightMiddle, source.DisplayRectangle.RightMiddle()) });
+            target.AddConnection(new Connection { ToElement = diagonal, ToConnectionPoint = new ConnectionPoint(GripType.End, diagonal.EndPoint), ElementConnectionPoint = new ConnectionPoint(GripType.LeftMiddle, target.DisplayRectangle.LeftMiddle()) });
+
+            DynamicConnector replacement = controller.ConvertConnectorToOrthogonalWithUndo(diagonal, OrthogonalConnectorOrientation.LeftRight);
+
+            Assert.IsInstanceOfType(replacement, typeof(DynamicConnectorLR));
+            Assert.AreSame(replacement, source.Connections.Single().ToElement);
+
+            Assert.IsTrue(controller.UndoStack.Undo());
+            Assert.IsTrue(controller.Elements.Contains(diagonal));
+            Assert.AreSame(diagonal, source.Connections.Single().ToElement);
+            Assert.AreSame(diagonal, target.Connections.Single().ToElement);
+
+            Assert.IsTrue(controller.UndoStack.Redo());
+            DynamicConnectorLR redone = controller.Elements.OfType<DynamicConnectorLR>().Single();
+            Assert.AreSame(redone, source.Connections.Single().ToElement);
+            Assert.AreSame(redone, target.Connections.Single().ToElement);
+            Assert.IsFalse(controller.Elements.Contains(diagonal));
+        }
+
+        [TestMethod]
+        public void PropertyGridUndoRedo_RestoresTextBoundsAndConnectorLabelProperties()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box box = AddBox(controller, new Rectangle(10, 20, 100, 80));
+            var propertyGridController = new TestablePropertyGridController();
+            Rectangle newTextBounds = new Rectangle(5, 6, 40, 30);
+            controller.SelectElement(box);
+
+            propertyGridController.UpdateWithUndo(
+                controller,
+                new ShapeProperties(box),
+                nameof(ShapeProperties.TextBounds),
+                Rectangle.Empty,
+                newTextBounds);
+
+            Assert.AreEqual(newTextBounds, box.TextBounds);
+            Assert.IsTrue(controller.UndoStack.Undo());
+            Assert.AreEqual(Rectangle.Empty, box.TextBounds);
+            Assert.IsTrue(controller.UndoStack.Redo());
+            Assert.AreEqual(newTextBounds, box.TextBounds);
+
+            DynamicConnectorLR connector = new DynamicConnectorLR(controller.Canvas, new Point(20, 20), new Point(120, 90));
+            controller.AddElement(connector);
+            controller.DeselectCurrentSelectedElements();
+            controller.SelectElement(connector);
+            Size oldLabelSize = connector.LabelSize;
+            Size newLabelSize = new Size(120, 24);
+
+            propertyGridController.UpdateWithUndo(
+                controller,
+                new DynamicConnectorProperties(connector),
+                nameof(DynamicConnectorProperties.LabelSize),
+                oldLabelSize,
+                newLabelSize);
+
+            Assert.AreEqual(newLabelSize, connector.LabelSize);
+            Assert.IsTrue(controller.UndoStack.Undo());
+            Assert.AreEqual(oldLabelSize, connector.LabelSize);
+            Assert.IsTrue(controller.UndoStack.Redo());
+            Assert.AreEqual(newLabelSize, connector.LabelSize);
+        }
+
+        [TestMethod]
+        public void ConvertConnectorToOrthogonal_CanCreateUpDownConnector()
+        {
+            BaseController controller = CreateController(600, 400);
+            DiagonalConnector diagonal = new DiagonalConnector(controller.Canvas, new Point(20, 20), new Point(120, 90));
+            controller.AddElement(diagonal);
+
+            DynamicConnector replacement = controller.ConvertConnectorToOrthogonal(diagonal, OrthogonalConnectorOrientation.UpDown);
+
+            Assert.IsInstanceOfType(replacement, typeof(DynamicConnectorUD));
+            Assert.AreEqual(new Point(20, 20), replacement.StartPoint);
+            Assert.AreEqual(new Point(120, 90), replacement.EndPoint);
+        }
+
+        [TestMethod]
+        public void RemoveDiagonalConnectors_RemovesDiagonalConnectionsOnly()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box source = AddBox(controller, new Rectangle(10, 100, 50, 50));
+            DiagonalConnector diagonal = new DiagonalConnector(controller.Canvas, new Point(20, 20), new Point(120, 90));
+            DynamicConnectorLR orthogonal = new DynamicConnectorLR(controller.Canvas, new Point(20, 120), new Point(120, 160));
+            controller.AddElement(diagonal);
+            controller.AddElement(orthogonal);
+            source.AddConnection(new Connection { ToElement = diagonal, ToConnectionPoint = new ConnectionPoint(GripType.Start, diagonal.StartPoint), ElementConnectionPoint = new ConnectionPoint(GripType.RightMiddle, source.DisplayRectangle.RightMiddle()) });
+            diagonal.StartConnectedShape = source;
+
+            int removed = controller.RemoveDiagonalConnectors();
+
+            Assert.AreEqual(1, removed);
+            Assert.IsFalse(controller.Elements.Contains(diagonal));
+            Assert.IsTrue(controller.Elements.Contains(orthogonal));
+            Assert.AreEqual(0, source.Connections.Count);
+        }
+
+        [TestMethod]
+        public void MoveConnectedShape_ReroutesDynamicConnectorToFacingAnchors()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box source = AddBox(controller, new Rectangle(100, 100, 50, 50));
+            Box target = AddBox(controller, new Rectangle(240, 100, 50, 50));
+            DynamicConnectorLR connector = AddDynamicConnector(controller, source, target);
+
+            controller.MoveElement(target, new Point(-220, 0));
+
+            Assert.AreEqual(source.DisplayRectangle.LeftMiddle(), connector.StartPoint);
+            Assert.AreEqual(target.DisplayRectangle.RightMiddle(), connector.EndPoint);
+            Assert.AreEqual(GripType.LeftMiddle, source.Connections.Single().ElementConnectionPoint.Type);
+            Assert.AreEqual(GripType.RightMiddle, target.Connections.Single().ElementConnectionPoint.Type);
+        }
+
+        [TestMethod]
+        public void UpdateConnections_ReroutesDynamicConnectorAfterShapeGeometryChange()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box source = AddBox(controller, new Rectangle(100, 100, 50, 50));
+            Box target = AddBox(controller, new Rectangle(240, 100, 50, 50));
+            DynamicConnectorLR connector = AddDynamicConnector(controller, source, target);
+
+            target.DisplayRectangle = new Rectangle(100, 240, 50, 50);
+            target.UpdatePath();
+            controller.UpdateConnections(target);
+
+            Assert.AreEqual(source.DisplayRectangle.BottomMiddle(), connector.StartPoint);
+            Assert.AreEqual(target.DisplayRectangle.TopMiddle(), connector.EndPoint);
+            Assert.AreEqual(GripType.BottomMiddle, source.Connections.Single().ElementConnectionPoint.Type);
+            Assert.AreEqual(GripType.TopMiddle, target.Connections.Single().ElementConnectionPoint.Type);
+        }
+
+        [TestMethod]
         public void RegroupShapes_RestoresGroupMembershipAfterUngroup()
         {
             BaseController controller = CreateController(600, 400);
@@ -304,6 +663,37 @@ namespace FlowSharp.Main.Tests
             controller.AddElement(box);
 
             return box;
+        }
+
+        private static DynamicConnectorLR AddDynamicConnector(BaseController controller, Box source, Box target)
+        {
+            DynamicConnectorLR connector = new DynamicConnectorLR(
+                controller.Canvas,
+                source.DisplayRectangle.RightMiddle(),
+                target.DisplayRectangle.LeftMiddle())
+            {
+                StartConnectedShape = source,
+                EndConnectedShape = target
+            };
+            controller.AddElement(connector);
+            source.AddConnection(new Connection { ToElement = connector, ToConnectionPoint = new ConnectionPoint(GripType.Start, connector.StartPoint), ElementConnectionPoint = new ConnectionPoint(GripType.RightMiddle, source.DisplayRectangle.RightMiddle()) });
+            target.AddConnection(new Connection { ToElement = connector, ToConnectionPoint = new ConnectionPoint(GripType.End, connector.EndPoint), ElementConnectionPoint = new ConnectionPoint(GripType.LeftMiddle, target.DisplayRectangle.LeftMiddle()) });
+            connector.AutoAnchor();
+
+            return connector;
+        }
+
+        private sealed class TestablePropertyGridController : PropertyGridController
+        {
+            public TestablePropertyGridController() : base(new ServiceManager(), new PropertyGrid())
+            {
+            }
+
+            public void UpdateWithUndo(BaseController controller, ElementProperties properties, string label, object oldValue, object newValue)
+            {
+                elementProperties = properties;
+                UpdateSelectedElementsWithUndo(controller, label, oldValue, newValue);
+            }
         }
 
         private static Rectangle RenderBounds(BaseController controller)

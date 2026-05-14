@@ -80,6 +80,8 @@ namespace FlowSharpLib
 
         public AvailableLineCap StartCap { get; set; }
         public AvailableLineCap EndCap { get; set; }
+        public Point LabelOffset { get; set; }
+        public Size LabelSize { get; set; }
 
         public Guid StartConnectedShapeId { get; set; }
         public Guid EndConnectedShapeId { get; set; }
@@ -103,6 +105,9 @@ namespace FlowSharpLib
         public ContentAlignment TextAlign { get; set; }
         public bool Multiline { get; set; }
         public bool WordWrap { get; set; }
+        public Rectangle TextBounds { get; set; }
+        public int TextMargin { get; set; }
+        public ParagraphJustification ParagraphJustification { get; set; }
         public int RotationAngle { get; set; }
 
         [XmlIgnore]
@@ -139,6 +144,7 @@ namespace FlowSharpLib
             CustomConnectionPoints = new List<ConnectionPoint>();
             Visible = true;     // Default, if not defined, for older fsd's that don't have this property.
             WordWrap = true;
+            TextMargin = 3;
         }
     }
 

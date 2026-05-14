@@ -1,5 +1,8 @@
 using System;
+using System.Drawing;
+using System.Drawing.Printing;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 using Clifton.Core.ServiceManagement;
@@ -67,6 +70,80 @@ namespace FlowSharp.Main.Tests
             }
         }
 
+        [TestMethod]
+        public void MenuStrip_ExposesPrintCommandWithShortcut()
+        {
+            BaseController activeController = CreateController();
+            var canvasService = new TestCanvasService(activeController);
+            var editService = new TestEditService();
+            ServiceManager serviceManager = CreateServiceManager(canvasService, editService);
+            var controller = new MenuController(serviceManager);
+
+            ToolStripMenuItem printItem = FindMenuItem(controller.MenuStrip.Items, "mnuPrint");
+
+            Assert.IsNotNull(printItem);
+            Assert.AreEqual("&Print...", printItem.Text);
+            Assert.AreEqual(Keys.Control | Keys.P, printItem.ShortcutKeys);
+        }
+
+        [TestMethod]
+        public void PrintCommand_CreatesPrintDocumentAndShowsDialog()
+        {
+            BaseController activeController = CreateController();
+            AddBox(activeController);
+            var canvasService = new TestCanvasService(activeController);
+            var editService = new TestEditService();
+            ServiceManager serviceManager = CreateServiceManager(canvasService, editService);
+            var controller = new TestableMenuController(serviceManager);
+
+            controller.ClickMenuItem("mnuPrint");
+
+            Assert.IsTrue(controller.PrintDialogShown);
+            Assert.IsNotNull(controller.PrintDialogDocument);
+            Assert.AreEqual("document", controller.PrintDialogDocument.DocumentName);
+        }
+
+        [TestMethod]
+        public void MenuStrip_ExposesAlignCommands()
+        {
+            BaseController activeController = CreateController();
+            var canvasService = new TestCanvasService(activeController);
+            var editService = new TestEditService();
+            ServiceManager serviceManager = CreateServiceManager(canvasService, editService);
+            var controller = new MenuController(serviceManager);
+
+            Assert.AreEqual("Al&ign", FindMenuItem(controller.MenuStrip.Items, "alignToolStripMenuItem").Text);
+            Assert.AreEqual("Align &Lefts", FindMenuItem(controller.MenuStrip.Items, "mnuAlignLefts").Text);
+            Assert.AreEqual("Align &Rights", FindMenuItem(controller.MenuStrip.Items, "mnuAlignRights").Text);
+            Assert.AreEqual("Align &Tops", FindMenuItem(controller.MenuStrip.Items, "mnuAlignTops").Text);
+            Assert.AreEqual("Align &Bottoms", FindMenuItem(controller.MenuStrip.Items, "mnuAlignBottoms").Text);
+        }
+
+        [TestMethod]
+        public void AlignLeftsMenuCommand_AlignsSelectedShapesAndSupportsUndoRedo()
+        {
+            BaseController activeController = CreateController();
+            Box left = AddBox(activeController, new Rectangle(10, 10, 20, 20));
+            Box right = AddBox(activeController, new Rectangle(50, 25, 20, 20));
+            activeController.SelectElement(left);
+            activeController.SelectElement(right);
+            var canvasService = new TestCanvasService(activeController);
+            var editService = new TestEditService();
+            ServiceManager serviceManager = CreateServiceManager(canvasService, editService);
+            var controller = new TestableMenuController(serviceManager);
+
+            controller.ClickMenuItem("mnuAlignLefts");
+
+            Assert.AreEqual(10, left.DisplayRectangle.Left);
+            Assert.AreEqual(10, right.DisplayRectangle.Left);
+
+            Assert.IsTrue(activeController.UndoStack.Undo());
+            Assert.AreEqual(50, right.DisplayRectangle.Left);
+
+            Assert.IsTrue(activeController.UndoStack.Redo());
+            Assert.AreEqual(10, right.DisplayRectangle.Left);
+        }
+
         private static ServiceManager CreateServiceManager(TestCanvasService canvasService, TestEditService editService)
         {
             var serviceManager = new ServiceManager();
@@ -85,15 +162,73 @@ namespace FlowSharp.Main.Tests
             return new CanvasController(canvas);
         }
 
+        private static void AddBox(BaseController controller)
+        {
+            AddBox(controller, new Rectangle(10, 10, 20, 20));
+        }
+
+        private static Box AddBox(BaseController controller, Rectangle rectangle)
+        {
+            var box = new Box(controller.Canvas)
+            {
+                DisplayRectangle = rectangle
+            };
+            box.UpdatePath();
+            controller.AddElement(box);
+
+            return box;
+        }
+
+        private static ToolStripMenuItem FindMenuItem(ToolStripItemCollection items, string name)
+        {
+            foreach (ToolStripItem item in items)
+            {
+                if (item is ToolStripMenuItem menuItem)
+                {
+                    if (menuItem.Name == name)
+                    {
+                        return menuItem;
+                    }
+
+                    ToolStripMenuItem child = FindMenuItem(menuItem.DropDownItems, name);
+                    if (child != null)
+                    {
+                        return child;
+                    }
+                }
+            }
+
+            return null;
+        }
+
         private sealed class TestableMenuController : MenuController
         {
             public TestableMenuController(IServiceManager serviceManager) : base(serviceManager)
             {
+                InitializeMenuHandlers();
             }
 
             public void InvokeSaveDiagram(string filename)
             {
                 SaveDiagram(filename);
+            }
+
+            public bool PrintDialogShown { get; private set; }
+            public PrintDocument PrintDialogDocument { get; private set; }
+
+            public void ClickMenuItem(string name)
+            {
+                ToolStripMenuItem item = FindMenuItem(MenuStrip.Items, name);
+                Assert.IsNotNull(item);
+                item.PerformClick();
+            }
+
+            protected override DialogResult ShowPrintDialog(PrintDocument document)
+            {
+                PrintDialogShown = true;
+                PrintDialogDocument = document;
+
+                return DialogResult.Cancel;
             }
         }
 

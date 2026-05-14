@@ -6,8 +6,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
+using System.Windows.Forms;
 
 using Clifton.Core.ExtensionMethods;
 
@@ -20,6 +22,8 @@ namespace FlowSharpLib
 
         public GraphicElement StartConnectedShape { get; set; }
         public GraphicElement EndConnectedShape { get; set; }
+        public Point LabelOffset { get; set; }
+        public Size LabelSize { get; set; }
 
         public override bool IsConnector => true;
         public bool ShowConnectorAsSelected { get; set; }
@@ -36,6 +40,7 @@ namespace FlowSharpLib
         {
             adjCapArrow = new AdjustableArrowCap(BaseController.CAP_WIDTH, BaseController.CAP_HEIGHT, true);
             adjCapDiamond.MiddleInset = -BaseController.CAP_WIDTH;
+            LabelSize = new Size(160, 30);
         }
 
         public override void Serialize(ElementPropertyBag epb, IEnumerable<GraphicElement> elementsBeingSerialized)
@@ -43,6 +48,8 @@ namespace FlowSharpLib
             base.Serialize(epb, elementsBeingSerialized);
             epb.StartCap = StartCap;
             epb.EndCap = EndCap;
+            epb.LabelOffset = LabelOffset;
+            epb.LabelSize = LabelSize;
 
             // Don't assign connected shape ID to partial copy and paste selection where target is not in elements being serialized.
 
@@ -62,6 +69,44 @@ namespace FlowSharpLib
             base.Deserialize(epb);
             StartCap = epb.StartCap;
             EndCap = epb.EndCap;
+            LabelOffset = epb.LabelOffset;
+            LabelSize = epb.LabelSize == Size.Empty ? new Size(160, 30) : epb.LabelSize;
+        }
+
+        public override TextBox CreateTextBox(Point mousePosition)
+        {
+            TextBox textBox = base.CreateTextBox(mousePosition);
+            Rectangle labelRectangle = GetLabelDisplayRectangle();
+            textBox.Multiline = true;
+            textBox.WordWrap = true;
+            textBox.Location = labelRectangle.Location;
+            textBox.Size = labelRectangle.Size;
+
+            return textBox;
+        }
+
+        public Rectangle GetLabelDisplayRectangle()
+        {
+            Point center = GetLabelCenter().Move(LabelOffset.X, LabelOffset.Y);
+            Size size = LabelSize == Size.Empty ? new Size(160, 30) : LabelSize;
+
+            return new Rectangle(
+                center.X - size.Width / 2,
+                center.Y - size.Height / 2,
+                size.Width,
+                size.Height);
+        }
+
+        public override Rectangle GetTextDisplayRectangle()
+        {
+            return TextBounds == Rectangle.Empty || TextBounds.Width <= 0 || TextBounds.Height <= 0
+                ? GetLabelDisplayRectangle()
+                : base.GetTextDisplayRectangle();
+        }
+
+        protected virtual Point GetLabelCenter()
+        {
+            return DisplayRectangle.Center();
         }
 
         public override void FinalFixup(List<GraphicElement> elements, ElementPropertyBag epb, Dictionary<Guid, Guid> oldNewGuidMap)

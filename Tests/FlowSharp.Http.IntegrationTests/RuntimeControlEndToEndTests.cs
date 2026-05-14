@@ -478,6 +478,113 @@ namespace FlowSharp.Http.IntegrationTests
             Assert.AreEqual(1, finalSelection.RootElement.GetArrayLength());
         }
 
+        [TestMethod]
+        [Timeout(120000)]
+        public async Task BugReview_RuntimeFeatureSurfacesScript_CanBeRunThroughRuntimeControl()
+        {
+            if (!OperatingSystem.IsWindows())
+            {
+                Assert.Inconclusive("FlowSharp end-to-end tests require Windows.");
+            }
+
+            string printPath = GetBugReviewArtifactPath("flowsharp-runtime-feature-surfaces-print.png");
+            string diagramPath = GetBugReviewArtifactPath("flowsharp-runtime-feature-surfaces.fsd");
+            string layoutPath = GetBugReviewArtifactPath("flowsharp-runtime-feature-surfaces-layout.xml");
+            CleanupFiles(printPath, diagramPath, layoutPath);
+
+            try
+            {
+                using FlowSharpAppSession session = await FlowSharpAppSession.StartAsync();
+                using JsonDocument macroResults = await RunBugReviewScriptAsync(session, "08-runtime-feature-surfaces.flow");
+
+                AssertMacroSucceeded(macroResults);
+
+                using JsonDocument textInspect = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "inspectshape Name=TextBox "));
+                JsonElement textProperties = textInspect.RootElement[0].GetProperty("Properties");
+                Assert.AreEqual("20,15,130,70", textProperties.GetProperty("TextBounds").GetString());
+                Assert.AreEqual("Justify", textProperties.GetProperty("ParagraphJustification").GetString());
+
+                using JsonDocument flowInspect = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "inspectshape Name=Flow "));
+                JsonElement flow = flowInspect.RootElement[0];
+                Assert.AreEqual("DynamicConnectorLR", flow.GetProperty("Type").GetString());
+                Assert.AreEqual("12,-8", flow.GetProperty("Properties").GetProperty("LabelOffset").GetString());
+
+                using JsonDocument aligned = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "listshapes Name=AlignB "));
+                Assert.AreEqual(100, aligned.RootElement[0].GetProperty("X").GetInt32());
+
+                using JsonDocument snapped = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "listshapes Name=SnapMoving "));
+                Assert.AreEqual(150, snapped.RootElement[0].GetProperty("X").GetInt32());
+
+                using JsonDocument customPoints = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "inspectshape Name=CustomPointBox ", 1));
+                JsonElement customPoint = customPoints.RootElement[0].GetProperty("ConnectionPoints").EnumerateArray().First(p => p.GetProperty("IsCustom").GetBoolean());
+                Assert.AreEqual(60, customPoint.GetProperty("X").GetInt32());
+                Assert.AreEqual(40, customPoint.GetProperty("Y").GetInt32());
+
+                using JsonDocument resizedCustomPoints = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "inspectshape Name=CustomPointBox ", 2));
+                JsonElement resizedCustomPoint = resizedCustomPoints.RootElement[0].GetProperty("ConnectionPoints").EnumerateArray().First(p => p.GetProperty("IsCustom").GetBoolean());
+                Assert.AreEqual(110, resizedCustomPoint.GetProperty("X").GetInt32());
+                Assert.AreEqual(60, resizedCustomPoint.GetProperty("Y").GetInt32());
+
+                using JsonDocument capLine = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "inspectshape Name=CapLine "));
+                Assert.AreEqual("Square", capLine.RootElement[0].GetProperty("Properties").GetProperty("StartCap").GetString());
+                Assert.AreEqual("Round", capLine.RootElement[0].GetProperty("Properties").GetProperty("EndCap").GetString());
+
+                using JsonDocument upDown = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "inspectshape Name=UpDownCandidate"));
+                Assert.AreEqual("DynamicConnectorUD", upDown.RootElement[0].GetProperty("Type").GetString());
+
+                using JsonDocument removeResult = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "removediagonalconnectors"));
+                Assert.AreEqual(1, removeResult.RootElement.GetProperty("Count").GetInt32());
+
+                using JsonDocument rotateAfter = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "inspectshape Name=RotateBox ", 1));
+                Assert.AreEqual("30", rotateAfter.RootElement[0].GetProperty("Properties").GetProperty("RotationAngle").GetString());
+                using JsonDocument rotateUndo = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "inspectshape Name=RotateBox ", 2));
+                Assert.AreEqual("0", rotateUndo.RootElement[0].GetProperty("Properties").GetProperty("RotationAngle").GetString());
+                using JsonDocument rotateRedo = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "inspectshape Name=RotateBox ", 3));
+                Assert.AreEqual("30", rotateRedo.RootElement[0].GetProperty("Properties").GetProperty("RotationAngle").GetString());
+
+                using JsonDocument regrouped = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "inspectshape Name=RegroupBox"));
+                Assert.AreEqual(2, regrouped.RootElement[0].GetProperty("GroupChildCount").GetInt32());
+
+                using JsonDocument routeSourceAfterMove = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "inspectshape Name=RouteSource", 2));
+                using JsonDocument routeTargetAfterMove = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "inspectshape Name=RouteTarget", 1));
+                Assert.AreEqual("LeftMiddle", routeSourceAfterMove.RootElement[0].GetProperty("Connections")[0].GetProperty("ShapeGrip").GetString());
+                Assert.AreEqual("RightMiddle", routeTargetAfterMove.RootElement[0].GetProperty("Connections")[0].GetProperty("ShapeGrip").GetString());
+
+                using JsonDocument routeSourceAfterGeometry = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "inspectshape Name=RouteSource", 3));
+                using JsonDocument routeTargetAfterGeometry = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "inspectshape Name=RouteTarget", 2));
+                Assert.AreEqual("BottomMiddle", routeSourceAfterGeometry.RootElement[0].GetProperty("Connections")[0].GetProperty("ShapeGrip").GetString());
+                Assert.AreEqual("TopMiddle", routeTargetAfterGeometry.RootElement[0].GetProperty("Connections")[0].GetProperty("ShapeGrip").GetString());
+
+                using JsonDocument viewBeforeFocus = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "getcanvasview", 1));
+                using JsonDocument viewAfterFocus = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "getcanvasview", 2));
+                Assert.IsTrue(
+                    viewBeforeFocus.RootElement.GetProperty("ViewportOriginX").GetInt32() != viewAfterFocus.RootElement.GetProperty("ViewportOriginX").GetInt32() ||
+                    viewBeforeFocus.RootElement.GetProperty("ViewportOriginY").GetInt32() != viewAfterFocus.RootElement.GetProperty("ViewportOriginY").GetInt32(),
+                    "ShowShape did not change the viewport origin.");
+
+                using JsonDocument persistBefore = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "inspectshape Name=PersistBox ", 1));
+                using JsonDocument persistAfter = JsonDocument.Parse(GetMacroCommandResponse(macroResults, "inspectshape Name=PersistBox ", 2));
+                JsonElement beforeProps = persistBefore.RootElement[0].GetProperty("Properties");
+                JsonElement afterProps = persistAfter.RootElement[0].GetProperty("Properties");
+                Assert.AreEqual(beforeProps.GetProperty("WordWrap").GetString(), afterProps.GetProperty("WordWrap").GetString());
+                Assert.AreEqual(beforeProps.GetProperty("RotationAngle").GetString(), afterProps.GetProperty("RotationAngle").GetString());
+                Assert.AreEqual(beforeProps.GetProperty("TextBounds").GetString(), afterProps.GetProperty("TextBounds").GetString());
+                Assert.AreEqual(beforeProps.GetProperty("TextMargin").GetString(), afterProps.GetProperty("TextMargin").GetString());
+                Assert.AreEqual(beforeProps.GetProperty("ParagraphJustification").GetString(), afterProps.GetProperty("ParagraphJustification").GetString());
+                JsonElement persistedCustomPoint = persistAfter.RootElement[0].GetProperty("ConnectionPoints").EnumerateArray().First(p => p.GetProperty("IsCustom").GetBoolean());
+                Assert.AreEqual(70, persistedCustomPoint.GetProperty("X").GetInt32());
+                Assert.AreEqual(680, persistedCustomPoint.GetProperty("Y").GetInt32());
+
+                Assert.IsTrue(File.Exists(printPath), "Expected print-page render file was not created.");
+                Assert.IsTrue(new FileInfo(printPath).Length > 0, "Expected print-page render file to be non-empty.");
+                Assert.IsTrue(File.Exists(diagramPath), "Expected persisted diagram file was not created.");
+            }
+            finally
+            {
+                CleanupFiles(printPath, diagramPath, layoutPath);
+            }
+        }
+
         private static string ToMacroPath(string path)
         {
             return Path.GetFullPath(path).Replace('\\', '/');
@@ -502,6 +609,26 @@ namespace FlowSharp.Http.IntegrationTests
         private static string GetMacroStepResponse(JsonDocument macroResults, int stepNumber)
         {
             return macroResults.RootElement[stepNumber - 1].GetProperty("Response").GetString();
+        }
+
+        private static string GetMacroCommandResponse(JsonDocument macroResults, string commandPrefix, int occurrence = 1)
+        {
+            int seen = 0;
+            foreach (JsonElement step in macroResults.RootElement.EnumerateArray())
+            {
+                string command = step.GetProperty("Command").GetString();
+                if (command != null && command.StartsWith(commandPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    seen++;
+                    if (seen == occurrence)
+                    {
+                        return step.GetProperty("Response").GetString();
+                    }
+                }
+            }
+
+            Assert.Fail("Macro command was not found: " + commandPrefix + " occurrence " + occurrence + ".");
+            return null;
         }
 
         private static string GetBugReviewArtifactPath(string fileName)
@@ -548,7 +675,7 @@ namespace FlowSharp.Http.IntegrationTests
                 string solutionRoot = FindSolutionRoot();
                 string appDirectory = Path.Combine(solutionRoot, "bin", "Debug", "net8.0-windows");
                 string exePath = Path.Combine(appDirectory, "FlowSharp.exe");
-                string moduleFile = Path.Combine(appDirectory, "FlowSharpCodeModules.xml");
+                string moduleFile = Path.Combine(appDirectory, "FlowSharpRuntimeControlModules.xml");
 
                 Assert.IsTrue(File.Exists(exePath), "FlowSharp executable was not found: " + exePath);
                 Assert.IsTrue(File.Exists(moduleFile), "FlowSharp module definition was not found: " + moduleFile);

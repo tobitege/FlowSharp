@@ -29,6 +29,8 @@ namespace FlowSharpRestService
 {
     public partial class CommandProcessor : IReceptor
     {
+        private readonly Dictionary<BaseController, UngroupedGroupState> lastUngroupedGroups = new Dictionary<BaseController, UngroupedGroupState>();
+
         // Ex: localhost:8001/flowsharp?cmd=CmdUpdateProperty&Name=btnTest&PropertyName=Text&Value=Foobar
         public void Process(ISemanticProcessor proc, IMembrane membrane, CmdUpdateProperty cmd)
         {
@@ -151,6 +153,9 @@ namespace FlowSharpRestService
                 el.Name = cmd.Name;
                 cmd.BorderColor.IfNotNull(c => el.BorderPenColor = GetColor(c));
                 SetConnectorEndpoints(el, new Point(cmd.X1, cmd.Y1), new Point(cmd.X2, cmd.Y2));
+                if (TryParseCap(cmd.StartCap, out var startCap)) el.StartCap = startCap;
+                if (TryParseCap(cmd.EndCap, out var endCap)) el.EndCap = endCap;
+                el.UpdateProperties();
                 el.UpdatePath();
                 controller.Insert(el);
             });
@@ -592,6 +597,11 @@ namespace FlowSharpRestService
                 {
                     Process(proc, membrane, cp);
                 }
+                else if (command is CmdSetShapeProperty setShapeProperty)
+                {
+                    Process(proc, membrane, setShapeProperty);
+                    result.Response = setShapeProperty.SerializeResponse();
+                }
                 else if (command is CmdShowShape ss)
                 {
                     Process(proc, membrane, ss);
@@ -659,6 +669,10 @@ namespace FlowSharpRestService
                 {
                     Process(proc, membrane, exportPng);
                 }
+                else if (command is CmdRenderPrintPage renderPrintPage)
+                {
+                    Process(proc, membrane, renderPrintPage);
+                }
                 else if (command is CmdSelectShapes selectShapes)
                 {
                     Process(proc, membrane, selectShapes);
@@ -675,6 +689,18 @@ namespace FlowSharpRestService
                 else if (command is CmdMoveSelection moveSelection)
                 {
                     Process(proc, membrane, moveSelection);
+                }
+                else if (command is CmdDragSelection dragSelection)
+                {
+                    Process(proc, membrane, dragSelection);
+                }
+                else if (command is CmdAlignSelection alignSelection)
+                {
+                    Process(proc, membrane, alignSelection);
+                }
+                else if (command is CmdRotateSelection rotateSelection)
+                {
+                    Process(proc, membrane, rotateSelection);
                 }
                 else if (command is CmdCopySelection copySelection)
                 {
@@ -696,6 +722,10 @@ namespace FlowSharpRestService
                 {
                     Process(proc, membrane, ungroupSelection);
                 }
+                else if (command is CmdRegroupSelection regroupSelection)
+                {
+                    Process(proc, membrane, regroupSelection);
+                }
                 else if (command is CmdUndo undo)
                 {
                     Process(proc, membrane, undo);
@@ -703,6 +733,21 @@ namespace FlowSharpRestService
                 else if (command is CmdRedo redo)
                 {
                     Process(proc, membrane, redo);
+                }
+                else if (command is CmdConvertConnector convertConnector)
+                {
+                    Process(proc, membrane, convertConnector);
+                    result.Response = convertConnector.SerializeResponse();
+                }
+                else if (command is CmdRemoveDiagonalConnectors removeDiagonalConnectors)
+                {
+                    Process(proc, membrane, removeDiagonalConnectors);
+                    result.Response = removeDiagonalConnectors.SerializeResponse();
+                }
+                else if (command is CmdSetCustomConnectionPoints setCustomConnectionPoints)
+                {
+                    Process(proc, membrane, setCustomConnectionPoints);
+                    result.Response = setCustomConnectionPoints.SerializeResponse();
                 }
                 else if (command is CmdGetCanvasView getCanvasView)
                 {
@@ -1007,6 +1052,10 @@ namespace FlowSharpRestService
             if (colorString[0] == '!')
             {
                 color = ColorTranslator.FromHtml("#" + colorString.Substring(1));
+            }
+            else if (colorString[0] == '#')
+            {
+                color = ColorTranslator.FromHtml(colorString);
             }
             else
             {

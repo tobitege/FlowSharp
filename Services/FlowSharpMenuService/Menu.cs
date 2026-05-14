@@ -16,6 +16,7 @@ namespace FlowSharpMenuService
         private ToolStripMenuItem mnuSave;
         private ToolStripMenuItem mnuSaveAs;
         private ToolStripMenuItem mnuSaveSelectionAs;
+        private ToolStripMenuItem mnuPrint;
         private ToolStripSeparator toolStripMenuItem1;
         private ToolStripMenuItem mnuRecentFiles;
         private ToolStripMenuItem mnuExit;
@@ -90,6 +91,7 @@ namespace FlowSharpMenuService
             mnuSave = new ToolStripMenuItem();
             mnuSaveAs = new ToolStripMenuItem();
             mnuSaveSelectionAs = new ToolStripMenuItem();
+            mnuPrint = new ToolStripMenuItem();
             toolStripMenuItem1 = new ToolStripSeparator();
             mnuPlugins = new ToolStripMenuItem();
             toolStripMenuItem4 = new ToolStripSeparator();
@@ -176,6 +178,7 @@ namespace FlowSharpMenuService
             mnuSave,
             mnuSaveAs,
             mnuSaveSelectionAs,
+            mnuPrint,
             toolStripMenuItem1,
             //mnuLoadLayout,            // We do not expose these menu items, as they happen automatically.
             //mnuSaveLayout,
@@ -264,6 +267,13 @@ namespace FlowSharpMenuService
             mnuSaveSelectionAs.Name = "mnuSaveSelectionAs";
             mnuSaveSelectionAs.Size = new Size(165, 24);
             mnuSaveSelectionAs.Text = "Save Selection As...";
+            //
+            // mnuPrint
+            //
+            mnuPrint.Name = "mnuPrint";
+            mnuPrint.ShortcutKeys = ((Keys)((Keys.Control | Keys.P)));
+            mnuPrint.Size = new Size(165, 24);
+            mnuPrint.Text = "&Print...";
             // 
             // toolStripMenuItem1
             // 
@@ -417,6 +427,7 @@ namespace FlowSharpMenuService
             mnuZoom10.Tag = 10;
 
             // alignToolStripMenuItem
+            alignToolStripMenuItem.Name = "alignToolStripMenuItem";
             alignToolStripMenuItem.Text = "Al&ign";
             alignToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[]
                 {
@@ -428,11 +439,17 @@ namespace FlowSharpMenuService
                     mnuAlignSizes
                 });
 
+            mnuAlignLefts.Name = "mnuAlignLefts";
             mnuAlignLefts.Text = "Align &Lefts";
+            mnuAlignRights.Name = "mnuAlignRights";
             mnuAlignRights.Text = "Align &Rights";
+            mnuAlignTops.Name = "mnuAlignTops";
             mnuAlignTops.Text = "Align &Tops";
+            mnuAlignBottoms.Name = "mnuAlignBottoms";
             mnuAlignBottoms.Text = "Align &Bottoms";
+            mnuAlignCenters.Name = "mnuAlignCenters";
             mnuAlignCenters.Text = "Align &Centers";
+            mnuAlignSizes.Name = "mnuAlignSizes";
             mnuAlignSizes.Text = "Align &Sizes";
 
             // 

@@ -179,6 +179,7 @@ namespace FlowSharpLib
                 Point target = EndConnectedShape?.DisplayRectangle.Center() ?? EndPoint;
                 ConnectionPoint start = GetFacingConnectionPoint(StartConnectedShape, target);
                 StartPoint = start.Point;
+                UpdateAttachedConnection(StartConnectedShape, GripType.Start, start);
             }
 
             if (EndConnectedShape != null)
@@ -186,10 +187,16 @@ namespace FlowSharpLib
                 Point target = StartConnectedShape?.DisplayRectangle.Center() ?? StartPoint;
                 ConnectionPoint end = GetFacingConnectionPoint(EndConnectedShape, target);
                 EndPoint = end.Point;
+                UpdateAttachedConnection(EndConnectedShape, GripType.End, end);
             }
 
             UpdatePath();
             DisplayRectangle = RecalcDisplayRectangle();
+        }
+
+        protected override Point GetLabelCenter()
+        {
+            return new Point((StartPoint.X + EndPoint.X) / 2, (StartPoint.Y + EndPoint.Y) / 2);
         }
 
         protected ConnectionPoint GetFacingConnectionPoint(GraphicElement shape, Point target)
@@ -208,6 +215,21 @@ namespace FlowSharpLib
 
             return shape.GetConnectionPoints().FirstOrDefault(cp => cp.Type == preferred)
                 ?? shape.GetNearestConnectionPoint(target);
+        }
+
+        protected void UpdateAttachedConnection(GraphicElement shape, GripType connectorGrip, ConnectionPoint shapeConnectionPoint)
+        {
+            ConnectionPoint connectorConnectionPoint = new ConnectionPoint(
+                connectorGrip,
+                connectorGrip == GripType.Start ? StartPoint : EndPoint);
+
+            shape.Connections
+                .Where(c => c.ToElement == this && c.ToConnectionPoint.Type == connectorGrip)
+                .ForEach(c =>
+                {
+                    c.ToConnectionPoint = connectorConnectionPoint;
+                    c.ElementConnectionPoint = shapeConnectionPoint;
+                });
         }
 
         public override void UpdateSize(ShapeAnchor anchor, Point delta)
@@ -268,11 +290,7 @@ namespace FlowSharpLib
                 return;
             }
 
-            Rectangle original = ZoomRectangle;
-            Point midpoint = new Point((ZoomStartPoint.X + ZoomEndPoint.X) / 2, (ZoomStartPoint.Y + ZoomEndPoint.Y) / 2);
-            ZoomRectangle = new Rectangle(midpoint.X - 80, midpoint.Y - 15, 160, 30);
             base.DrawText(gr);
-            ZoomRectangle = original;
         }
 
         protected Rectangle RecalcDisplayRectangle()

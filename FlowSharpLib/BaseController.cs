@@ -31,6 +31,12 @@ namespace FlowSharpLib
         public Connection EndConnection { get; set; }
     }
 
+    public enum OrthogonalConnectorOrientation
+    {
+        LeftRight,
+        UpDown
+    }
+
     public abstract class BaseController
     {
         public event EventHandler<EventArgs> CanvasNameChanged;
@@ -565,12 +571,18 @@ namespace FlowSharpLib
             return GroupShapes(groupBox);
         }
 
-        public void MoveSelectedElements(Point delta)
+        public void MoveSelectedElements(Point delta, bool snapToCentersAndEdges = false)
         {
             // TODO: We shouldn't even be calling this method if there are no selected elements!
             if (selectedElements.Count == 0) return;
 
             delta = InverseZoomAdjust(delta);
+
+            if (snapToCentersAndEdges)
+            {
+                Point snapDelta = GetSelectedCenterEdgeSnapDelta(delta);
+                delta = new Point(delta.X + snapDelta.X, delta.Y + snapDelta.Y);
+            }
 
             var dx = delta.X.Abs();
             var dy = delta.Y.Abs();
@@ -632,8 +644,12 @@ namespace FlowSharpLib
 
         public void MoveLineOrAnchor(Connection c, Point delta)
         {
-            // TODO: Improve this code, somehow.
-            if (c.ToElement is Line)
+            if (c.ToElement is DynamicConnector dynamicConnector &&
+                (dynamicConnector.StartConnectedShape != null || dynamicConnector.EndConnectedShape != null))
+            {
+                dynamicConnector.AutoAnchor();
+            }
+            else if (c.ToElement is Line)
             {
                 c.ToElement.Move(delta);
             }
@@ -641,6 +657,84 @@ namespace FlowSharpLib
             {
                 c.ToElement.MoveAnchor(c.ToConnectionPoint.Type, delta);
             }
+        }
+
+        public DynamicConnector ConvertConnectorToOrthogonal(Connector connector, OrthogonalConnectorOrientation orientation)
+        {
+            if (!(connector is DynamicConnector source))
+            {
+                throw new ArgumentException("Only dynamic connectors can be converted.", nameof(connector));
+            }
+
+            if ((orientation == OrthogonalConnectorOrientation.LeftRight && connector is DynamicConnectorLR) ||
+                (orientation == OrthogonalConnectorOrientation.UpDown && connector is DynamicConnectorUD))
+            {
+                return source;
+            }
+
+            return ConvertConnectorToOrthogonal(source, orientation, true);
+        }
+
+        public DynamicConnector ConvertConnectorToOrthogonalWithUndo(Connector connector, OrthogonalConnectorOrientation orientation)
+        {
+            if (!(connector is DynamicConnector source))
+            {
+                throw new ArgumentException("Only dynamic connectors can be converted.", nameof(connector));
+            }
+
+            if ((orientation == OrthogonalConnectorOrientation.LeftRight && connector is DynamicConnectorLR) ||
+                (orientation == OrthogonalConnectorOrientation.UpDown && connector is DynamicConnectorUD))
+            {
+                return source;
+            }
+
+            DynamicConnector replacement = null;
+
+            undoStack.UndoRedo(
+                "ConvertConnector",
+                () => replacement = ConvertConnectorToOrthogonal(source, orientation, false),
+                () =>
+                {
+                    if (replacement != null)
+                    {
+                        ReplaceConnector(replacement, source, false);
+                    }
+                },
+                true,
+                () => replacement = ConvertConnectorToOrthogonal(source, orientation, false));
+
+            return replacement;
+        }
+
+        protected DynamicConnector ConvertConnectorToOrthogonal(DynamicConnector source, OrthogonalConnectorOrientation orientation, bool disposeSource)
+        {
+            DynamicConnector replacement = orientation == OrthogonalConnectorOrientation.LeftRight
+                ? new DynamicConnectorLR(canvas, source.StartPoint, source.EndPoint)
+                : new DynamicConnectorUD(canvas, source.StartPoint, source.EndPoint);
+
+            CopyConnectorProperties(source, replacement);
+            ReplaceConnector(source, replacement, disposeSource);
+
+            return replacement;
+        }
+
+        public int RemoveDiagonalConnectors()
+        {
+            var diagonals = elements.OfType<DiagonalConnector>().ToList();
+
+            diagonals.ForEach(connector =>
+            {
+                connector.DetachAll();
+                selectedElements.Remove(connector);
+                RemoveElement(connector, true);
+            });
+
+            if (diagonals.Any())
+            {
+                canvas.Invalidate();
+            }
+
+            return diagonals.Count;
         }
 
         public void MoveElement(GraphicElement el, Point delta)
@@ -662,6 +756,77 @@ namespace FlowSharpLib
                 el.Move(delta);
                 // TODO: Display element if moved back on screen at this point?
             }
+        }
+
+        protected void ReplaceConnector(DynamicConnector source, DynamicConnector replacement, bool disposeSource = true)
+        {
+            int index = elements.IndexOf(source);
+            if (index < 0)
+            {
+                throw new InvalidOperationException("Connector is not on this controller.");
+            }
+
+            elements[index] = replacement;
+
+            elements.ForEach(el =>
+            {
+                el.Connections.Where(connection => connection.ToElement == source).ForEach(connection =>
+                {
+                    connection.ToElement = replacement;
+                });
+            });
+
+            bool wasSelected = selectedElements.Remove(source);
+            source.Deselect();
+
+            if (wasSelected)
+            {
+                selectedElements.Add(replacement);
+                replacement.Select();
+            }
+
+            replacement.UpdateProperties();
+            replacement.UpdatePath();
+            replacement.DisplayRectangle = replacement.DisplayRectangle == Rectangle.Empty
+                ? replacement.DefaultRectangle()
+                : replacement.DisplayRectangle;
+            replacement.Restored();
+            source.Removed(disposeSource);
+
+            if (disposeSource)
+            {
+                source.Dispose();
+            }
+
+            UpdateViewport();
+            canvas.Invalidate();
+        }
+
+        protected void CopyConnectorProperties(DynamicConnector source, DynamicConnector replacement)
+        {
+            replacement.Name = source.Name;
+            replacement.Text = source.Text;
+            replacement.TextColor = source.TextColor;
+            replacement.TextAlign = source.TextAlign;
+            replacement.Multiline = source.Multiline;
+            replacement.WordWrap = source.WordWrap;
+            replacement.TextBounds = source.TextBounds;
+            replacement.TextMargin = source.TextMargin;
+            replacement.ParagraphJustification = source.ParagraphJustification;
+            replacement.LabelOffset = source.LabelOffset;
+            replacement.LabelSize = source.LabelSize;
+            replacement.BorderPenColor = source.BorderPenColor;
+            replacement.BorderPenWidth = source.BorderPenWidth;
+            replacement.FillColor = source.FillColor;
+            replacement.StartCap = source.StartCap;
+            replacement.EndCap = source.EndCap;
+            replacement.StartConnectedShape = source.StartConnectedShape;
+            replacement.EndConnectedShape = source.EndConnectedShape;
+            replacement.CustomConnectionPoints = source.CustomConnectionPoints.ToList();
+            replacement.Json = new Dictionary<string, string>(source.Json);
+            replacement.RotationAngle = source.RotationAngle;
+            replacement.TextFont.Dispose();
+            replacement.TextFont = (Font)source.TextFont.Clone();
         }
 
         public void MoveElementTo(GraphicElement el, Point location)
@@ -786,6 +951,11 @@ namespace FlowSharpLib
 
         public Point GetCenterEdgeSnapDelta(GraphicElement movingElement, int range = 5)
         {
+            return GetCenterEdgeSnapDelta(movingElement, Point.Empty, range);
+        }
+
+        public Point GetCenterEdgeSnapDelta(GraphicElement movingElement, Point proposedDelta, int range = 5)
+        {
             var candidates = elements.Where(e => e != movingElement && e.Visible).ToList();
 
             if (!candidates.Any())
@@ -793,7 +963,32 @@ namespace FlowSharpLib
                 return Point.Empty;
             }
 
-            var moving = movingElement.DisplayRectangle;
+            var moving = movingElement.DisplayRectangle.Move(proposedDelta);
+            return GetCenterEdgeSnapDelta(moving, candidates, range);
+        }
+
+        protected Point GetSelectedCenterEdgeSnapDelta(Point proposedDelta, int range = 5)
+        {
+            var movingElements = selectedElements.Where(e => !e.IsConnector && e.Visible).ToList();
+
+            if (!movingElements.Any())
+            {
+                return Point.Empty;
+            }
+
+            var candidates = elements.Where(e => !movingElements.Contains(e) && e.Visible).ToList();
+
+            if (!candidates.Any())
+            {
+                return Point.Empty;
+            }
+
+            Rectangle moving = GetExtents(movingElements).Move(proposedDelta);
+            return GetCenterEdgeSnapDelta(moving, candidates, range);
+        }
+
+        protected Point GetCenterEdgeSnapDelta(Rectangle moving, IEnumerable<GraphicElement> candidates, int range)
+        {
             var movingXs = new[] { moving.Left, moving.Center().X, moving.Right };
             var movingYs = new[] { moving.Top, moving.Center().Y, moving.Bottom };
             var targetXs = candidates.SelectMany(e => new[] { e.DisplayRectangle.Left, e.DisplayRectangle.Center().X, e.DisplayRectangle.Right });
@@ -1216,8 +1411,21 @@ namespace FlowSharpLib
 
         public void UpdateConnections(GraphicElement el)
         {
+            HashSet<DynamicConnector> reroutedConnectors = new HashSet<DynamicConnector>();
+
             el.Connections.ForEach(c =>
             {
+                if (c.ToElement is DynamicConnector dynamicConnector &&
+                    (dynamicConnector.StartConnectedShape != null || dynamicConnector.EndConnectedShape != null))
+                {
+                    if (reroutedConnectors.Add(dynamicConnector))
+                    {
+                        dynamicConnector.AutoAnchor();
+                    }
+
+                    return;
+                }
+
                 // Connection point on shape.
                 var cps = el.GetConnectionPoints().Where(cp2 => cp2.Type == c.ElementConnectionPoint.Type);
                 cps.ForEach(cp => c.ToElement.MoveAnchor(cp, c.ToConnectionPoint));

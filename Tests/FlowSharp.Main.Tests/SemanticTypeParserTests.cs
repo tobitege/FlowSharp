@@ -67,6 +67,20 @@ namespace FlowSharp.Main.Tests
         }
 
         [TestMethod]
+        public void NormalizeCommandName_MapsRuntimeFeatureSurfaceAliases()
+        {
+            Assert.IsInstanceOfType(SemanticTypeParser.NewCommand("setproperty"), typeof(CmdSetShapeProperty));
+            Assert.IsInstanceOfType(SemanticTypeParser.NewCommand("renderprintpage"), typeof(CmdRenderPrintPage));
+            Assert.IsInstanceOfType(SemanticTypeParser.NewCommand("dragselection"), typeof(CmdDragSelection));
+            Assert.IsInstanceOfType(SemanticTypeParser.NewCommand("align"), typeof(CmdAlignSelection));
+            Assert.IsInstanceOfType(SemanticTypeParser.NewCommand("rotate"), typeof(CmdRotateSelection));
+            Assert.IsInstanceOfType(SemanticTypeParser.NewCommand("convertconnector"), typeof(CmdConvertConnector));
+            Assert.IsInstanceOfType(SemanticTypeParser.NewCommand("removediagonalconnectors"), typeof(CmdRemoveDiagonalConnectors));
+            Assert.IsInstanceOfType(SemanticTypeParser.NewCommand("setcustomconnectionpoints"), typeof(CmdSetCustomConnectionPoints));
+            Assert.IsInstanceOfType(SemanticTypeParser.NewCommand("regroupselection"), typeof(CmdRegroupSelection));
+        }
+
+        [TestMethod]
         public void NormalizeCommandName_ResolvesKnownCommandTypesWithoutExplicitAlias()
         {
             Assert.AreEqual("CmdUpdateProperty", SemanticTypeParser.NormalizeCommandName("updateproperty"));

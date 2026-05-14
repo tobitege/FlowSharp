@@ -11,22 +11,43 @@ using Clifton.Core.ExtensionMethods;
 
 namespace FlowSharpLib
 {
+    public enum PropertyRedrawMode
+    {
+        None,
+        Element,
+        ElementAndConnections
+    }
+
 	public abstract class ElementProperties : IPropertyObject
 	{
-		protected GraphicElement element;
+        protected GraphicElement element;
 
         [Category("Element")]
+        [DisplayName("Name")]
+        [Description("Optional diagram element name used by commands and runtime inspection.")]
         public string Name { get; set; }
         [Category("Element")]
+        [DisplayName("Shape Type")]
+        [Description("The concrete FlowSharp shape or connector type.")]
+        [ReadOnly(true)]
         public string ShapeName => element?.GetType().Name;
         [Category("Element")]
+        [DisplayName("Bounds")]
+        [Description("The element position and size in diagram coordinates.")]
 		public Rectangle Rectangle { get; set; }
 
 		[Category("Border")]
+        [DisplayName("Border Color")]
+        [Description("The outline color used when drawing the element.")]
 		public Color BorderColor { get; set; }
+        [Category("Border")]
+        [DisplayName("Border Width")]
+        [Description("The outline width in pixels.")]
 		public int BorderWidth { get; set; }
 
 		[Category("Fill")]
+        [DisplayName("Fill Color")]
+        [Description("The interior fill color used when drawing the element.")]
 		public Color FillColor { get; set; }
 
 		public ElementProperties(GraphicElement el)
@@ -44,6 +65,22 @@ namespace FlowSharpLib
 			// The only property that can change.
 			Rectangle = el.DisplayRectangle;
 		}
+
+        public virtual PropertyRedrawMode GetRedrawMode(string label)
+        {
+            switch (label)
+            {
+                case nameof(Name):
+                case nameof(ShapeName):
+                    return PropertyRedrawMode.None;
+
+                case nameof(Rectangle):
+                    return PropertyRedrawMode.ElementAndConnections;
+
+                default:
+                    return PropertyRedrawMode.Element;
+            }
+        }
 
 		public virtual void Update(GraphicElement el, string label)
 		{
