@@ -316,11 +316,5 @@ Workspaces can save multiple canvases. Unnamed secondary canvases are assigned s
 ## Grouping
 ![Grouping](https://github.com/cliftonm/FlowSharp/blob/master/Article/img36.png)
 
-## What's Not Implemented
-
-Please contribute to working on this list!
-
-- Cross-cutting UX and history:
-
 # License
 [The Code Project Open License (CPOL) 1.02](http://htmlpreview.github.io/?http://www.codeproject.com/info/cpol10.aspx)

@@ -7,6 +7,65 @@ All notable changes to FlowSharp will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0]
+
+### Added
+
+- Print workflow coverage now verifies the File menu print command and print-document creation.
+- Shape text layout now supports custom text bounds, text margins, paragraph justification, and persisted word-wrap behavior.
+- Dynamic connectors now support editable midpoint labels with persisted label offset and size.
+- Diagonal connectors can be converted to left-right or up-down dynamic connectors while preserving labels, caps, endpoints, and shape attachments.
+- Dynamic connectors now reroute to facing anchors when connected shapes move or change geometry.
+- Dragging selected shapes can snap to nearby centers and edges.
+- The Align menu now exposes left, right, top, and bottom alignment actions with undo/redo coverage.
+- Runtime/REPL automation now covers completed feature surfaces through durable commands for property edits, print-page rendering, connector conversion/removal, snapped drag, align, rotate, regroup, custom connection points, dynamic rerouting, focus/pan observation, persistence, and undo/redo.
+- A fast runtime feature-surface REPL verifier and macro script were added for end-to-end automation coverage.
+- Focused verification was added for close-document save prompts, MRU refresh on Save As/new filenames, default panel restoration, overlap-selection cycling, one-level nested selection, canvas scrollbars, zoom-aware rendering/hit-testing/grips/selection feedback, true toolbox drag placement, page boundary rendering, connector cap options, custom connector connection points, resize-aware custom points, auto-anchor, three-line connector middle-line handles, shape rotation, and regroup after manipulation.
+
+### Changed
+
+- Property-grid metadata and redraw policy now target shape and connector visual properties more precisely.
+- Feature action undo/redo coverage now includes property edits, connector conversion, diagonal removal, drag snapping, align, rotation, and regroup workflows.
+- Runtime control can run without the HOPE service by using the new `FlowSharpRuntimeControlModules.xml` module set.
+- The REPL client now supports explicit output capture and faster connection failure handling.
+
+### Fixed
+
+- Print/export rendering and dynamic connector rendering are covered through real runtime evidence instead of controller-only confidence.
+- Connector label edits, line caps, custom connection points, and text layout properties now round-trip through persistence and runtime inspection.
+- Dynamic connectors now expose custom connection points to the same connection-point lookup path used by shapes, enabling connector custom anchors in snapping and nearest-anchor behavior.
+
+### Commits
+
+- `3ab0b8c` Implement print menu command verification — 5 files changed, 131 insertions, 4 deletions
+- `0fa38b4` Implement richer shape text layout — 6 files changed, 247 insertions, 9 deletions
+- `b9efc12` Implement editable connector labels — 11 files changed, 228 insertions, 14 deletions
+- `52d5272` Optimize property change redraws — 8 files changed, 140 insertions, 25 deletions
+- `80aaecd` Implement orthogonal connector conversion — 4 files changed, 187 insertions, 2 deletions
+- `7761801` Implement dynamic connector rerouting — 5 files changed, 90 insertions, 4 deletions
+- `9012503` Integrate center edge drag snapping — 6 files changed, 56 insertions, 7 deletions
+- `9015425` Verify align menu workflow — 4 files changed, 58 insertions, 3 deletions
+- `24c657d` Improve property grid metadata — 7 files changed, 74 insertions, 3 deletions
+- `3b08b23` Expand undo redo coverage for feature actions — 5 files changed, 164 insertions, 27 deletions
+- `0dc38c0` Remove obsolete dev docs — 2 files changed, 56 deletions
+- `71d6dca` Add runtime REPL coverage for completed features — 13 files changed, 1529 insertions, 29 deletions
+- `0fa8999` Verify document close save prompt
+- `3051a19` Update MRU for newly saved filenames
+- `2db39be` Verify default panels are restored
+- `498f9d0` Verify alternate selection for overlaps
+- `e15b354` Verify one-level selection depth
+- `e2def30` Verify canvas scrollbar viewport
+- `812181b` Verify zoomed viewport interactions
+- `95c217b` Verify toolbox drag placement
+- `9eec74a` Verify page boundary rendering
+- `4842304` Verify connector cap options
+- `2a6d38c` Support connector custom points
+- `622015d` Verify resize-aware custom points
+- `4bf2418` Verify connector auto-anchor
+- `f8f00ef` Verify connector middle-line handles
+- `ad38594` Verify shape rotation
+- `400d623` Verify regroup after manipulation
+
 ## [1.3.0]
 
 ### Added
