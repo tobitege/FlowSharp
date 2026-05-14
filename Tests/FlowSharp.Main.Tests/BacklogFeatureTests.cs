@@ -121,6 +121,29 @@ namespace FlowSharp.Main.Tests
         }
 
         [TestMethod]
+        public void CustomConnectionPoints_AreAvailableOnDynamicConnectors()
+        {
+            BaseController controller = CreateController(600, 400);
+            DiagonalConnector connector = new DiagonalConnector(
+                controller.Canvas,
+                new Point(40, 50),
+                new Point(220, 150));
+            connector.SetCustomConnectionPoints(new[]
+            {
+                new ConnectionPoint(GripType.Center, new Point(5000, 5000))
+            });
+            Point center = connector.DisplayRectangle.Center();
+
+            List<ConnectionPoint> points = connector.GetConnectionPoints();
+            ConnectionPoint nearest = connector.GetNearestConnectionPoint(new Point(center.X + 3, center.Y + 2));
+
+            Assert.AreEqual(3, points.Count);
+            Assert.IsTrue(points.Any(point => point.Type == GripType.Start && point.Point == connector.StartPoint));
+            Assert.IsTrue(points.Any(point => point.Type == GripType.End && point.Point == connector.EndPoint));
+            Assert.AreEqual(new ConnectionPoint(GripType.Center, center), nearest);
+        }
+
+        [TestMethod]
         public void LineCaps_SupportSquareAndRoundCaps()
         {
             BaseController controller = CreateController(600, 400);

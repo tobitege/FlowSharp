@@ -72,10 +72,14 @@ namespace FlowSharpLib
 
         public override List<ConnectionPoint> GetConnectionPoints()
         {
-            return new List<ConnectionPoint>() {
+            var connectionPoints = new List<ConnectionPoint>() {
                 new ConnectionPoint(GripType.Start, StartPoint),
                 new ConnectionPoint(GripType.End, EndPoint),
             };
+
+            connectionPoints.AddRange(GetCustomConnectionPoints());
+
+            return connectionPoints;
         }
 
         public override void Serialize(ElementPropertyBag epb, IEnumerable<GraphicElement> elementsBeingSerialized)

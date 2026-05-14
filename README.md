@@ -321,7 +321,6 @@ Workspaces can save multiple canvases. Unnamed secondary canvases are assigned s
 Please contribute to working on this list!
 
 - Connector rendering, anchors, and routing:
-  - Custom defined connection points / custom anchor points, including on connectors.
   - Adjust custom connection points intelligently when shape is resized.
   - Auto-anchor.
   - Three-line connector middle-line repositioning.
