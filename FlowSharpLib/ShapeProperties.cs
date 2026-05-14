@@ -14,24 +14,44 @@ namespace FlowSharpLib
     public class ShapeProperties : ElementProperties
     {
         [Category("Text")]
+        [DisplayName("Text")]
+        [Description("Text displayed inside the shape.")]
         public string Text { get; set; }
         [Category("Text")]
+        [DisplayName("Font")]
+        [Description("Font used to render the shape text.")]
         public Font Font { get; set; }
         [Category("Text")]
+        [DisplayName("Text Color")]
+        [Description("Color used to render the shape text.")]
         public Color TextColor { get; set; }
         [Category("Text")]
+        [DisplayName("Text Alignment")]
+        [Description("Horizontal and vertical alignment for text inside the text bounds.")]
         public ContentAlignment TextAlign { get; set; }
         [Category("Text")]
+        [DisplayName("Multiline")]
+        [Description("Allow text to render across multiple lines.")]
         public bool Multiline { get; set; }
         [Category("Text")]
+        [DisplayName("Word Wrap")]
+        [Description("Wrap text at word boundaries when multiline text is enabled.")]
         public bool WordWrap { get; set; }
         [Category("Text")]
+        [DisplayName("Text Bounds")]
+        [Description("Optional local text rectangle inside the shape. Leave empty to use the full shape bounds.")]
         public Rectangle TextBounds { get; set; }
         [Category("Text")]
+        [DisplayName("Text Margin")]
+        [Description("Inner text padding in pixels.")]
         public int TextMargin { get; set; }
         [Category("Text")]
+        [DisplayName("Paragraph Justification")]
+        [Description("Paragraph alignment behavior for wrapped text.")]
         public ParagraphJustification ParagraphJustification { get; set; }
         [Category("Geometry")]
+        [DisplayName("Rotation Angle")]
+        [Description("Clockwise shape rotation angle in degrees.")]
         public int RotationAngle { get; set; }
 
         public ShapeProperties(GraphicElement el) : base(el)

@@ -13,12 +13,20 @@ namespace FlowSharpLib
 	public class DynamicConnectorProperties : ElementProperties
 	{
 		[Category("Endcaps")]
+        [DisplayName("Start Cap")]
+        [Description("Decoration rendered at the connector start point.")]
 		public AvailableLineCap StartCap { get; set; }
 		[Category("Endcaps")]
+        [DisplayName("End Cap")]
+        [Description("Decoration rendered at the connector end point.")]
 		public AvailableLineCap EndCap { get; set; }
         [Category("Label")]
+        [DisplayName("Label Offset")]
+        [Description("Label position offset from the connector midpoint.")]
         public System.Drawing.Point LabelOffset { get; set; }
         [Category("Label")]
+        [DisplayName("Label Size")]
+        [Description("Editable connector label rectangle size.")]
         public System.Drawing.Size LabelSize { get; set; }
 
 		public DynamicConnectorProperties(DynamicConnector el) : base(el)

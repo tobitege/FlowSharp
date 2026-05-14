@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
@@ -415,6 +416,26 @@ namespace FlowSharp.Main.Tests
 
             Assert.AreEqual(PropertyRedrawMode.Element, properties.GetRedrawMode(nameof(DynamicConnectorProperties.EndCap)));
             Assert.AreEqual(PropertyRedrawMode.Element, properties.GetRedrawMode(nameof(DynamicConnectorProperties.LabelOffset)));
+        }
+
+        [TestMethod]
+        public void PropertyUxMetadata_ProvidesFriendlyLabelsDescriptionsAndReadOnlyShapeType()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box box = AddBox(controller, new Rectangle(10, 20, 100, 80));
+            ShapeProperties properties = new ShapeProperties(box);
+
+            PropertyDescriptor shapeType = TypeDescriptor.GetProperties(properties)[nameof(ElementProperties.ShapeName)];
+            PropertyDescriptor textBounds = TypeDescriptor.GetProperties(properties)[nameof(ShapeProperties.TextBounds)];
+            PropertyDescriptor rotation = TypeDescriptor.GetProperties(properties)[nameof(ShapeProperties.RotationAngle)];
+
+            Assert.AreEqual("Shape Type", shapeType.DisplayName);
+            Assert.IsTrue(shapeType.IsReadOnly);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(shapeType.Description));
+            Assert.AreEqual("Text Bounds", textBounds.DisplayName);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(textBounds.Description));
+            Assert.AreEqual("Rotation Angle", rotation.DisplayName);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(rotation.Description));
         }
 
         [TestMethod]

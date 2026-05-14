@@ -14,12 +14,20 @@ namespace FlowSharpLib
 	public class LineProperties : ElementProperties
 	{
 		[Category("Endcaps")]
+        [DisplayName("Start Cap")]
+        [Description("Decoration rendered at the connector start point.")]
 		public AvailableLineCap StartCap { get; set; }
 		[Category("Endcaps")]
+        [DisplayName("End Cap")]
+        [Description("Decoration rendered at the connector end point.")]
 		public AvailableLineCap EndCap { get; set; }
         [Category("Label")]
+        [DisplayName("Label Offset")]
+        [Description("Label position offset from the connector midpoint.")]
         public Point LabelOffset { get; set; }
         [Category("Label")]
+        [DisplayName("Label Size")]
+        [Description("Editable connector label rectangle size.")]
         public Size LabelSize { get; set; }
 
 		public LineProperties(Line el) : base(el)
