@@ -373,6 +373,38 @@ namespace FlowSharp.Main.Tests
         }
 
         [TestMethod]
+        public void PropertyRedrawPolicy_SkipsNonVisualNameChanges()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box box = AddBox(controller, new Rectangle(10, 20, 100, 80));
+            ShapeProperties properties = new ShapeProperties(box);
+
+            Assert.AreEqual(PropertyRedrawMode.None, properties.GetRedrawMode(nameof(ElementProperties.Name)));
+        }
+
+        [TestMethod]
+        public void PropertyRedrawPolicy_UpdatesConnectionsForGeometryChanges()
+        {
+            BaseController controller = CreateController(600, 400);
+            Box box = AddBox(controller, new Rectangle(10, 20, 100, 80));
+            ShapeProperties properties = new ShapeProperties(box);
+
+            Assert.AreEqual(PropertyRedrawMode.ElementAndConnections, properties.GetRedrawMode(nameof(ElementProperties.Rectangle)));
+            Assert.AreEqual(PropertyRedrawMode.ElementAndConnections, properties.GetRedrawMode(nameof(ShapeProperties.RotationAngle)));
+        }
+
+        [TestMethod]
+        public void PropertyRedrawPolicy_TargetsConnectorVisualProperties()
+        {
+            BaseController controller = CreateController(600, 400);
+            DynamicConnectorLR connector = new DynamicConnectorLR(controller.Canvas, new Point(10, 20), new Point(110, 80));
+            DynamicConnectorProperties properties = new DynamicConnectorProperties(connector);
+
+            Assert.AreEqual(PropertyRedrawMode.Element, properties.GetRedrawMode(nameof(DynamicConnectorProperties.EndCap)));
+            Assert.AreEqual(PropertyRedrawMode.Element, properties.GetRedrawMode(nameof(DynamicConnectorProperties.LabelOffset)));
+        }
+
+        [TestMethod]
         public void RegroupShapes_RestoresGroupMembershipAfterUngroup()
         {
             BaseController controller = CreateController(600, 400);

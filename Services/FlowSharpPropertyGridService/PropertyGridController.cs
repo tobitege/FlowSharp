@@ -5,7 +5,6 @@
 */
 
 using System;
-using System.Drawing;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -100,30 +99,12 @@ namespace FlowSharpPropertyGridService
                     if (piElProps == null) return;
                     object oldVal = e.OldValue;
                     object newVal = piElProps.GetValue(elementProperties);
+                    PropertyRedrawMode redrawMode = elementProperties.GetRedrawMode(label);
 
                     canvasController.UndoStack.UndoRedo("Update " + label,
-                        () =>
-                        {
-                            canvasController.Redraw(sel, el =>
-                            {
-                                piElProps.SetValue(elementProperties, newVal);
-                                elementProperties.Update(el, label);
-                                el.UpdateProperties();
-                                el.UpdatePath();
-                                pgElement.Refresh();
-                            });
-                        },
-                        () =>
-                        {
-                            canvasController.Redraw(sel, el =>
-                            {
-                                piElProps.SetValue(elementProperties, oldVal);
-                                elementProperties.Update(el, label);
-                                el.UpdateProperties();
-                                el.UpdatePath();
-                                pgElement.Refresh();
-                            });
-                        }, false);
+                        () => ApplyPropertyChange(canvasController, sel, piElProps, label, newVal, redrawMode),
+                        () => ApplyPropertyChange(canvasController, sel, piElProps, label, oldVal, redrawMode),
+                        false);
                 });
 
                 canvasController.UndoStack.FinishGroup();
@@ -139,6 +120,45 @@ namespace FlowSharpPropertyGridService
                 // Updating canvas properties
                 (pgElement.SelectedObject as IPropertyObject).Update(label);
             }
+        }
+
+        protected virtual void ApplyPropertyChange(
+            BaseController canvasController,
+            GraphicElement element,
+            PropertyInfo propertyInfo,
+            string label,
+            object value,
+            PropertyRedrawMode redrawMode)
+        {
+            if (redrawMode == PropertyRedrawMode.None)
+            {
+                ApplyPropertyValue(canvasController, element, propertyInfo, label, value, redrawMode);
+                return;
+            }
+
+            canvasController.Redraw(element, el =>
+                ApplyPropertyValue(canvasController, el, propertyInfo, label, value, redrawMode));
+        }
+
+        protected virtual void ApplyPropertyValue(
+            BaseController canvasController,
+            GraphicElement element,
+            PropertyInfo propertyInfo,
+            string label,
+            object value,
+            PropertyRedrawMode redrawMode)
+        {
+            propertyInfo.SetValue(elementProperties, value);
+            elementProperties.Update(element, label);
+            element.UpdateProperties();
+            element.UpdatePath();
+
+            if (redrawMode == PropertyRedrawMode.ElementAndConnections)
+            {
+                canvasController.UpdateConnections(element);
+            }
+
+            pgElement.Refresh();
         }
     }
 }

@@ -30,6 +30,21 @@ namespace FlowSharpLib
             LabelSize = el.LabelSize;
 		}
 
+        public override PropertyRedrawMode GetRedrawMode(string label)
+        {
+            switch (label)
+            {
+                case nameof(StartCap):
+                case nameof(EndCap):
+                case nameof(LabelOffset):
+                case nameof(LabelSize):
+                    return PropertyRedrawMode.Element;
+
+                default:
+                    return base.GetRedrawMode(label);
+            }
+        }
+
 		public override void Update(GraphicElement el, string label)
 		{
             // X1

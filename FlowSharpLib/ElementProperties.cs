@@ -11,6 +11,13 @@ using Clifton.Core.ExtensionMethods;
 
 namespace FlowSharpLib
 {
+    public enum PropertyRedrawMode
+    {
+        None,
+        Element,
+        ElementAndConnections
+    }
+
 	public abstract class ElementProperties : IPropertyObject
 	{
 		protected GraphicElement element;
@@ -44,6 +51,22 @@ namespace FlowSharpLib
 			// The only property that can change.
 			Rectangle = el.DisplayRectangle;
 		}
+
+        public virtual PropertyRedrawMode GetRedrawMode(string label)
+        {
+            switch (label)
+            {
+                case nameof(Name):
+                case nameof(ShapeName):
+                    return PropertyRedrawMode.None;
+
+                case nameof(Rectangle):
+                    return PropertyRedrawMode.ElementAndConnections;
+
+                default:
+                    return PropertyRedrawMode.Element;
+            }
+        }
 
 		public virtual void Update(GraphicElement el, string label)
 		{

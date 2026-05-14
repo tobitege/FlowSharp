@@ -288,7 +288,6 @@ Please contribute to working on this list!
   - Ruler margins / page boundaries.
 - Connector rendering, anchors, and routing:
   - Other line caps besides an arrow and diamond.
-  - Property changes, like end caps, can force a full page redraw.
   - Custom defined connection points / custom anchor points, including on connectors.
   - Adjust custom connection points intelligently when shape is resized.
   - Auto-anchor.

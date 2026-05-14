@@ -48,6 +48,18 @@ namespace FlowSharpLib
             RotationAngle = el.RotationAngle;
         }
 
+        public override PropertyRedrawMode GetRedrawMode(string label)
+        {
+            switch (label)
+            {
+                case nameof(RotationAngle):
+                    return PropertyRedrawMode.ElementAndConnections;
+
+                default:
+                    return base.GetRedrawMode(label);
+            }
+        }
+
         public override void Update(GraphicElement el, string label)
         {
             // X1
