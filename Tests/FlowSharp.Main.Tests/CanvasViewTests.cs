@@ -1,4 +1,6 @@
 using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -48,6 +50,31 @@ namespace FlowSharp.Main.Tests
             controller.SetZoom(80);
 
             Assert.AreEqual(80, controller.Zoom);
+        }
+
+        [TestMethod]
+        public void UpdateScrollbars_ForOversizedContent_ShowsScrollbarsAndClampsViewport()
+        {
+            using var form = new Form();
+            using var parent = new Panel
+            {
+                Size = new Size(200, 150)
+            };
+            var canvas = new Canvas();
+            var controller = new CanvasController(canvas);
+            form.Controls.Add(parent);
+            canvas.Initialize(parent);
+            canvas.Size = parent.Size;
+
+            canvas.UpdateScrollbars(new Rectangle(0, 0, 900, 700), 100);
+            canvas.SetViewportOrigin(1000, 1000);
+            HScrollBar horizontal = canvas.Controls.OfType<HScrollBar>().Single();
+            VScrollBar vertical = canvas.Controls.OfType<VScrollBar>().Single();
+
+            Assert.IsTrue(horizontal.Maximum > horizontal.LargeChange);
+            Assert.IsTrue(vertical.Maximum > vertical.LargeChange);
+            Assert.IsTrue(canvas.ViewportOrigin.X < 1000);
+            Assert.IsTrue(canvas.ViewportOrigin.Y < 1000);
         }
 
         private static BaseController CreateController()
