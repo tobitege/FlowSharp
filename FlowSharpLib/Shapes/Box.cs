@@ -17,10 +17,13 @@ namespace FlowSharpLib
 
         public override void Draw(Graphics gr, bool showSelection = true)
         {
-            Rectangle zdr = ZoomRectangle;
-            gr.FillRectangle(FillBrush, zdr);
-            gr.DrawRectangle(BorderPen, zdr);
-            base.Draw(gr, showSelection);
+            DrawRotated(gr, () =>
+            {
+                Rectangle zdr = ZoomRectangle;
+                gr.FillRectangle(FillBrush, zdr);
+                gr.DrawRectangle(BorderPen, zdr);
+                base.Draw(gr, showSelection);
+            });
         }
     }
 }

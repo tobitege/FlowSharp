@@ -103,6 +103,49 @@ namespace FlowSharpLib
             StartConnectedShape = null;
             EndConnectedShape = null;
         }
+
+        protected void ApplyStartCap(AvailableLineCap cap)
+        {
+            ApplyCap(cap, true);
+        }
+
+        protected void ApplyEndCap(AvailableLineCap cap)
+        {
+            ApplyCap(cap, false);
+        }
+
+        protected void ApplyCap(AvailableLineCap cap, bool start)
+        {
+            LineCap lineCap = cap switch
+            {
+                AvailableLineCap.None => LineCap.NoAnchor,
+                AvailableLineCap.Square => LineCap.SquareAnchor,
+                AvailableLineCap.Round => LineCap.RoundAnchor,
+                _ => LineCap.NoAnchor
+            };
+
+            if (start)
+            {
+                BorderPen.StartCap = lineCap;
+            }
+            else
+            {
+                BorderPen.EndCap = lineCap;
+            }
+
+            if (cap == AvailableLineCap.Arrow || cap == AvailableLineCap.Diamond)
+            {
+                CustomLineCap customCap = cap == AvailableLineCap.Arrow ? adjCapArrow : adjCapDiamond;
+
+                if (start)
+                {
+                    BorderPen.CustomStartCap = customCap;
+                }
+                else
+                {
+                    BorderPen.CustomEndCap = customCap;
+                }
+            }
+        }
     }
 }
-

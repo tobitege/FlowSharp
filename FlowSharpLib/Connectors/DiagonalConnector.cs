@@ -72,23 +72,8 @@ namespace FlowSharpLib
 
         public override void UpdateProperties()
         {
-            if (StartCap == AvailableLineCap.None)
-            {
-                BorderPen.StartCap = LineCap.NoAnchor;
-            }
-            else
-            {
-                BorderPen.CustomStartCap = StartCap == AvailableLineCap.Arrow ? adjCapArrow : adjCapDiamond;
-            }
-
-            if (EndCap == AvailableLineCap.None)
-            {
-                BorderPen.EndCap = LineCap.NoAnchor;
-            }
-            else
-            {
-                BorderPen.CustomEndCap = EndCap == AvailableLineCap.Arrow ? adjCapArrow : adjCapDiamond;
-            }
+            ApplyStartCap(StartCap);
+            ApplyEndCap(EndCap);
 
             base.UpdateProperties();
         }
@@ -120,17 +105,20 @@ namespace FlowSharpLib
 
         public override void Draw(Graphics gr, bool showSelection = true)
         {
-            Pen pen = (Pen)BorderPen.Clone();
-
-            if ( (ShowConnectorAsSelected || Selected) && showSelection)
+            DrawRotated(gr, () =>
             {
-                pen.Color = pen.Color.ToArgb() == Color.Red.ToArgb() ? Color.Blue : Color.Red;
-            }
+                Pen pen = (Pen)BorderPen.Clone();
 
-            gr.DrawLine(pen, ZoomStartPoint, ZoomEndPoint);
-            pen.Dispose();
+                if ( (ShowConnectorAsSelected || Selected) && showSelection)
+                {
+                    pen.Color = pen.Color.ToArgb() == Color.Red.ToArgb() ? Color.Blue : Color.Red;
+                }
 
-            base.Draw(gr, showSelection);
+                gr.DrawLine(pen, ZoomStartPoint, ZoomEndPoint);
+                pen.Dispose();
+
+                base.Draw(gr, showSelection);
+            });
         }
     }
 }

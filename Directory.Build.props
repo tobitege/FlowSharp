@@ -4,19 +4,19 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
     <TargetPlatformMinVersion>7.0</TargetPlatformMinVersion>
-    
+
     <!-- Preserve existing AssemblyInfo.cs during migration -->
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    
+
     <!-- Build settings -->
     <Deterministic>true</Deterministic>
     <LangVersion>12.0</LangVersion>
-    <Version>1.2.0</Version>
-    
+    <Version>1.3.0</Version>
+
     <!-- Disable implicit usings and nullable by default for parity-first migration -->
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
-    
+
     <!-- Allow .NET Framework references for compatibility -->
     <NoWarn>NU1701</NoWarn>
   </PropertyGroup>

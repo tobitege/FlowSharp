@@ -64,30 +64,22 @@ namespace FlowSharpLib
 
         public override void Draw(Graphics gr, bool showSelection = true)
         {
-            // While this clips the region, the lines are no longer antialiased.
-            /*
-            GraphicsPath gp = new GraphicsPath();
-            gp.AddPolygon(path);
-            Region region = new Region(gp);
-            gr.SetClip(region, CombineMode.Replace);
-            gr.IntersectClip(ZoomRectangle);
-            ...
-            gr.ResetClip();
-            */
-
-            // Drawing onto a bitmap that constrains the drawing area fixes the trail problem
-            // but still has issues with larger pen widths (try 10) as triangle points are clipped.
-            var r = ZoomRectangle.Grow(2);
-            var bitmap = new Bitmap(r.Width, r.Height);
-            var g2 = Graphics.FromImage(bitmap);
-            g2.SmoothingMode = SmoothingMode.AntiAlias;
-            var p = ZPath();
-            g2.FillPolygon(FillBrush, p);
-            g2.DrawPolygon(BorderPen, p);
-            gr.DrawImage(bitmap, ZoomRectangle.X, ZoomRectangle.Y);
-            bitmap.Dispose();
-            g2.Dispose();
-            base.Draw(gr, showSelection);
+            DrawRotated(gr, () =>
+            {
+                // Drawing onto a bitmap that constrains the drawing area fixes the trail problem
+                // but still has issues with larger pen widths (try 10) as triangle points are clipped.
+                var r = ZoomRectangle.Grow(2);
+                var bitmap = new Bitmap(r.Width, r.Height);
+                var g2 = Graphics.FromImage(bitmap);
+                g2.SmoothingMode = SmoothingMode.AntiAlias;
+                var p = ZPath();
+                g2.FillPolygon(FillBrush, p);
+                g2.DrawPolygon(BorderPen, p);
+                gr.DrawImage(bitmap, ZoomRectangle.X, ZoomRectangle.Y);
+                bitmap.Dispose();
+                g2.Dispose();
+                base.Draw(gr, showSelection);
+            });
         }
     }
 }

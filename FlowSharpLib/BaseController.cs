@@ -10,6 +10,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Drawing;
+using System.Drawing.Printing;
 using System.Windows.Forms;
 
 using Clifton.Core.ExtensionMethods;
@@ -91,6 +92,7 @@ namespace FlowSharpLib
 
         public int Zoom { get; protected set; }
         public Point CanvasOffset { get; protected set; }
+        public int RotationSnapDegrees { get; set; }
 
         protected List<GraphicElement> elements;
         protected Canvas canvas;
@@ -111,6 +113,7 @@ namespace FlowSharpLib
             SnapController = new SnapController(this);
             Zoom = 100;
             CanvasOffset = Point.Empty;
+            RotationSnapDegrees = 15;
         }
 
         public virtual bool IsMultiSelect()
@@ -135,11 +138,13 @@ namespace FlowSharpLib
         public void AddElement(GraphicElement el)
         {
             elements.Add(el);
+            UpdateViewport();
         }
 
         public void AddElements(List<GraphicElement> els)
         {
             elements.AddRange(els);
+            UpdateViewport();
         }
 
         public void SaveChildZOrder(GraphicElement el, List<ZOrderMap> zorder)
@@ -459,6 +464,22 @@ namespace FlowSharpLib
         {
             elements.Insert(0, el);
             Redraw(el);
+            UpdateViewport();
+        }
+
+        public GraphicElement InsertAt(GraphicElement prototype, Point clientPoint)
+        {
+            GraphicElement el = prototype.CloneDefault(canvas);
+            Point worldPoint = ClientToWorld(clientPoint);
+            Point target = new Point(
+                worldPoint.X - el.DisplayRectangle.Width / 2,
+                worldPoint.Y - el.DisplayRectangle.Height / 2);
+            el.DisplayRectangle = new Rectangle(target, el.DisplayRectangle.Size);
+            el.UpdateProperties();
+            el.UpdatePath();
+            Insert(el);
+
+            return el;
         }
 
         public void UpdateSize(GraphicElement el, ShapeAnchor anchor, Point delta)
@@ -534,6 +555,14 @@ namespace FlowSharpLib
 
             DrawBottomToTop(intersections.AsEnumerable());
             UpdateScreen(originalIntersections);        // remember, this updates the screen for the now erased groupbox.
+        }
+
+        public GroupBox RegroupShapes(GroupBox groupBox, IEnumerable<GraphicElement> shapes)
+        {
+            DeselectCurrentSelectedElements();
+            SelectElements(shapes.Where(shape => shape != groupBox).ToList());
+
+            return GroupShapes(groupBox);
         }
 
         public void MoveSelectedElements(Point delta)
@@ -669,6 +698,16 @@ namespace FlowSharpLib
             MoveAllElementsByCanvasDelta(new Point(offset.X - CanvasOffset.X, offset.Y - CanvasOffset.Y));
         }
 
+        public Point ClientToWorld(Point p)
+        {
+            return canvas.ClientToWorld(p, Zoom);
+        }
+
+        public Point WorldToClient(Point p)
+        {
+            return canvas.WorldToClient(p, Zoom);
+        }
+
         public Point InverseZoomAdjust(Point p)
         {
             var ret = p;
@@ -682,19 +721,101 @@ namespace FlowSharpLib
 
         public void SetZoom(int zoom)
         {
+            zoom = Math.Max(10, Math.Min(zoom, 400));
             // erase and ppdate the screen, removing elements after erasure, so they don't leave their images when the zoom factor is changed.
             EraseTopToBottom(elements);
             UpdateScreen(elements);
 
             Zoom = zoom;
+            UpdateViewport();
+
+            DrawBottomToTop(elements);
+            UpdateScreen(elements);
+        }
+
+        public void UpdateViewport()
+        {
             elements.ForEach(e =>
             {
                 e.UpdateZoomRectangle();
                 e.UpdatePath();
             });
+            canvas.UpdateScrollbars(GetDiagramExtents(), Zoom);
+        }
 
-            DrawBottomToTop(elements);
-            UpdateScreen(elements);
+        public Rectangle GetDiagramExtents()
+        {
+            Rectangle extents = canvas.PageBounds;
+
+            if (elements.Count == 0)
+            {
+                return extents;
+            }
+
+            elements.ForEach(e => extents = extents.Union(e.DisplayRectangle));
+
+            return extents;
+        }
+
+        public void AlignSelected(GripType alignment)
+        {
+            if (selectedElements.Count < 2)
+            {
+                return;
+            }
+
+            switch (alignment)
+            {
+                case GripType.LeftMiddle:
+                    AlignSelectedByOffset(e => e.DisplayRectangle.Left, values => values.Min(), (e, offset) => new Point(offset, 0));
+                    break;
+
+                case GripType.RightMiddle:
+                    AlignSelectedByOffset(e => e.DisplayRectangle.Right, values => values.Max(), (e, offset) => new Point(offset, 0));
+                    break;
+
+                case GripType.TopMiddle:
+                    AlignSelectedByOffset(e => e.DisplayRectangle.Top, values => values.Min(), (e, offset) => new Point(0, offset));
+                    break;
+
+                case GripType.BottomMiddle:
+                    AlignSelectedByOffset(e => e.DisplayRectangle.Bottom, values => values.Max(), (e, offset) => new Point(0, offset));
+                    break;
+            }
+        }
+
+        public Point GetCenterEdgeSnapDelta(GraphicElement movingElement, int range = 5)
+        {
+            var candidates = elements.Where(e => e != movingElement && e.Visible).ToList();
+
+            if (!candidates.Any())
+            {
+                return Point.Empty;
+            }
+
+            var moving = movingElement.DisplayRectangle;
+            var movingXs = new[] { moving.Left, moving.Center().X, moving.Right };
+            var movingYs = new[] { moving.Top, moving.Center().Y, moving.Bottom };
+            var targetXs = candidates.SelectMany(e => new[] { e.DisplayRectangle.Left, e.DisplayRectangle.Center().X, e.DisplayRectangle.Right });
+            var targetYs = candidates.SelectMany(e => new[] { e.DisplayRectangle.Top, e.DisplayRectangle.Center().Y, e.DisplayRectangle.Bottom });
+            int dx = FindNearestSnapDelta(movingXs, targetXs, range);
+            int dy = FindNearestSnapDelta(movingYs, targetYs, range);
+
+            return new Point(dx, dy);
+        }
+
+        public void RotateSelected(int degrees)
+        {
+            if (selectedElements.Count == 0)
+            {
+                return;
+            }
+
+            selectedElements.ForEach(el =>
+            {
+                el.RotationAngle = NormalizeAngle(el.RotationAngle + SnapRotation(degrees));
+                Redraw(el);
+            });
         }
 
         protected void MoveAllElementsByCanvasDelta(Point delta)
@@ -748,6 +869,65 @@ namespace FlowSharpLib
         public void SaveAsPng(string fname, bool selectionOnly = false)
         {
             selectionOnly.If(() => SaveAsPng(fname, SelectedElements.ToList())).Else(() => SaveAsPng(fname, elements));
+        }
+
+        public void RenderTo(Graphics targetGraphics, Rectangle targetBounds, bool selectionOnly = false)
+        {
+            var elems = selectionOnly ? SelectedElements.ToList() : elements;
+
+            if (!elems.Any())
+            {
+                return;
+            }
+
+            Rectangle extents = GetExtents(elems);
+            float scale = Math.Min((float)targetBounds.Width / extents.Width, (float)targetBounds.Height / extents.Height);
+            int previousZoom = Zoom;
+
+            canvas.UseViewportOrigin(Point.Empty, () =>
+            {
+                Zoom = 100;
+                elems.ForEach(e =>
+                {
+                    e.UpdateZoomRectangle();
+                    e.UpdatePath();
+                });
+
+                var state = targetGraphics.Save();
+                try
+                {
+                    targetGraphics.TranslateTransform(targetBounds.Left - extents.Left * scale, targetBounds.Top - extents.Top * scale);
+                    targetGraphics.ScaleTransform(scale, scale);
+
+                    elems.AsEnumerable().Reverse().ForEach(e =>
+                    {
+                        e.Draw(targetGraphics, false);
+                        e.DrawText(targetGraphics);
+                    });
+                }
+                finally
+                {
+                    targetGraphics.Restore(state);
+                    Zoom = previousZoom;
+                    elems.ForEach(e =>
+                    {
+                        e.UpdateZoomRectangle();
+                        e.UpdatePath();
+                    });
+                }
+            });
+        }
+
+        public PrintDocument CreatePrintDocument(bool selectionOnly = false)
+        {
+            var document = new PrintDocument();
+            document.PrintPage += (sender, args) =>
+            {
+                RenderTo(args.Graphics, args.MarginBounds, selectionOnly);
+                args.HasMorePages = false;
+            };
+
+            return document;
         }
 
         protected void SaveAsPng(string fname, List<GraphicElement> elems)
@@ -826,11 +1006,9 @@ namespace FlowSharpLib
         /// </summary>
         public void FocusOn(GraphicElement el)
         {
-            var cx = (Canvas.Width - el.DisplayRectangle.Width) / 2;
-            var cy = (Canvas.Height - el.DisplayRectangle.Height) / 2;
-            var dx = -(el.DisplayRectangle.X - cx);
-            var dy = -(el.DisplayRectangle.Y - cy);
-            MoveAllElements(new Point(dx, dy));
+            Point center = el.DisplayRectangle.Center();
+            Point scaledCenter = new Point(center.X * Zoom / 100, center.Y * Zoom / 100);
+            Canvas.SetViewportOrigin(scaledCenter.X - Canvas.Width / 2, scaledCenter.Y - Canvas.Height / 2);
         }
 
         public void ClearBookmarks()
@@ -846,6 +1024,7 @@ namespace FlowSharpLib
         {
             elements.Remove(el);
             el.Removed(dispose);
+            UpdateViewport();
 
             if (dispose)
             {
@@ -870,6 +1049,52 @@ namespace FlowSharpLib
             }
 
             return depth;
+        }
+
+        protected void AlignSelectedByOffset(Func<GraphicElement, int> valueSelector, Func<IEnumerable<int>, int> targetSelector, Func<GraphicElement, int, Point> deltaFactory)
+        {
+            var target = targetSelector(selectedElements.Select(valueSelector));
+            selectedElements.ForEach(el => MoveElement(el, deltaFactory(el, target - valueSelector(el))));
+        }
+
+        protected static int FindNearestSnapDelta(IEnumerable<int> movingValues, IEnumerable<int> targetValues, int range)
+        {
+            int best = 0;
+            int bestAbs = range + 1;
+
+            foreach (int movingValue in movingValues)
+            {
+                foreach (int targetValue in targetValues)
+                {
+                    int delta = targetValue - movingValue;
+                    int abs = delta.Abs();
+
+                    if (abs < bestAbs)
+                    {
+                        bestAbs = abs;
+                        best = delta;
+                    }
+                }
+            }
+
+            return bestAbs <= range ? best : 0;
+        }
+
+        protected int SnapRotation(int degrees)
+        {
+            if (RotationSnapDegrees <= 0)
+            {
+                return degrees;
+            }
+
+            return (int)Math.Round((double)degrees / RotationSnapDegrees) * RotationSnapDegrees;
+        }
+
+        protected static int NormalizeAngle(int angle)
+        {
+            int ret = angle % 360;
+
+            return ret < 0 ? ret + 360 : ret;
         }
 
         protected void DeleteElementHierarchy(GraphicElement el, bool dispose)

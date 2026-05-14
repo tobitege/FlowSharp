@@ -23,6 +23,10 @@ namespace FlowSharpLib
         public ContentAlignment TextAlign { get; set; }
         [Category("Text")]
         public bool Multiline { get; set; }
+        [Category("Text")]
+        public bool WordWrap { get; set; }
+        [Category("Geometry")]
+        public int RotationAngle { get; set; }
 
         public ShapeProperties(GraphicElement el) : base(el)
         {
@@ -31,6 +35,8 @@ namespace FlowSharpLib
             TextColor = el.TextColor;
             TextAlign = el.TextAlign;
             Multiline = el.Multiline;
+            WordWrap = el.WordWrap;
+            RotationAngle = el.RotationAngle;
         }
 
         public override void Update(GraphicElement el, string label)
@@ -45,6 +51,8 @@ namespace FlowSharpLib
             (label == nameof(TextColor)).If(() => el.TextColor = TextColor);
             (label == nameof(TextAlign)).If(() => el.TextAlign = TextAlign);
             (label == nameof(Multiline)).If(() => el.Multiline = Multiline);
+            (label == nameof(WordWrap)).If(() => el.WordWrap = WordWrap);
+            (label == nameof(RotationAngle)).If(() => el.RotationAngle = RotationAngle);
             base.Update(el, label);
         }
     }

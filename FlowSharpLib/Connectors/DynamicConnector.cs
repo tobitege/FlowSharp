@@ -172,6 +172,44 @@ namespace FlowSharpLib
             DisplayRectangle = RecalcDisplayRectangle();
         }
 
+        public void AutoAnchor()
+        {
+            if (StartConnectedShape != null)
+            {
+                Point target = EndConnectedShape?.DisplayRectangle.Center() ?? EndPoint;
+                ConnectionPoint start = GetFacingConnectionPoint(StartConnectedShape, target);
+                StartPoint = start.Point;
+            }
+
+            if (EndConnectedShape != null)
+            {
+                Point target = StartConnectedShape?.DisplayRectangle.Center() ?? StartPoint;
+                ConnectionPoint end = GetFacingConnectionPoint(EndConnectedShape, target);
+                EndPoint = end.Point;
+            }
+
+            UpdatePath();
+            DisplayRectangle = RecalcDisplayRectangle();
+        }
+
+        protected ConnectionPoint GetFacingConnectionPoint(GraphicElement shape, Point target)
+        {
+            Point center = shape.DisplayRectangle.Center();
+            GripType preferred;
+
+            if ((target.X - center.X).Abs() >= (target.Y - center.Y).Abs())
+            {
+                preferred = target.X >= center.X ? GripType.RightMiddle : GripType.LeftMiddle;
+            }
+            else
+            {
+                preferred = target.Y >= center.Y ? GripType.BottomMiddle : GripType.TopMiddle;
+            }
+
+            return shape.GetConnectionPoints().FirstOrDefault(cp => cp.Type == preferred)
+                ?? shape.GetNearestConnectionPoint(target);
+        }
+
         public override void UpdateSize(ShapeAnchor anchor, Point delta)
         {
             if (anchor.Type == GripType.Start)
@@ -217,10 +255,24 @@ namespace FlowSharpLib
 
         public override void Draw(Graphics gr, bool showSelection = true)
         {
-            lines.ForEach(l => l.Draw());
+            lines.ForEach(l => l.Draw(gr, showSelection));
 
             // No selection box!
             // base.Draw(gr);
+        }
+
+        public override void DrawText(Graphics gr)
+        {
+            if (string.IsNullOrEmpty(Text))
+            {
+                return;
+            }
+
+            Rectangle original = ZoomRectangle;
+            Point midpoint = new Point((ZoomStartPoint.X + ZoomEndPoint.X) / 2, (ZoomStartPoint.Y + ZoomEndPoint.Y) / 2);
+            ZoomRectangle = new Rectangle(midpoint.X - 80, midpoint.Y - 15, 160, 30);
+            base.DrawText(gr);
+            ZoomRectangle = original;
         }
 
         protected Rectangle RecalcDisplayRectangle()
@@ -231,6 +283,15 @@ namespace FlowSharpLib
             int y2 = StartPoint.Y.Max(EndPoint.Y).MaxDelta(hyAdjust);
 
             return new Rectangle(x1, y1, x2 - x1, y2 - y1);
+        }
+
+        protected void UpdateLinePaths()
+        {
+            lines.ForEach(l =>
+            {
+                l.UpdateZoomRectangle();
+                l.UpdatePath();
+            });
         }
     }
 }

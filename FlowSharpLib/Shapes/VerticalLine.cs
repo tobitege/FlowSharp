@@ -56,17 +56,20 @@ namespace FlowSharpLib
 
 		public override void Draw(Graphics gr, bool showSelection = true)
 		{
-			Pen pen = (Pen)BorderPen.Clone();
+            DrawRotated(gr, () =>
+            {
+			    Pen pen = (Pen)BorderPen.Clone();
 
-			if (ShowConnectorAsSelected && showSelection)
-			{
-				pen.Color = pen.Color.ToArgb() == Color.Red.ToArgb() ? Color.Blue : Color.Red;
-			}
+			    if (ShowConnectorAsSelected && showSelection)
+			    {
+				    pen.Color = pen.Color.ToArgb() == Color.Red.ToArgb() ? Color.Blue : Color.Red;
+			    }
 
-			gr.DrawLine(pen, ZoomRectangle.TopMiddle(), ZoomRectangle.BottomMiddle());
-			pen.Dispose();
+			    gr.DrawLine(pen, ZoomRectangle.TopMiddle(), ZoomRectangle.BottomMiddle());
+			    pen.Dispose();
 
-			base.Draw(gr, showSelection);
+			    base.Draw(gr, showSelection);
+            });
 		}
 	}
 }

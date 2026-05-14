@@ -1,6 +1,6 @@
 # Open Feature Plan
 
-Last reviewed: 2026-05-13
+Last reviewed: 2026-05-14
 
 This file tracks only open work. Completed items and historical discovery notes are intentionally omitted.
 
@@ -12,41 +12,26 @@ This file tracks only open work. Completed items and historical discovery notes 
 
 ## Current Focus
 
-Viewport foundation remains the next dependency group: scrollbars, full zoom behavior, and drag-from-toolbox coordinate handling.
+Finish the remaining partial feature work: print command verification, richer text/connector editing, targeted redraw behavior, connector conversion/rerouting semantics, snapping integration, layout command wiring, property UX, and broader undo/redo coverage.
 
 ## Open Issues
 
 | # | Issue | Status | Notes |
 | --- | --- | --- | --- |
-| 1 | Scrollbars for canvas | Open | Needed before full viewport-aware zoom and drag/drop. |
-| 2 | Zoom | Open | Runtime/control plumbing exists, but full UI/rendering/hit-test zoom behavior remains open. |
-| 3 | True drag-from-toolbox-onto-surface | Open | Depends on reliable scrolled/zoomed coordinate transforms. |
-| 4 | Ruler margins / page boundaries | Open | Depends on zoom and viewport math. |
-| 5 | Printing | Open | Depends on page boundaries and rendering scale decisions. |
-| 6 | Shape text improvements | Open | Alignment persistence exists; bounds, paragraph justification, and auto-wrap remain open. |
-| 7 | Connector text | Open | Should reuse shape text layout decisions where possible. |
-| 8 | Other line caps besides an arrow and diamond | Open | Needs model, rendering, serialization, and UI exposure. |
-| 9 | Property-change redraw optimization | Open | Target invalidation scope instead of unnecessary full-page redraws. |
-| 10 | Custom defined connection points / custom anchor points | Open | Existing tests cover only basic connection-point equality behavior. |
-| 11 | Resize-aware custom connection points | Open | Depends on custom anchor model. |
-| 12 | Auto-anchor | Open | Depends on custom anchors and resize behavior. |
-| 13 | Force V/H connectors | Open | Depends on anchor/routing decisions. |
-| 14 | Three-line connector middle-line repositioning | Open | Depends on orthogonal connector routing. |
-| 15 | True dynamic connectors | Open | Depends on anchor and routing foundation. |
-| 16 | Shape rotation | Open | Affects rendering, bounds, hit testing, handles, connectors, and text. |
-| 17 | Snap shapes to centers and edges | Open | Should be built against final geometry model. |
-| 18 | Align selected shapes | Open | Needs reliable selection and bounds semantics. |
-| 19 | Regroup | Open | Needs stable grouping ownership and connector behavior. |
-| 20 | Better property UX | Open | Should follow the main editable feature model. |
-| 21 | Undo/redo | Open | Requires broad command coverage across editing actions. |
-| 22 | Try intersection depth limit of 1 deep | Open | Imported from `todo.txt`; verify current hit-testing behavior before implementation. |
-| 23 | Add panels back in that have been removed: Toolbox, PropertyGrid, code editor | Open | Imported from `todo.txt`; verify startup/docking layout behavior. |
-| 24 | Saving drawing updates MRU when a new filename is introduced | Open | Imported from `todo.txt`; verify normal save and save-as flows. |
-| 25 | Close document prompts to save changes | Open | Imported from `todo.txt`; verify canvas-tab close and application close paths. |
-| 26 | Be able to select alternate shape when there is more than one option at the click point | Open | Verify shared-point selection behavior. |
+| 1 | Printing | Partial | `RenderTo` and `CreatePrintDocument` exist and have tests; print UI command/dialog verification remains open. |
+| 2 | Shape text improvements | Partial | Word-wrap state and persistence are implemented; text bounds, paragraph justification, and richer layout behavior remain open. |
+| 3 | Connector text | Partial | Dynamic connector midpoint labels are implemented; broader connector label editing remains open. |
+| 4 | Property-change redraw optimization | Partial | New editable values are exposed through existing property paths; targeted redraw optimization remains limited. |
+| 5 | Force V/H connectors | Partial | Orthogonal connector types exist; force-convert/remove-diagonal behavior remains open. |
+| 6 | True dynamic connectors | Partial | Dynamic connector render and anchor behavior improved; full rerouting semantics remain open. |
+| 7 | Snap shapes to centers and edges | Partial | Center/edge snap delta helper exists; drag integration remains open. |
+| 8 | Align selected shapes | Partial | Controller-level edge alignment exists; remaining UI/workflow coverage still needs verification against the final command surface. |
+| 9 | Better property UX | Partial | PropertyGrid exposes added values; redesigned property UX remains open. |
+| 10 | Undo/redo | Partial | Existing undo/redo remains available; broad command coverage for new feature actions remains open. |
 
 ## Open Regression Work
 
-- [ ] Re-run saving/document lifecycle checks when related save or text work changes.
-- [ ] Re-run selection/grouping checks when viewport, grouping, or alignment work changes.
-- [ ] Re-run connector checks when anchor, routing, or dynamic connector work changes.
+- [ ] Re-run printing and export checks when print UI command behavior changes.
+- [ ] Re-run text and connector rendering checks when label editing or text layout changes.
+- [ ] Re-run connector checks when anchor, routing, V/H conversion, or dynamic connector behavior changes.
+- [ ] Re-run selection, grouping, snapping, and layout checks when drag integration or alignment workflow changes.

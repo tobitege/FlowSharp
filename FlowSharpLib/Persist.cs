@@ -98,9 +98,12 @@ namespace FlowSharpLib
 
         public List<ConnectionPropertyBag> Connections { get; set; }
         public List<ChildPropertyBag> Children { get; set; }
+        public List<ConnectionPoint> CustomConnectionPoints { get; set; }
 
         public ContentAlignment TextAlign { get; set; }
         public bool Multiline { get; set; }
+        public bool WordWrap { get; set; }
+        public int RotationAngle { get; set; }
 
         [XmlIgnore]
         public Color TextColor { get; set; }
@@ -133,7 +136,9 @@ namespace FlowSharpLib
         {
             Connections = new List<ConnectionPropertyBag>();
             Children = new List<ChildPropertyBag>();
+            CustomConnectionPoints = new List<ConnectionPoint>();
             Visible = true;     // Default, if not defined, for older fsd's that don't have this property.
+            WordWrap = true;
         }
     }
 

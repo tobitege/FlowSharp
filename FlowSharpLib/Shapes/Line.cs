@@ -21,23 +21,8 @@ namespace FlowSharpLib
 
         public override void UpdateProperties()
         {
-            if (StartCap == AvailableLineCap.None)
-            {
-                BorderPen.StartCap = LineCap.NoAnchor;
-            }
-            else
-            {
-                BorderPen.CustomStartCap = StartCap == AvailableLineCap.Arrow ? adjCapArrow : adjCapDiamond;
-            }
-
-            if (EndCap == AvailableLineCap.None)
-            {
-                BorderPen.EndCap = LineCap.NoAnchor;
-            }
-            else
-            {
-                BorderPen.CustomEndCap = EndCap == AvailableLineCap.Arrow ? adjCapArrow : adjCapDiamond;
-            }
+            ApplyStartCap(StartCap);
+            ApplyEndCap(EndCap);
 
             base.UpdateProperties();
         }

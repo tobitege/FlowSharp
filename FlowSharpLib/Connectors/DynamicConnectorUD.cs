@@ -105,7 +105,7 @@ namespace FlowSharpLib
             lines[1].DisplayRectangle = new Rectangle(hx1, hy - BaseController.MIN_HEIGHT / 2, hx2 - hx1, BaseController.MIN_HEIGHT);
             lines[2].DisplayRectangle = new Rectangle(y2x, y2a, BaseController.MIN_WIDTH, y2b - y2a);
 
-            lines.ForEach(l => l.UpdatePath());
+            UpdateLinePaths();
 		}
 
         protected void UpdateCaps()

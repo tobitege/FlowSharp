@@ -29,6 +29,7 @@ namespace FlowSharpToolboxService
         protected Point currentDragPosition;
         protected bool setup;
         protected bool dragging;
+        protected GraphicElement draggedCanvasElement;
         protected IServiceManager serviceManager;
 
         public ToolboxController(IServiceManager serviceManager, Canvas canvas) : base(canvas)
@@ -67,15 +68,25 @@ namespace FlowSharpToolboxService
             {
                 if (selectedElements.Any())
                 {
-                    CreateShape();
+                    CreateShape(null);
                     xDisplacement += 80;
                 }
             }
             else if (args.Button == MouseButtons.Left && dragging)
             {
+                if (draggedCanvasElement == null)
+                {
+                    dragging = false;
+                    mouseDown = false;
+                    DeselectCurrentSelectedElement();
+                    selectedElements.Clear();
+                    canvas.Cursor = Cursors.Arrow;
+                    return;
+                }
+
                 // TODO: Similar to MouseController EndShapeDrag/EndAnchorDrag
                 canvasController.SnapController.DoUndoSnapActions(canvasController.UndoStack);
-                GraphicElement droppedElement = canvasController.SelectedElements.Count == 1 ? canvasController.SelectedElements[0] : null;
+                GraphicElement droppedElement = draggedCanvasElement;
                 FlowSharpLib.GroupBox targetGroup = droppedElement == null || droppedElement.IsConnector ? null : canvasController.GetContainingGroupBox(droppedElement);
 
                 if (targetGroup != null)
@@ -122,6 +133,7 @@ namespace FlowSharpToolboxService
 
             dragging = false;
             mouseDown = false;
+            draggedCanvasElement = null;
             canvasController.SnapController.HideConnectionPoints();
             DeselectCurrentSelectedElement();
             selectedElements.Clear();
@@ -140,7 +152,6 @@ namespace FlowSharpToolboxService
                     dragging = true;
                     setup = true;
                     ResetDisplacement();
-                    CreateShape();
                     canvas.Cursor = Cursors.SizeAll;
                 }
             }
@@ -151,15 +162,22 @@ namespace FlowSharpToolboxService
                 // after our mouse coordinate management is set up correctly.
                 if (setup)
                 {
-                    currentDragPosition = args.Location;
+                    currentDragPosition = GetCanvasPointerLocation(canvasController);
+                    if (!IsPointInsideCanvas(canvasController, currentDragPosition))
+                    {
+                        return;
+                    }
+
+                    draggedCanvasElement = CreateShape(currentDragPosition);
                     setup = false;
                     canvasController.SnapController.Reset();
                 }
                 else
                 {
                     // Toolbox controller still has control, so simulate dragging on the canvas.
-                    var delta = args.Location.Delta(currentDragPosition);
-                    currentDragPosition = args.Location;
+                    Point pointer = GetCanvasPointerLocation(canvasController);
+                    var delta = pointer.Delta(currentDragPosition);
+                    currentDragPosition = pointer;
 
                     if (delta == Point.Empty) return;
                     // TODO: Duplicate code in FlowSharpUI.DoMove and MouseController
@@ -184,7 +202,7 @@ namespace FlowSharpToolboxService
             }
         }
 
-        protected void CreateShape()
+        protected GraphicElement CreateShape(Point? canvasClientPoint)
         {
             var canvasController = serviceManager.Get<IFlowSharpCanvasService>().ActiveController;
             var where = xDisplacement;
@@ -192,7 +210,19 @@ namespace FlowSharpToolboxService
             // For undo, we need to preserve currently selected shapes.
             var currentSelectedShapes = canvasController.SelectedElements.ToList();
             var selectedElement = selectedElements[0];
-            var el = selectedElement.CloneDefault(canvasController.Canvas, new Point(where, 0));
+            var el = canvasClientPoint.HasValue
+                ? selectedElement.CloneDefault(canvasController.Canvas)
+                : selectedElement.CloneDefault(canvasController.Canvas, new Point(where, 0));
+
+            if (canvasClientPoint.HasValue)
+            {
+                Point worldPoint = canvasController.ClientToWorld(canvasClientPoint.Value);
+                el.DisplayRectangle = new Rectangle(
+                    worldPoint.X - el.DisplayRectangle.Width / 2,
+                    worldPoint.Y - el.DisplayRectangle.Height / 2,
+                    el.DisplayRectangle.Width,
+                    el.DisplayRectangle.Height);
+            }
 
             canvasController.UndoStack.UndoRedo("Create " + el.ToString(),
                 () =>
@@ -205,7 +235,6 @@ namespace FlowSharpToolboxService
                     serviceManager.Get<IFlowSharpDebugWindowService>().UpdateDebugWindow();
 
                     if (!dragging) return;
-                    Cursor.Position = canvas.PointToScreen(el.DisplayRectangle.Center().Move(canvas.Width, 0));
                     if (el.IsConnector)
                     {
                         el.ShowAnchors = true;
@@ -219,6 +248,18 @@ namespace FlowSharpToolboxService
                     canvasController.SelectElements(currentSelectedShapes);
                     serviceManager.Get<IFlowSharpDebugWindowService>().UpdateDebugWindow();
                 });
+
+            return el;
+        }
+
+        protected Point GetCanvasPointerLocation(BaseController canvasController)
+        {
+            return canvasController.Canvas.PointToClient(Cursor.Position);
+        }
+
+        protected bool IsPointInsideCanvas(BaseController canvasController, Point point)
+        {
+            return canvasController.Canvas.ClientRectangle.Contains(point);
         }
 
         public override void SelectElement(GraphicElement el)

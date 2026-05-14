@@ -7,6 +7,33 @@ All notable changes to FlowSharp will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0]
+
+### Added
+
+- Close-document save prompts now cover dirty canvas close decisions without prompting for unrelated clean canvases.
+- Normal save now updates the MRU list when the active canvas filename is introduced or changed.
+- Removed shell panels are restored through the startup workflow for Toolbox, PropertyGrid, and the code editor.
+- Selection now cycles overlapping root shapes on repeated clicks and limits normal nested hit-testing to one child level.
+- Canvas viewport support now includes scrollbars, zoom-aware world/client coordinate conversion, and true toolbox drag placement on the drawing surface.
+- Page boundary and margin state is modeled and rendered with the diagram.
+- Print/export rendering support now includes `RenderTo` and `CreatePrintDocument`.
+- Shape text now has persisted word-wrap state, and dynamic connectors can render midpoint labels.
+- Lines and connectors now support square and round caps in addition to the existing cap styles.
+- Custom connection points are persisted as relative points, remain resize-aware, and can be used by the auto-anchor helper.
+- Three-line dynamic connectors now support middle-line repositioning.
+- Shape rotation now covers state, persistence, rendering, hit-testing, and print/export rendering.
+- Regrouping can restore group membership after ungroup/edit workflows.
+- Focused regression tests were added for save workflow, dirty-state handling, selection hit-testing, viewport math, toolbox placement, rendering, line caps, custom anchors, rotation, print document creation, auto-anchor, and regrouping.
+
+### Fixed
+
+- `FocusOn` now pans the viewport to the selected element instead of moving diagram elements.
+- Print/export rendering no longer depends on the live viewport or zoom state.
+- Dynamic connector print/export rendering now draws to the supplied graphics target.
+- Toolbox drag creation now waits until the pointer reaches the canvas before creating the shape.
+- Rotated shapes now render geometry, text, selection, hit-testing, and invalidation around rotated bounds.
+
 ## [1.2.0]
 
 ### Added

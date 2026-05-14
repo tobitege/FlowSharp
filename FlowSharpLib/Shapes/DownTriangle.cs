@@ -62,17 +62,20 @@ namespace FlowSharpLib
 
         public override void Draw(Graphics gr, bool showSelection = true)
         {
-            var r = ZoomRectangle.Grow(2);
-            var bitmap = new Bitmap(r.Width, r.Height);
-            var g2 = Graphics.FromImage(bitmap);
-            g2.SmoothingMode = SmoothingMode.AntiAlias;
-            var path = ZPath();
-            g2.FillPolygon(FillBrush, path);
-            g2.DrawPolygon(BorderPen, path);
-            gr.DrawImage(bitmap, ZoomRectangle.X, ZoomRectangle.Y);
-            bitmap.Dispose();
-            g2.Dispose();
-            base.Draw(gr, showSelection);
+            DrawRotated(gr, () =>
+            {
+                var r = ZoomRectangle.Grow(2);
+                var bitmap = new Bitmap(r.Width, r.Height);
+                var g2 = Graphics.FromImage(bitmap);
+                g2.SmoothingMode = SmoothingMode.AntiAlias;
+                var path = ZPath();
+                g2.FillPolygon(FillBrush, path);
+                g2.DrawPolygon(BorderPen, path);
+                gr.DrawImage(bitmap, ZoomRectangle.X, ZoomRectangle.Y);
+                bitmap.Dispose();
+                g2.Dispose();
+                base.Draw(gr, showSelection);
+            });
         }
     }
 }

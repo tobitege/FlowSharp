@@ -55,7 +55,7 @@ namespace FlowSharpLib
 
         // This is probably a ridiculous optimization -- should just grow pen width + connection point size / 2
         // public virtual Rectangle UpdateRectangle { get { return DisplayRectangle.Grow(BorderPen.Width + ((ShowConnectionPoints || HideConnectionPoints) ? 3 : 0)); } }
-        public virtual Rectangle UpdateRectangle => ZoomRectangle.Grow(BorderPen.Width + BaseController.CONNECTION_POINT_SIZE);
+        public virtual Rectangle UpdateRectangle => GetRotatedBounds(ZoomRectangle).Grow(BorderPen.Width + BaseController.CONNECTION_POINT_SIZE);
         public virtual bool IsConnector => false;
         public List<Connection> Connections = new List<Connection>();
         public List<GraphicElement> GroupChildren = new List<GraphicElement>();
@@ -109,6 +109,9 @@ namespace FlowSharpLib
         public Color TextColor { get; set; }
         public ContentAlignment TextAlign { get; set; }
         public bool Multiline { get; set; }
+        public bool WordWrap { get; set; }
+        public int RotationAngle { get; set; }
+        public List<ConnectionPoint> CustomConnectionPoints { get; set; }
         // TODO: Text location - left, top, right, middle, bottom
 
         protected bool HasCornerAnchors { get; set; }
@@ -166,6 +169,8 @@ namespace FlowSharpLib
             TextFont = new Font(FontFamily.GenericSansSerif, 10);
             TextColor = Color.Black;
             TextAlign = ContentAlignment.MiddleCenter;
+            WordWrap = true;
+            CustomConnectionPoints = new List<ConnectionPoint>();
         }
 
         public virtual void RightClick() { }
@@ -258,7 +263,19 @@ namespace FlowSharpLib
 
         public virtual bool IsSelectable(Point p)
         {
-            return UpdateRectangle.Contains(p);
+            if (RotationAngle == 0)
+            {
+                return UpdateRectangle.Contains(p);
+            }
+
+            using (var path = new System.Drawing.Drawing2D.GraphicsPath())
+            using (var transform = GetRotationTransform())
+            {
+                path.AddRectangle(ZoomRectangle);
+                path.Transform(transform);
+
+                return path.IsVisible(p);
+            }
         }
 
         public virtual GraphicElement CloneDefault(Canvas canv)
@@ -285,7 +302,7 @@ namespace FlowSharpLib
             var tb = new TextBox
             {
                 Multiline = Multiline,
-                WordWrap = false
+                WordWrap = WordWrap
             };
 
             if (Multiline)
@@ -338,6 +355,8 @@ namespace FlowSharpLib
             epb.TextColor = TextColor;
             epb.TextAlign = TextAlign;
             epb.Multiline = Multiline;
+            epb.WordWrap = WordWrap;
+            epb.RotationAngle = RotationAngle;
             epb.TextFontFamily = TextFont.FontFamily.Name;
             epb.TextFontSize = TextFont.Size;
             epb.TextFontUnderline = TextFont.Underline;
@@ -360,6 +379,7 @@ namespace FlowSharpLib
 
             Connections.ForEach(c => c.Serialize(epb, elementsBeingSerialized));
             GroupChildren.ForEach(c => epb.Children.Add(new ChildPropertyBag() { ChildId = c.Id }));
+            CustomConnectionPoints.ForEach(c => epb.CustomConnectionPoints.Add(c));
         }
 
         public virtual void Deserialize(ElementPropertyBag epb)
@@ -384,6 +404,8 @@ namespace FlowSharpLib
             // If missing (backwards compatibility) middle-center align.
             TextAlign = epb.TextAlign == 0 ? ContentAlignment.MiddleCenter : epb.TextAlign;
             Multiline = epb.Multiline;
+            WordWrap = epb.WordWrap;
+            RotationAngle = epb.RotationAngle;
             TextFont.Dispose();
             var fontStyle = (epb.TextFontUnderline ? FontStyle.Underline : FontStyle.Regular) | (epb.TextFontItalic ? FontStyle.Italic : FontStyle.Regular) | (epb.TextFontStrikeout ? FontStyle.Strikeout : FontStyle.Regular) | (epb.TextFontBold ? FontStyle.Bold : FontStyle.Regular);
             TextFont = new Font(epb.TextFontFamily, epb.TextFontSize, fontStyle);
@@ -400,6 +422,7 @@ namespace FlowSharpLib
             HasCenterConnection = epb.HasCenterConnection;
 
             HasCenterAnchor = epb.HasCenterAnchor;
+            CustomConnectionPoints = epb.CustomConnectionPoints ?? new List<ConnectionPoint>();
         }
 
         public virtual void FinalFixup(List<GraphicElement> elements, ElementPropertyBag epb, Dictionary<Guid, Guid> oldNewGuidMap)
@@ -623,7 +646,26 @@ namespace FlowSharpLib
                 connectionPoints.Add(new ConnectionPoint(GripType.Center, DisplayRectangle.Center()));
             }
 
+            connectionPoints.AddRange(GetCustomConnectionPoints());
+
             return connectionPoints;
+        }
+
+        public virtual void SetCustomConnectionPoints(IEnumerable<ConnectionPoint> points)
+        {
+            CustomConnectionPoints = points?.ToList() ?? new List<ConnectionPoint>();
+        }
+
+        public virtual List<ConnectionPoint> GetCustomConnectionPoints()
+        {
+            return CustomConnectionPoints.Select(cp => new ConnectionPoint(cp.Type, ResolveCustomConnectionPoint(cp.Point))).ToList();
+        }
+
+        public virtual ConnectionPoint GetNearestConnectionPoint(Point point)
+        {
+            return GetConnectionPoints()
+                .OrderBy(cp => DistanceSquared(cp.Point, point))
+                .FirstOrDefault();
         }
 
         /// <summary>
@@ -651,13 +693,7 @@ namespace FlowSharpLib
         {
             // TODO: canvas controller is null when saving as PNG!
             if (canvas.Controller == null) return;
-            double dz = canvas.Controller.Zoom / 100.0;
-
-            ZoomRectangle = new Rectangle(
-                (int)(DisplayRectangle.X * dz),
-                (int)(DisplayRectangle.Y * dz),
-                (int)(DisplayRectangle.Width * dz),
-                (int)(DisplayRectangle.Height * dz));
+            ZoomRectangle = canvas.WorldToClient(DisplayRectangle, canvas.Controller.Zoom);
         }
 
         protected void InternalUpdateScreen(int ix, int iy)
@@ -700,13 +736,13 @@ namespace FlowSharpLib
 
         protected virtual void DrawSelection(Graphics gr)
         {
-            var r = ZoomRectangle;
+            var r = GetRotatedBounds(ZoomRectangle);
             gr.DrawRectangle(BorderPen.Color.ToArgb() == selectionPen.Color.ToArgb() ? altSelectionPen : selectionPen, r);
         }
 
         protected virtual void DrawTag(Graphics gr)
         {
-            var r = DisplayRectangle.Grow(-2);
+            var r = GetRotatedBounds(ZoomRectangle).Grow(-2);
             gr.DrawRectangle(FillBrush.Color.ToArgb() == tagPen.Color.ToArgb() ? altTagPen : tagPen, r);
         }
 
@@ -778,7 +814,7 @@ namespace FlowSharpLib
 
         public virtual void DrawText(Graphics gr)
         {
-            DrawText(gr, Text, TextFont, TextColor, TextAlign);
+            DrawRotated(gr, () => DrawText(gr, Text, TextFont, TextColor, TextAlign));
         }
 
         protected virtual void DrawText(Graphics gr, string text, Font textFont, Color textColor, ContentAlignment textAlign)
@@ -815,12 +851,75 @@ namespace FlowSharpLib
                 Trimming = StringTrimming.None
             };
 
-            if (!Multiline)
+            if (!Multiline || !WordWrap)
             {
                 format.FormatFlags |= StringFormatFlags.NoWrap;
             }
 
             return format;
+        }
+
+        protected virtual Point ResolveCustomConnectionPoint(Point point)
+        {
+            if (point.X >= 0 && point.X <= 10000 && point.Y >= 0 && point.Y <= 10000)
+            {
+                return new Point(
+                    DisplayRectangle.Left + DisplayRectangle.Width * point.X / 10000,
+                    DisplayRectangle.Top + DisplayRectangle.Height * point.Y / 10000);
+            }
+
+            return point;
+        }
+
+        protected virtual System.Drawing.Drawing2D.Matrix GetRotationTransform()
+        {
+            var transform = new System.Drawing.Drawing2D.Matrix();
+            transform.RotateAt(RotationAngle, ZoomRectangle.Center());
+
+            return transform;
+        }
+
+        protected virtual Rectangle GetRotatedBounds(Rectangle rectangle)
+        {
+            if (RotationAngle == 0)
+            {
+                return rectangle;
+            }
+
+            using (var path = new System.Drawing.Drawing2D.GraphicsPath())
+            using (var transform = GetRotationTransform())
+            {
+                path.AddRectangle(rectangle);
+                path.Transform(transform);
+                RectangleF bounds = path.GetBounds();
+
+                return Rectangle.Ceiling(bounds);
+            }
+        }
+
+        protected void DrawRotated(Graphics gr, Action draw)
+        {
+            if (RotationAngle == 0)
+            {
+                draw();
+                return;
+            }
+
+            var state = gr.Save();
+            using (var transform = GetRotationTransform())
+            {
+                gr.MultiplyTransform(transform);
+                draw();
+            }
+            gr.Restore(state);
+        }
+
+        protected static int DistanceSquared(Point first, Point second)
+        {
+            int dx = first.X - second.X;
+            int dy = first.Y - second.Y;
+
+            return dx * dx + dy * dy;
         }
 
         private static StringAlignment GetHorizontalAlignment(ContentAlignment textAlign)

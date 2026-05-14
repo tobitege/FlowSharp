@@ -61,9 +61,12 @@ namespace FlowSharpLib
 
         public override void Draw(Graphics gr, bool showSelection = true)
         {
-            gr.FillPolygon(FillBrush, path);
-            gr.DrawPolygon(BorderPen, path);
-            base.Draw(gr, showSelection);
+            DrawRotated(gr, () =>
+            {
+                gr.FillPolygon(FillBrush, path);
+                gr.DrawPolygon(BorderPen, path);
+                base.Draw(gr, showSelection);
+            });
         }
     }
 
