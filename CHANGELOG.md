@@ -34,6 +34,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Toolbox drag creation now waits until the pointer reaches the canvas before creating the shape.
 - Rotated shapes now render geometry, text, selection, hit-testing, and invalidation around rotated bounds.
 
+### Commits
+
+- `4971fec` Features implemented, version 1.3.0. — 28 files changed, 1232 insertions, 205 deletions
+- `20dcbab` Updated todo's — 2 files changed, 41 insertions, 21 deletions
+
 ## [1.2.0]
 
 ### Added
